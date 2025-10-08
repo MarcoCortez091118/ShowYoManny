@@ -1,0 +1,125 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Shield, LogIn } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+const AdminLogin = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [credentials, setCredentials] = useState({
+    username: 'admin',
+    password: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const email = credentials.username === 'admin' ? 'admin@showyo.app' : credentials.username;
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: credentials.password
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Verify admin role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .eq('role', 'admin')
+        .single();
+
+      if (roleError || !roleData) {
+        throw new Error('Admin access required');
+      }
+
+      toast({
+        title: "Login Successful",
+        description: "Welcome to the admin dashboard",
+      });
+
+      navigate('/admin');
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid username or password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+            <Shield className="h-6 w-6 text-primary" />
+          </div>
+          <CardTitle className="text-2xl font-bold">Admin Login</CardTitle>
+          <CardDescription>
+            Sign in to access the admin dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                value={credentials.username}
+                onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
+                placeholder="admin"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={credentials.password}
+                onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full" 
+              variant="electric"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                "Signing in..."
+              ) : (
+                <>
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
+                </>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default AdminLogin;

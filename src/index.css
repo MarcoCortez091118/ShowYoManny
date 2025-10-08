@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ShowYo Electric Billboard Design System - All colors MUST be HSL */
+
+@layer base {
+  :root {
+    /* Electric Billboard Theme - Pure Black Base */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Electric Primary - Cyan/Turquoise Neon */
+    --primary: 180 100% 50%;
+    --primary-foreground: 0 0% 0%;
+
+    /* Electric Secondary - Bright Cyan */
+    --secondary: 190 100% 60%;
+    --secondary-foreground: 0 0% 0%;
+
+    /* Electric Accent - Neon Turquoise */
+    --accent: 175 100% 55%;
+    --accent-foreground: 0 0% 0%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 60%;
+
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 180 100% 15%;
+    --input: 0 0% 10%;
+    --ring: 210 100% 60%;
+
+    --radius: 0.75rem;
+
+    /* Electric Billboard Gradients */
+    --gradient-electric: linear-gradient(135deg, hsl(180 100% 50%), hsl(190 100% 60%));
+    --gradient-neon: linear-gradient(90deg, hsl(175 100% 55%), hsl(180 100% 50%));
+    --gradient-billboard: linear-gradient(180deg, hsl(0 0% 0%), hsl(220 26% 7%));
+    
+    /* Glow Effects */
+    --glow-electric: 0 0 30px hsl(180 100% 50% / 0.6);
+    --glow-neon: 0 0 20px hsl(175 100% 55% / 0.5);
+    --glow-cyan: 0 0 25px hsl(190 100% 60% / 0.5);
+    
+    /* Animation Variables */
+    --transition-electric: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --pulse-duration: 2s;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+}
+
+@layer components {
+  /* Electric Billboard Components */
+  .electric-glow {
+    box-shadow: var(--glow-electric);
+  }
+  
+  .neon-glow {
+    box-shadow: var(--glow-neon);
+  }
+  
+  .purple-glow {
+    box-shadow: var(--glow-purple);
+  }
+  
+  .gradient-electric {
+    background: var(--gradient-electric);
+  }
+  
+  .gradient-neon {
+    background: var(--gradient-neon);
+  }
+  
+  .gradient-billboard {
+    background: var(--gradient-billboard);
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow var(--pulse-duration) ease-in-out infinite;
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: var(--glow-electric);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(210 100% 60% / 0.8), 0 0 60px hsl(270 100% 65% / 0.4);
+    }
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* Ensure full height on mobile */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent scrolling/zooming on mobile */
+    touch-action: manipulation;
+    overscroll-behavior: none;
+  }
+  
+  html {
+    /* Ensure proper viewport height on mobile */
+    height: -webkit-fill-available;
+  }
+  
+  /* Full screen kiosk styles */
+  .kiosk-fullscreen {
+    width: 100vw;
+    height: 100vh;
+    height: -webkit-fill-available;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+  }
+  
+  /* Prevent text selection on touch */
+  .no-select {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Enhanced touch targets for mobile */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
