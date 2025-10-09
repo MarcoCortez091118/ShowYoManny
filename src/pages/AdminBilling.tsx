@@ -4,40 +4,57 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-
-interface Order {
-  id: string;
-  created_at: string;
-  user_email: string;
-  price_cents: number;
-  status: string;
-  pricing_option_id: string;
-  file_name: string;
-}
+import { firebaseOrderService, OrderRecord } from "@/domain/services/firebase/orderService";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AdminBilling = () => {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { loading, isAdmin } = useAuth();
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    if (!loading && isAdmin) {
+      fetchOrders();
+    }
+  }, [loading, isAdmin]);
 
   const fetchOrders = async () => {
-    const { data } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('status', 'paid')
-      .order('created_at', { ascending: false });
-
-    if (data) {
+    try {
+      const data = await firebaseOrderService.listPaidOrders();
       setOrders(data);
       const total = data.reduce((sum, order) => sum + (order.price_cents || 0), 0);
-      setTotalRevenue(total / 100); // Convert cents to dollars
+      setTotalRevenue(total / 100);
+    } catch (error) {
+      console.error("Failed to load paid orders", error);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        Loading billing data...
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Access Restricted</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              You need administrative privileges to view billing information.
+            </p>
+            <Button variant="ghost" className="mt-4" onClick={() => navigate('/')}>Return Home</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

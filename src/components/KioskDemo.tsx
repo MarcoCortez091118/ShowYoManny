@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Monitor, Clock, Users } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseOrderService } from "@/domain/services/firebase/orderService";
+import { firebaseStorageService } from "@/domain/services/firebase/storageService";
 
 const KioskDemo = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -48,27 +49,28 @@ const KioskDemo = () => {
     fetchRealContent();
   }, []);
 
-  const getPublicUrl = (path: string | null) => {
+  const getPublicUrl = async (path: string | null) => {
     if (!path) return null;
-    return supabase.storage.from('billboard-content').getPublicUrl(path).data.publicUrl;
+    try {
+      return await firebaseStorageService.getPublicUrl(path);
+    } catch (error) {
+      console.error('KioskDemo: Failed to resolve public URL for', path, error);
+      return null;
+    }
   };
 
   const fetchRealContent = async () => {
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('moderation_status', 'approved')
-        .in('display_status', ['queued', 'active', 'playing'])
-        .order('created_at', { ascending: false })
-        .limit(4);
-      
-      if (error) throw error;
-      
-      console.log('KioskDemo: Fetched real content:', data?.length, 'items');
-      
-      if (data && data.length > 0) {
-        const formatted = data.map(item => ({
+      const data = await firebaseOrderService.listApprovedOrders();
+
+      const filteredOrders = data
+        .filter((order) => ['queued', 'active', 'playing'].includes(order.display_status))
+        .slice(0, 4);
+
+      console.log('KioskDemo: Fetched real content:', filteredOrders.length, 'items');
+
+      if (filteredOrders.length > 0) {
+        const formatted = filteredOrders.map(item => ({
           type: item.file_type?.startsWith('video/') ? 'video' : 'image',
           title: item.file_name?.replace(/\.[^/.]+$/, '') || 'Content',
           border: item.border_id?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'No Border',
@@ -81,7 +83,15 @@ const KioskDemo = () => {
         const filtered = formatted.filter(item => item.file_path && !item.file_path.startsWith('admin-uploads/'));
         console.log('KioskDemo: Formatted content:', formatted);
         console.log('KioskDemo: Filtered content (excluding legacy admin-uploads):', filtered);
-        setRealContent(filtered);
+
+        const withUrls = await Promise.all(
+          filtered.map(async (item) => ({
+            ...item,
+            cachedUrl: await getPublicUrl(item.file_path),
+          }))
+        );
+
+        setRealContent(withUrls.filter(item => item.cachedUrl));
       }
     } catch (error) {
       console.error('Error fetching real content:', error);
@@ -140,13 +150,11 @@ const KioskDemo = () => {
                     <div className="mb-4">
                       {current.type === 'image' ? (
                         <img
-                          src={getPublicUrl(current.file_path) || ''}
+                          src={current.cachedUrl || ''}
                           alt={current.file_name}
                           className="max-w-full max-h-48 mx-auto rounded-lg shadow-lg"
                           onError={(e) => {
-                            const url = getPublicUrl(current.file_path);
                             console.error('KioskDemo: Image failed to load:', current.file_path);
-                            console.error('KioskDemo: URL:', url);
                             e.currentTarget.style.display = 'none';
                           }}
                           onLoad={() => {
@@ -155,15 +163,13 @@ const KioskDemo = () => {
                         />
                       ) : (
                         <video
-                          src={getPublicUrl(current.file_path) || ''}
+                          src={current.cachedUrl || ''}
                           autoPlay
                           muted
                           loop
                           className="max-w-full max-h-48 mx-auto rounded-lg shadow-lg"
                           onError={(e) => {
-                            const url = getPublicUrl(current.file_path);
                             console.error('KioskDemo: Video failed to load:', current.file_path);
-                            console.error('KioskDemo: URL:', url);
                             e.currentTarget.style.display = 'none';
                           }}
                         />

@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { firebaseOrderService } from "@/domain/services/firebase/orderService";
+import { firebasePaymentService } from "@/domain/services/firebase/paymentService";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -29,22 +30,16 @@ const PaymentSuccess = () => {
 
       try {
         // Update order status to paid (awaiting moderation)
-        const { data: order, error: orderError } = await supabase
-          .from('orders')
-          .update({
-            status: 'completed',
-            paid_at: new Date().toISOString(),
-            stripe_session_id: sessionId,
-            moderation_status: 'pending',
-            display_status: 'pending'
-          })
-          .eq('id', orderId)
-          .select()
-          .single();
+        await firebasePaymentService.confirmPayment({
+          orderId,
+          sessionId,
+        });
 
-        if (orderError) throw orderError;
-
-        console.log('Order updated to paid (awaiting moderation):', order);
+        await firebaseOrderService.updateOrder(orderId, {
+          status: 'completed',
+          moderation_status: 'pending',
+          display_status: 'pending',
+        });
 
         toast({
           title: "Payment Successful! 🎉",

@@ -3,24 +3,27 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { 
-  GripVertical, 
-  Settings, 
-  Eye, 
-  Trash2 
+import {
+  GripVertical,
+  Settings,
+  Eye,
+  Trash2
 } from "lucide-react";
+import { QueueItemRecord } from "@/domain/services/firebase/queueService";
+import { OrderRecord } from "@/domain/services/firebase/orderService";
 
 interface DraggableQueueItemProps {
-  item: any;
+  item: QueueItemRecord;
+  order: OrderRecord | undefined;
   index: number;
-  onEdit: (item: any) => void;
-  onPreview: (item: any) => void;
-  onDelete: (id: string) => void;
+  onEdit: (order: OrderRecord) => void;
+  onPreview: (order: OrderRecord) => void;
+  onDelete: (orderId: string) => void;
 }
 
 export const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
   item,
+  order,
   index,
   onEdit,
   onPreview,
@@ -40,6 +43,10 @@ export const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  if (!order) {
+    return null;
+  }
 
   return (
     <div
@@ -65,11 +72,11 @@ export const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
           </Badge>
 
           <div>
-            <p className="font-medium">{item.orders?.file_name}</p>
+            <p className="font-medium">{order.file_name}</p>
             <p className="text-sm text-muted-foreground">
-              {item.orders?.file_type} • {item.orders?.duration_seconds}s
-              {item.orders?.timer_loop_enabled && item.orders?.timer_loop_minutes && (
-                <span> • Every {item.orders.timer_loop_minutes}m</span>
+              {order.file_type} • {order.duration_seconds}s
+              {order.timer_loop_enabled && order.timer_loop_minutes && (
+                <span> • Every {order.timer_loop_minutes}m</span>
               )}
             </p>
           </div>
@@ -77,17 +84,17 @@ export const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
 
         <div className="flex items-center gap-2">
           <Badge variant="outline">
-            {item.orders?.display_status}
+            {order.display_status}
           </Badge>
-          {item.orders?.scheduled_start && (
+          {order.scheduled_start && (
             <Badge variant="secondary" className="text-xs">
-              {new Date(item.orders.scheduled_start).toLocaleDateString()}
+              {new Date(order.scheduled_start).toLocaleDateString()}
             </Badge>
           )}
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onEdit(item.orders)}
+            onClick={() => onEdit(order)}
             title="Edit Content"
           >
             <Settings className="h-4 w-4" />
@@ -95,7 +102,7 @@ export const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onPreview(item.orders)}
+            onClick={() => onPreview(order)}
             title="Preview Content"
           >
             <Eye className="h-4 w-4" />
@@ -103,7 +110,7 @@ export const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onDelete(item.orders.id)}
+            onClick={() => onDelete(order.id)}
             title="Delete Content"
             className="hover:bg-destructive hover:text-destructive-foreground"
           >
