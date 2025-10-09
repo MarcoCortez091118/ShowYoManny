@@ -15,15 +15,22 @@ import { borderService } from "@/domain/services/borderService";
 import { firebaseStorageService } from "@/domain/services/firebase/storageService";
 import { firebaseOrderService } from "@/domain/services/firebase/orderService";
 import { firebasePaymentService } from "@/domain/services/firebase/paymentService";
+import { MediaEditor } from "@/components/media/MediaEditor";
+import { MediaGuidelines } from "@/components/media/MediaGuidelines";
+import { useDisplaySettings } from "@/hooks/use-display-settings";
 
 const ContentUpload = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { settings } = useDisplaySettings();
   const [isUploading, setIsUploading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [sourceFile, setSourceFile] = useState<File | null>(null);
+  const [processedFile, setProcessedFile] = useState<File | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
   const [borderStyle, setBorderStyle] = useState("none");
   const [previewUrl, setPreviewUrl] = useState("");
+  const [uploadMetadata, setUploadMetadata] = useState<Record<string, string | number | boolean>>({});
+  const [videoTrim, setVideoTrim] = useState<{ start: number; end: number; duration: number } | null>(null);
 
   const plans = useMemo(() => planService.getAllPlans(), []);
   const borderThemes = useMemo(() => borderService.getAll(), []);
@@ -37,6 +44,14 @@ const ContentUpload = () => {
     }),
     []
   );
+
+  React.useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   // Reset border when switching to/from clean plans
   React.useEffect(() => {
@@ -52,34 +67,108 @@ const ContentUpload = () => {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      const MAX_SIZE = 600 * 1024 * 1024; // 600 MB
-      if (selectedFile.size > MAX_SIZE) {
-        toast({
-          title: "File too large",
-          description: "Maximum allowed size is 600 MB. Please compress or trim your video.",
-          variant: "destructive",
-        });
-        // Reset the input so the same file can be picked again after changes
-        event.target.value = "";
-        return;
-      }
+    if (!selectedFile) {
+      return;
+    }
 
-      setFile(selectedFile);
-      const url = URL.createObjectURL(selectedFile);
-      setPreviewUrl(url);
-      
-      // Auto-select logo-only plan based on file type (without border)
-      if (selectedFile.type.startsWith('video/')) {
-        setSelectedPlan("video-logo");
-      } else if (selectedFile.type.startsWith('image/')) {
-        setSelectedPlan("photo-logo");
+    const isVideo = selectedFile.type.startsWith("video/");
+    const maxBytes = (isVideo ? settings.maxVideoFileSizeMB : settings.maxImageFileSizeMB) * 1024 * 1024;
+
+    if (selectedFile.size > maxBytes) {
+      toast({
+        title: "File too large",
+        description: `Maximum allowed size is ${isVideo ? settings.maxVideoFileSizeMB : settings.maxImageFileSizeMB} MB. Please optimize and try again.`,
+        variant: "destructive",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    const url = URL.createObjectURL(selectedFile);
+    setPreviewUrl((previous) => {
+      if (previous) {
+        URL.revokeObjectURL(previous);
       }
+      return url;
+    });
+
+    setSourceFile(selectedFile);
+    setProcessedFile(selectedFile);
+    setUploadMetadata({
+      originalFileSizeBytes: selectedFile.size,
+      originalMimeType: selectedFile.type,
+    });
+    setVideoTrim(null);
+
+    if (selectedFile.type.startsWith("video/")) {
+      setSelectedPlan("video-logo");
+    } else if (selectedFile.type.startsWith("image/")) {
+      setSelectedPlan("photo-logo");
     }
   };
 
+  const handleImageAdjustments = React.useCallback(
+    (result: {
+      file: File;
+      previewUrl: string;
+      width: number;
+      height: number;
+      zoom: number;
+      offsetXPercent: number;
+      offsetYPercent: number;
+    }) => {
+      setProcessedFile(result.file);
+      setPreviewUrl((previous) => {
+        if (previous && previous !== result.previewUrl) {
+          URL.revokeObjectURL(previous);
+        }
+        return result.previewUrl;
+      });
+      setUploadMetadata((prev) => ({
+        ...prev,
+        processedWidth: result.width,
+        processedHeight: result.height,
+        imageZoom: Number(result.zoom.toFixed(2)),
+        imageOffsetXPercent: Number(result.offsetXPercent.toFixed(2)),
+        imageOffsetYPercent: Number(result.offsetYPercent.toFixed(2)),
+      }));
+      setVideoTrim(null);
+    },
+    []
+  );
+
+  const handleVideoAdjustments = React.useCallback(
+    (result: {
+      file: File;
+      previewUrl: string;
+      trimStartSeconds: number;
+      trimEndSeconds: number;
+      durationSeconds: number;
+    }) => {
+      setProcessedFile(result.file);
+      setPreviewUrl((previous) => {
+        if (previous && previous !== result.previewUrl) {
+          URL.revokeObjectURL(previous);
+        }
+        return result.previewUrl;
+      });
+      setVideoTrim({
+        start: result.trimStartSeconds,
+        end: result.trimEndSeconds,
+        duration: result.durationSeconds,
+      });
+      setUploadMetadata((prev) => ({
+        ...prev,
+        trimStartSeconds: Number(result.trimStartSeconds.toFixed(2)),
+        trimEndSeconds: Number(result.trimEndSeconds.toFixed(2)),
+        processedDurationSeconds: Number(result.durationSeconds.toFixed(2)),
+      }));
+    },
+    []
+  );
+
   const handlePaymentAndUpload = async () => {
-    if (!file || !selectedPlan) {
+    if (!processedFile || !selectedPlan) {
       toast({
         title: "Missing Information",
         description: "Please select a file and pricing plan",
@@ -88,19 +177,49 @@ const ContentUpload = () => {
       return;
     }
 
-    // Size guard for large files
-    const MAX_SIZE = 600 * 1024 * 1024; // 600 MB
-    if (file.size > MAX_SIZE) {
+    const isVideo = processedFile.type.startsWith("video/");
+    const maxBytes =
+      (isVideo ? settings.maxVideoFileSizeMB : settings.maxImageFileSizeMB) * 1024 * 1024;
+
+    if (processedFile.size > maxBytes) {
       toast({
         title: "File too large",
-        description: "Maximum allowed size is 600 MB.",
+        description: `Maximum allowed size is ${isVideo ? settings.maxVideoFileSizeMB : settings.maxImageFileSizeMB} MB. Please optimize and try again.`,
         variant: "destructive",
       });
       return;
     }
 
-    // Validate border selection for border plans
-    if (planService.planRequiresBorder(selectedPlan) && borderStyle === 'none') {
+    if (isVideo) {
+      if (!videoTrim) {
+        toast({
+          title: "Trim Required",
+          description: "Please confirm the start and end times for your clip.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (videoTrim.duration < settings.minVideoDurationSeconds) {
+        toast({
+          title: "Clip Too Short",
+          description: `Videos must be at least ${settings.minVideoDurationSeconds} seconds.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (videoTrim.duration > settings.maxVideoDurationSeconds) {
+        toast({
+          title: "Clip Too Long",
+          description: `Videos must be ${settings.maxVideoDurationSeconds} seconds or less. Trim your clip before uploading.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (planService.planRequiresBorder(selectedPlan) && borderStyle === "none") {
       toast({
         title: "Border Required",
         description: "Please select a border style for your border plan",
@@ -109,37 +228,56 @@ const ContentUpload = () => {
       return;
     }
 
-    // Ensure clean plans don't have borders
-    const finalBorderStyle = planService.planSupportsBorderSelection(selectedPlan) ? borderStyle : 'none';
+    const finalBorderStyle = planService.planSupportsBorderSelection(selectedPlan) ? borderStyle : "none";
 
     setIsUploading(true);
 
     try {
       const selectedPlanData = planService.getPlan(selectedPlan);
-      
+      const durationSeconds =
+        selectedPlanData?.type === "video"
+          ? videoTrim?.duration ?? settings.minVideoDurationSeconds
+          : selectedPlanData?.displayDurationSeconds ?? settings.photoDisplayDurationSeconds;
+
+      const metadata: Record<string, string | number | boolean> = {
+        plan: selectedPlan,
+        border: finalBorderStyle,
+        source: "public-upload",
+        screenWidth: settings.screenWidth,
+        screenHeight: settings.screenHeight,
+        ...uploadMetadata,
+      };
+
+      if (selectedPlanData?.type === "video" && videoTrim) {
+        metadata.trimStartSeconds = Number(videoTrim.start.toFixed(2));
+        metadata.trimEndSeconds = Number(videoTrim.end.toFixed(2));
+        metadata.processedDurationSeconds = Number(videoTrim.duration.toFixed(2));
+      }
+
+      if (selectedPlanData?.type === "photo") {
+        metadata.processedWidth = settings.screenWidth;
+        metadata.processedHeight = settings.screenHeight;
+      }
+
       const uploadResult = await firebaseStorageService.uploadBillboardAsset({
-        file,
-        folder: 'content',
-        metadata: {
-          plan: selectedPlan,
-          border: finalBorderStyle,
-          source: 'public-upload',
-        },
+        file: processedFile,
+        folder: "content",
+        metadata,
       });
 
       const order = await firebaseOrderService.createOrder({
-        userEmail: 'guest@showyo.app',
+        userEmail: "guest@showyo.app",
         pricingOptionId: selectedPlan,
         priceCents: selectedPlanData!.price * 100,
-        fileName: file.name,
-        fileType: file.type,
+        fileName: processedFile.name,
+        fileType: processedFile.type,
         filePath: uploadResult.filePath,
         borderId: finalBorderStyle,
-        durationSeconds: selectedPlanData?.displayDurationSeconds ?? 10,
+        durationSeconds,
         isAdminContent: false,
-        moderationStatus: 'pending',
-        status: 'pending',
-        displayStatus: 'pending',
+        moderationStatus: "pending",
+        status: "pending",
+        displayStatus: "pending",
         maxPlays: 1,
         autoCompleteAfterPlay: true,
       });
@@ -147,30 +285,32 @@ const ContentUpload = () => {
       const checkoutData = await firebasePaymentService.createCheckoutSession({
         orderId: order.id,
         planId: selectedPlan,
-        userEmail: 'guest@showyo.app',
+        userEmail: "guest@showyo.app",
       });
 
       if (!checkoutData?.url) {
-        throw new Error('Failed to create checkout session');
+        throw new Error("Failed to create checkout session");
       }
 
-      // Redirect to Stripe Checkout (iOS Safari compatible)
       toast({
         title: "Opening Stripe Checkout",
         description: "Please complete your payment to submit your content.",
       });
 
-      // Use href for better iOS Safari compatibility
       window.location.href = checkoutData.url;
 
-      // Clear form after opening checkout
-      setFile(null);
-      setPreviewUrl('');
-      setSelectedPlan('');
-      setBorderStyle('none');
-
+      setSourceFile(null);
+      setProcessedFile(null);
+      setUploadMetadata({});
+      setVideoTrim(null);
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setPreviewUrl("");
+      setSelectedPlan("");
+      setBorderStyle("none");
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       toast({
         title: "Upload Failed",
         description: "There was an error processing your request. Please try again.",
@@ -182,6 +322,22 @@ const ContentUpload = () => {
   };
 
   const selectedPlanData = selectedPlan ? planService.getPlan(selectedPlan) : undefined;
+  const computedDurationSeconds = React.useMemo(() => {
+    if (!selectedPlanData) {
+      return null;
+    }
+
+    if (selectedPlanData.type === 'video') {
+      return videoTrim?.duration ?? selectedPlanData.displayDurationSeconds ?? settings.minVideoDurationSeconds;
+    }
+
+    return selectedPlanData.displayDurationSeconds ?? settings.photoDisplayDurationSeconds;
+  }, [
+    selectedPlanData,
+    videoTrim?.duration,
+    settings.minVideoDurationSeconds,
+    settings.photoDisplayDurationSeconds,
+  ]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-12">
@@ -197,6 +353,10 @@ const ContentUpload = () => {
           </p>
         </div>
 
+        <div className="mb-8">
+          <MediaGuidelines settings={settings} />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Upload Section */}
           <Card>
@@ -206,7 +366,7 @@ const ContentUpload = () => {
                 Upload Content
               </CardTitle>
               <CardDescription>
-                Select your photo or video file (max 600 MB)
+                Images up to {settings.maxImageFileSizeMB} MB and videos up to {settings.maxVideoFileSizeMB} MB.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -219,26 +379,59 @@ const ContentUpload = () => {
                   onChange={handleFileChange}
                   className="mt-2"
                 />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Recommended formats: {settings.recommendedImageFormat} for photos and {settings.recommendedVideoFormat} for videos.
+                </p>
               </div>
 
-              {previewUrl && (
-                <div className="space-y-2">
-                  <Label>Preview</Label>
-                  <div className="relative border-2 border-dashed border-border rounded-lg p-4">
-                    {file?.type.startsWith('image/') ? (
-                      <img src={previewUrl} alt="Preview" className="max-w-full h-48 object-contain mx-auto" />
-                    ) : (
-                      <video src={previewUrl} controls className="max-w-full h-48 mx-auto" />
-                    )}
+              {sourceFile && (
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label>Adjust &amp; Preview</Label>
+                    <MediaEditor
+                      file={sourceFile}
+                      settings={settings}
+                      onImageChange={handleImageAdjustments}
+                      onVideoChange={handleVideoAdjustments}
+                    />
                   </div>
+
+                  {previewUrl && processedFile && (
+                    <div className="space-y-2">
+                      <Label>Processed Preview</Label>
+                      <div className="relative border-2 border-dashed border-border rounded-lg p-4 bg-background">
+                        {processedFile.type.startsWith("image/") ? (
+                          <img src={previewUrl} alt="Processed preview" className="max-w-full h-48 object-contain mx-auto" />
+                        ) : (
+                          <video src={previewUrl} controls className="max-w-full h-48 mx-auto" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Output: {(processedFile.size / 1024 / 1024).toFixed(2)} MB • {processedFile.type}
+                      </p>
+                      {videoTrim && (
+                        <p className="text-xs text-muted-foreground">
+                          Trim: {videoTrim.start.toFixed(1)}s → {videoTrim.end.toFixed(1)}s ({videoTrim.duration.toFixed(1)}s)
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
               <div>
                 <Label htmlFor="duration">Display Duration</Label>
-                <div className="mt-2 p-4 bg-muted/50 rounded-lg border-2 border-dashed border-border text-center">
-                  <div className="text-xl font-bold text-primary">10 Seconds</div>
-                  <p className="text-sm text-muted-foreground mt-1">Fixed duration for all paid content</p>
+                <div className="mt-2 p-4 bg-muted/50 rounded-lg border-2 border-dashed border-border text-center space-y-1">
+                  <div className="text-xl font-bold text-primary">
+                    {computedDurationSeconds ? `${computedDurationSeconds.toFixed(1)} Seconds` : "Select a plan"}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedPlanData
+                      ? selectedPlanData.type === 'video'
+                        ? `Videos must run between ${settings.minVideoDurationSeconds}-${settings.maxVideoDurationSeconds} seconds.`
+                        : `Photos display for ${computedDurationSeconds?.toFixed(0)} seconds on the billboard.`
+                      : "Pick a plan to see the runtime for your creative."}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -260,10 +453,9 @@ const ContentUpload = () => {
                 {plans
                   .filter(plan => {
                     // If no file selected, show all plans
-                    if (!file) return true;
-                    // If file is selected, only show matching type
-                    if (file.type.startsWith('video/')) return plan.type === 'video';
-                    if (file.type.startsWith('image/')) return plan.type === 'photo';
+                    if (!sourceFile) return true;
+                    if (sourceFile.type.startsWith('video/')) return plan.type === 'video';
+                    if (sourceFile.type.startsWith('image/')) return plan.type === 'photo';
                     return true;
                   })
                   .map((plan) => (
@@ -385,7 +577,11 @@ const ContentUpload = () => {
                 </div>
                 <div className="flex justify-between items-center text-sm text-muted-foreground">
                   <span>Display Duration</span>
-                  <span>10 seconds (fixed)</span>
+                  <span>
+                    {computedDurationSeconds
+                      ? `${computedDurationSeconds.toFixed(1)} seconds`
+                      : 'Pending selection'}
+                  </span>
                 </div>
                 {planService.planSupportsBorderSelection(selectedPlanData.id) && (
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
@@ -405,9 +601,9 @@ const ContentUpload = () => {
                   <span>${selectedPlanData.price}</span>
                 </div>
                 
-                <Button 
+                <Button
                   onClick={handlePaymentAndUpload}
-                  disabled={!file || !selectedPlan || isUploading}
+                  disabled={!processedFile || !selectedPlan || isUploading}
                   className="w-full"
                   variant="electric"
                   size="lg"

@@ -1,25 +1,48 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import path from "path";
 
-export default defineConfig({
-  server: {
-    host: "::",
-    port: 8080,
-  },
-  plugins: [react()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+async function resolveReactPlugin() {
+  try {
+    const { default: react } = await import("@vitejs/plugin-react-swc");
+    return react();
+  } catch (error) {
+    console.warn(
+      "@vitejs/plugin-react-swc failed to load; falling back to a minimal JSX transform.",
+      error instanceof Error ? error.message : error,
+    );
+
+    return {
+      name: "react-jsx-fallback",
+      config() {
+        return {
+          esbuild: {
+            jsx: "automatic",
+            jsxImportSource: "react",
+          },
+        };
+      },
+    };
+  }
+}
+
+// https://vitejs.dev/config/
+export default defineConfig(async () => {
+  const reactPlugin = await resolveReactPlugin();
+
+  return {
+    server: {
+      host: "::",
+      port: 8080,
     },
-  },
-  // Evita el .map corrupto de react-query durante el prebundle
-  optimizeDeps: {
-    exclude: ["@tanstack/react-query"],
-  },
-  build: { sourcemap: false },
-  esbuild: {
-    jsx: "automatic",
-    jsxImportSource: "react",
-  },
+    plugins: reactPlugin ? [reactPlugin] : [],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+    },
+    esbuild: {
+      jsx: "automatic",
+      jsxImportSource: "react",
+    },
+  };
 });
