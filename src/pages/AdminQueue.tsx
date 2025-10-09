@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +9,8 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { firebaseQueueService } from "@/domain/services/firebase/queueService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface QueueItem {
   id: string;
@@ -87,8 +88,9 @@ const SortableItem = ({ item }: { item: QueueItem }) => {
 const AdminQueue = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { loading, isAdmin } = useAuth();
   const [items, setItems] = useState<QueueItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(true);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -96,77 +98,91 @@ const AdminQueue = () => {
   );
 
   useEffect(() => {
-    fetchQueue();
-  }, []);
+    if (!loading && isAdmin) {
+      fetchQueue();
+    }
+  }, [loading, isAdmin]);
 
   const fetchQueue = async () => {
     try {
-      const { data, error } = await supabase
-        .from('content_queue')
-        .select(`
-          id,
-          queue_position,
-          orders (
-            id,
-            file_name,
-            file_type,
-            display_status,
-            pricing_option_id,
-            is_admin_content,
-            scheduled_start,
-            scheduled_end,
-            play_count,
-            max_plays,
-            repeat_frequency_per_day
-          )
-        `)
-        .order('queue_position', { ascending: true });
-
-      if (error) throw error;
-
-      const queueItems = data.map((item: any) => ({
+      setIsFetching(true);
+      const data = await firebaseQueueService.fetchQueue();
+      const queueItems: QueueItem[] = data.map((item) => ({
         id: item.id,
+        file_name: item.order?.file_name ?? 'Unknown',
+        file_type: item.order?.file_type ?? 'unknown',
+        display_status: item.order?.display_status ?? 'pending',
+        priority: item.order?.pricing_option_id && !item.order?.is_admin_content ? 'paid'
+          : item.order?.is_admin_content ? 'admin'
+          : 'house',
+        scheduled_start: item.order?.scheduled_start ?? null,
+        scheduled_end: item.order?.scheduled_end ?? null,
+        play_count: item.order?.play_count ?? 0,
+        max_plays: item.order?.max_plays ?? 0,
+        repeat_frequency_per_day: item.order?.repeat_frequency_per_day ?? 0,
         queue_position: item.queue_position,
-        ...item.orders,
-        priority: item.orders.pricing_option_id && !item.orders.is_admin_content ? 'paid' 
-          : item.orders.is_admin_content ? 'admin' 
-          : 'house'
       }));
 
       setItems(queueItems);
     } catch (error: any) {
       toast({ title: "Error loading queue", description: error.message, variant: "destructive" });
     } finally {
-      setLoading(false);
+      setIsFetching(false);
     }
   };
 
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
 
-    if (active.id !== over.id) {
-      setItems((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        
-        // Update positions in database
-        newItems.forEach(async (item, index) => {
-          await supabase
-            .from('content_queue')
-            .update({ queue_position: index })
-            .eq('id', item.id);
-        });
+    if (!over || active.id === over.id) {
+      return;
+    }
 
-        return newItems;
+    const oldIndex = items.findIndex((item) => item.id === active.id);
+    const newIndex = items.findIndex((item) => item.id === over.id);
+    const reordered = arrayMove(items, oldIndex, newIndex).map((item, index) => ({
+      ...item,
+      queue_position: index + 1,
+    }));
+
+    setItems(reordered);
+
+    try {
+      await firebaseQueueService.updateQueueOrder({
+        queue: reordered.map((item) => ({
+          id: item.id,
+          queue_position: item.queue_position,
+        })),
       });
 
       toast({ title: "Queue updated", description: "Order saved successfully" });
+    } catch (error: any) {
+      console.error('Queue reorder error:', error);
+      toast({ title: "Update failed", description: error.message, variant: "destructive" });
+      fetchQueue();
     }
   };
 
-  if (loading) {
+  if (loading || isFetching) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Access Restricted</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              You need administrative privileges to manage the content queue.
+            </p>
+            <Button variant="ghost" className="mt-4" onClick={() => navigate('/')}>Return Home</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

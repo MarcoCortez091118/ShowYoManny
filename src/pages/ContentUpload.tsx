@@ -1,217 +1,232 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { Upload, Camera, Video, CreditCard, Image, Clock } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  Upload,
+  Camera,
+  Video,
+  CreditCard,
+  Image,
+  Clock,
+  ArrowLeft,
+  AlertCircle,
+  Trash2,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BorderPreview } from "@/components/BorderPreview";
 import showYoLogo from "@/assets/showyo-logo-color.png";
+import { planService } from "@/domain/services/planService";
+import { borderService } from "@/domain/services/borderService";
+import { firebaseStorageService } from "@/domain/services/firebase/storageService";
+import { firebaseOrderService } from "@/domain/services/firebase/orderService";
+import { firebasePaymentService } from "@/domain/services/firebase/paymentService";
+import { MediaEditor } from "@/components/media/MediaEditor";
+import { MediaGuidelines } from "@/components/media/MediaGuidelines";
+import { useDisplaySettings } from "@/hooks/use-display-settings";
+import type { ImageFitMode } from "@/utils/imageProcessing";
 
 const ContentUpload = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { settings } = useDisplaySettings();
   const [isUploading, setIsUploading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [sourceFile, setSourceFile] = useState<File | null>(null);
+  const [processedFile, setProcessedFile] = useState<File | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
   const [borderStyle, setBorderStyle] = useState("none");
-  const [displayDuration, setDisplayDuration] = useState(10);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [uploadMetadata, setUploadMetadata] = useState<Record<string, string | number | boolean>>({});
+  const [videoTrim, setVideoTrim] = useState<{ start: number; end: number; duration: number } | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const plans = useMemo(() => planService.getAllPlans(), []);
+  const borderThemes = useMemo(() => borderService.getAll(), []);
+  const borderCategories = useMemo(() => borderService.getCategories(), []);
+  const borderCategoryLabels = useMemo(
+    () => ({
+      Holiday: "🎄 Holiday Borders",
+      "Special Occasions": "🎓 Special Occasions",
+      Futuristic: "🚀 Futuristic Borders",
+      Seasonal: "🌤️ Seasonal Borders",
+    }),
+    []
+  );
+
+  React.useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   // Reset border when switching to/from clean plans
   React.useEffect(() => {
-    if (selectedPlan && (selectedPlan.includes('clean') || !selectedPlan.includes('border'))) {
+    if (!selectedPlan) {
+      setBorderStyle("none");
+      return;
+    }
+
+    if (!planService.planSupportsBorderSelection(selectedPlan)) {
       setBorderStyle("none");
     }
   }, [selectedPlan]);
 
-  const plans = [
-    { id: "photo-logo", title: "Photo with Logo", price: 10, type: "photo", features: ["ShowYo watermark", "Content protection"] },
-    { id: "photo-border-logo", title: "Photo with Border", price: 15, type: "photo", features: ["Custom border", "ShowYo watermark"], popular: true },
-    { id: "photo-clean", title: "Clean Photo", price: 15, type: "photo", features: ["No watermarks", "Full flexibility"] },
-    { id: "video-logo", title: "Video with Logo", price: 20, type: "video", features: ["ShowYo watermark", "Brand protection"] },
-    { id: "video-border-logo", title: "Video with Border", price: 25, type: "video", features: ["Custom border", "ShowYo watermark"], popular: true },
-    { id: "video-clean", title: "Clean Video", price: 30, type: "video", features: ["Premium quality", "No restrictions"] },
-  ];
-
-  const borderOptions = [
-    // 🎄 Holiday Borders
-    { 
-      id: "merry-christmas", 
-      name: "🎄 Merry Christmas",
-      category: "Holiday",
-      preview: "border-4 border-red-600 bg-gradient-to-r from-red-100 via-green-100 to-red-100",
-      description: "Festive Christmas celebration",
-      message: "Merry Christmas"
-    },
-    { 
-      id: "happy-new-year", 
-      name: "🎊 Happy New Year",
-      category: "Holiday",
-      preview: "border-4 border-yellow-500 bg-gradient-to-r from-yellow-100 via-orange-100 to-yellow-100",
-      description: "New Year celebration",
-      message: "Happy New Year"
-    },
-    { 
-      id: "happy-valentines", 
-      name: "💝 Happy Valentine's Day",
-      category: "Holiday",
-      preview: "border-4 border-pink-500 bg-gradient-to-r from-pink-100 via-red-100 to-pink-100",
-      description: "Love and romance celebration",
-      message: "Happy Valentine's Day"
-    },
-    { 
-      id: "happy-halloween", 
-      name: "🎃 Happy Halloween",
-      category: "Holiday",
-      preview: "border-4 border-orange-600 bg-gradient-to-r from-orange-100 via-black/10 to-orange-100",
-      description: "Spooky Halloween fun",
-      message: "Happy Halloween"
-    },
-    { 
-      id: "happy-easter", 
-      name: "🐰 Happy Easter",
-      category: "Holiday",
-      preview: "border-4 border-purple-500 bg-gradient-to-r from-purple-100 via-yellow-100 to-purple-100",
-      description: "Easter celebration",
-      message: "Happy Easter"
-    },
-    { 
-      id: "happy-thanksgiving", 
-      name: "🦃 Happy Thanksgiving",
-      category: "Holiday",
-      preview: "border-4 border-amber-600 bg-gradient-to-r from-amber-100 via-orange-100 to-amber-100",
-      description: "Thanksgiving gratitude",
-      message: "Happy Thanksgiving"
-    },
-    // 🎓 Special Occasions
-    { 
-      id: "happy-birthday", 
-      name: "🎂 Happy Birthday",
-      category: "Special Occasions",
-      preview: "border-4 border-blue-500 bg-gradient-to-r from-blue-100 via-pink-100 to-blue-100",
-      description: "Birthday celebration",
-      message: "Happy Birthday"
-    },
-    { 
-      id: "congrats-graduate", 
-      name: "🎓 Congrats Graduate",
-      category: "Special Occasions",
-      preview: "border-4 border-indigo-600 bg-gradient-to-r from-indigo-100 via-yellow-100 to-indigo-100",
-      description: "Graduation achievement",
-      message: "Congrats Graduate"
-    },
-    { 
-      id: "happy-anniversary", 
-      name: "💍 Happy Anniversary",
-      category: "Special Occasions",
-      preview: "border-4 border-rose-500 bg-gradient-to-r from-rose-100 via-gold-100 to-rose-100",
-      description: "Anniversary celebration",
-      message: "Happy Anniversary"
-    },
-    { 
-      id: "wedding-day", 
-      name: "👰 Wedding Day",
-      category: "Special Occasions",
-      preview: "border-4 border-white bg-gradient-to-r from-white via-pink-50 to-white",
-      description: "Wedding celebration",
-      message: "Wedding Day"
-    },
-    // 🚀 Futuristic Borders
-    { 
-      id: "neon-glow", 
-      name: "🌐 Neon Glow",
-      category: "Futuristic",
-      preview: "border-4 border-cyan-400 bg-gradient-to-r from-cyan-100 via-purple-100 to-cyan-100",
-      description: "Neon glow effects",
-      message: "Neon Glow"
-    },
-    { 
-      id: "tech-circuit", 
-      name: "⚡ Tech Circuit",
-      category: "Futuristic",
-      preview: "border-4 border-blue-600 bg-gradient-to-r from-blue-100 via-cyan-100 to-blue-100",
-      description: "Tech circuit pattern",
-      message: "Tech Circuit"
-    },
-    { 
-      id: "galaxy", 
-      name: "🌌 Galaxy",
-      category: "Futuristic",
-      preview: "border-4 border-indigo-600 bg-gradient-to-r from-indigo-100 via-purple-100 to-pink-100",
-      description: "Stars and space",
-      message: "Galaxy"
-    },
-    { 
-      id: "cyberpunk", 
-      name: "💠 Cyberpunk",
-      category: "Futuristic",
-      preview: "border-4 border-fuchsia-500 bg-gradient-to-r from-fuchsia-100 via-cyan-100 to-fuchsia-100",
-      description: "Cyberpunk neon grid",
-      message: "Cyberpunk"
-    },
-    // 🌤️ Seasonal Borders
-    { 
-      id: "summer", 
-      name: "☀️ Summer",
-      category: "Seasonal",
-      preview: "border-4 border-yellow-400 bg-gradient-to-r from-yellow-100 via-orange-100 to-yellow-100",
-      description: "Summer vibes",
-      message: "Summer"
-    },
-    { 
-      id: "winter", 
-      name: "❄️ Winter",
-      category: "Seasonal",
-      preview: "border-4 border-blue-300 bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50",
-      description: "Winter wonderland",
-      message: "Winter"
-    },
-    { 
-      id: "autumn", 
-      name: "🍂 Autumn",
-      category: "Seasonal",
-      preview: "border-4 border-orange-500 bg-gradient-to-r from-orange-100 via-red-100 to-orange-100",
-      description: "Fall leaves",
-      message: "Autumn"
-    },
-  ];
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      const MAX_SIZE = 600 * 1024 * 1024; // 600 MB
-      if (selectedFile.size > MAX_SIZE) {
+    if (!selectedFile) {
+      return;
+    }
+
+    setFileError(null);
+
+    const isVideo = selectedFile.type.startsWith("video/");
+    const isImage = selectedFile.type.startsWith("image/");
+
+    if (!isVideo && !isImage) {
+      setFileError("Unsupported file type. Upload a JPG, PNG, MP4, or MOV file.");
+      toast({
+        title: "Unsupported file",
+        description: "Please choose a photo (.jpg, .png) or video (.mp4, .mov) file.",
+        variant: "destructive",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    if (selectedPlan) {
+      const validation = planService.validateAssetForPlan(selectedPlan, selectedFile.type);
+      if (!validation.valid) {
+        const expectedLabel = validation.expectedType === "photo" ? "photo" : "video";
+        const actualLabel = isVideo ? "video" : "photo";
+        setFileError(`The selected plan expects a ${expectedLabel}, but you chose a ${actualLabel}.`);
         toast({
-          title: "File too large",
-          description: "Maximum allowed size is 600 MB. Please compress or trim your video.",
+          title: "Plan mismatch",
+          description: `Switch to a ${actualLabel}-ready plan or upload a ${expectedLabel} file to continue.`,
           variant: "destructive",
         });
-        // Reset the input so the same file can be picked again after changes
         event.target.value = "";
         return;
       }
+    } else {
+      const defaultPlan = planService.getDefaultPlanForType(isVideo ? "video" : "photo");
+      if (defaultPlan) {
+        setSelectedPlan(defaultPlan.id);
+      }
+    }
 
-      setFile(selectedFile);
-      const url = URL.createObjectURL(selectedFile);
-      setPreviewUrl(url);
-      
-      // Auto-select logo-only plan based on file type (without border)
-      if (selectedFile.type.startsWith('video/')) {
-        setSelectedPlan("video-logo");
-      } else if (selectedFile.type.startsWith('image/')) {
-        setSelectedPlan("photo-logo");
+    const maxBytes = (isVideo ? settings.maxVideoFileSizeMB : settings.maxImageFileSizeMB) * 1024 * 1024;
+
+    if (selectedFile.size > maxBytes) {
+      toast({
+        title: "File too large",
+        description: `Maximum allowed size is ${isVideo ? settings.maxVideoFileSizeMB : settings.maxImageFileSizeMB} MB. Please optimize and try again.`,
+        variant: "destructive",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    const url = URL.createObjectURL(selectedFile);
+    setPreviewUrl((previous) => {
+      if (previous) {
+        URL.revokeObjectURL(previous);
+      }
+      return url;
+    });
+
+    setSourceFile(selectedFile);
+    setProcessedFile(selectedFile);
+    setUploadMetadata({
+      originalFileSizeBytes: selectedFile.size,
+      originalMimeType: selectedFile.type,
+    });
+    setVideoTrim(null);
+
+    if (!selectedPlan) {
+      if (selectedFile.type.startsWith("video/")) {
+        const fallback = planService.getDefaultPlanForType("video");
+        if (fallback) {
+          setSelectedPlan(fallback.id);
+        }
+      } else if (selectedFile.type.startsWith("image/")) {
+        const fallback = planService.getDefaultPlanForType("photo");
+        if (fallback) {
+          setSelectedPlan(fallback.id);
+        }
       }
     }
   };
 
+  const handleImageAdjustments = React.useCallback(
+    (result: {
+      file: File;
+      previewUrl: string;
+      width: number;
+      height: number;
+      zoom: number;
+      offsetXPercent: number;
+      offsetYPercent: number;
+      fitMode: ImageFitMode;
+    }) => {
+      setProcessedFile(result.file);
+      setPreviewUrl((previous) => {
+        if (previous && previous !== result.previewUrl) {
+          URL.revokeObjectURL(previous);
+        }
+        return result.previewUrl;
+      });
+      setUploadMetadata((prev) => ({
+        ...prev,
+        processedWidth: result.width,
+        processedHeight: result.height,
+        imageZoom: Number(result.zoom.toFixed(2)),
+        imageOffsetXPercent: Number(result.offsetXPercent.toFixed(2)),
+        imageOffsetYPercent: Number(result.offsetYPercent.toFixed(2)),
+        imageFitMode: result.fitMode,
+      }));
+      setVideoTrim(null);
+    },
+    []
+  );
+
+  const handleVideoAdjustments = React.useCallback(
+    (result: {
+      file: File;
+      previewUrl: string;
+      trimStartSeconds: number;
+      trimEndSeconds: number;
+      durationSeconds: number;
+    }) => {
+      setProcessedFile(result.file);
+      setPreviewUrl((previous) => {
+        if (previous && previous !== result.previewUrl) {
+          URL.revokeObjectURL(previous);
+        }
+        return result.previewUrl;
+      });
+      setVideoTrim({
+        start: result.trimStartSeconds,
+        end: result.trimEndSeconds,
+        duration: result.durationSeconds,
+      });
+      setUploadMetadata((prev) => ({
+        ...prev,
+        trimStartSeconds: Number(result.trimStartSeconds.toFixed(2)),
+        trimEndSeconds: Number(result.trimEndSeconds.toFixed(2)),
+        processedDurationSeconds: Number(result.durationSeconds.toFixed(2)),
+      }));
+    },
+    []
+  );
+
   const handlePaymentAndUpload = async () => {
-    if (!file || !selectedPlan) {
+    if (!processedFile || !selectedPlan) {
       toast({
         title: "Missing Information",
         description: "Please select a file and pricing plan",
@@ -220,19 +235,49 @@ const ContentUpload = () => {
       return;
     }
 
-    // Size guard for large files
-    const MAX_SIZE = 600 * 1024 * 1024; // 600 MB
-    if (file.size > MAX_SIZE) {
+    const isVideo = processedFile.type.startsWith("video/");
+    const maxBytes =
+      (isVideo ? settings.maxVideoFileSizeMB : settings.maxImageFileSizeMB) * 1024 * 1024;
+
+    if (processedFile.size > maxBytes) {
       toast({
         title: "File too large",
-        description: "Maximum allowed size is 600 MB.",
+        description: `Maximum allowed size is ${isVideo ? settings.maxVideoFileSizeMB : settings.maxImageFileSizeMB} MB. Please optimize and try again.`,
         variant: "destructive",
       });
       return;
     }
 
-    // Validate border selection for border plans
-    if (selectedPlan.includes('border') && borderStyle === 'none') {
+    if (isVideo) {
+      if (!videoTrim) {
+        toast({
+          title: "Trim Required",
+          description: "Please confirm the start and end times for your clip.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (videoTrim.duration < settings.minVideoDurationSeconds) {
+        toast({
+          title: "Clip Too Short",
+          description: `Videos must be at least ${settings.minVideoDurationSeconds} seconds.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (videoTrim.duration > settings.maxVideoDurationSeconds) {
+        toast({
+          title: "Clip Too Long",
+          description: `Videos must be ${settings.maxVideoDurationSeconds} seconds or less. Trim your clip before uploading.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (planService.planRequiresBorder(selectedPlan) && borderStyle === "none") {
       toast({
         title: "Border Required",
         description: "Please select a border style for your border plan",
@@ -241,83 +286,89 @@ const ContentUpload = () => {
       return;
     }
 
-    // Ensure clean plans don't have borders
-    const finalBorderStyle = selectedPlan.includes('clean') ? 'none' : borderStyle;
+    const finalBorderStyle = planService.planSupportsBorderSelection(selectedPlan) ? borderStyle : "none";
 
     setIsUploading(true);
 
     try {
-      const selectedPlanData = plans.find(p => p.id === selectedPlan);
-      
-      // Upload file to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `content/${fileName}`;
+      const selectedPlanData = planService.getPlan(selectedPlan);
+      const durationSeconds =
+        selectedPlanData?.type === "video"
+          ? videoTrim?.duration ?? settings.minVideoDurationSeconds
+          : selectedPlanData?.displayDurationSeconds ?? settings.photoDisplayDurationSeconds;
 
-      const { error: uploadError } = await supabase.storage
-        .from('billboard-content')
-        .upload(filePath, file);
+      const metadata: Record<string, string | number | boolean> = {
+        plan: selectedPlan,
+        border: finalBorderStyle,
+        source: "public-upload",
+        screenWidth: settings.screenWidth,
+        screenHeight: settings.screenHeight,
+        ...uploadMetadata,
+      };
 
-      if (uploadError) {
-        throw uploadError;
+      if (selectedPlanData?.type === "video" && videoTrim) {
+        metadata.trimStartSeconds = Number(videoTrim.start.toFixed(2));
+        metadata.trimEndSeconds = Number(videoTrim.end.toFixed(2));
+        metadata.processedDurationSeconds = Number(videoTrim.duration.toFixed(2));
       }
 
-      // Create order for paid content
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_email: 'guest@showyo.app',
-          pricing_option_id: selectedPlan,
-          price_cents: selectedPlanData!.price * 100,
-          file_name: file.name,
-          file_type: file.type,
-          file_path: filePath,
-          border_id: selectedPlan.includes('border') ? borderStyle : 'none',
-          duration_seconds: 10,
-          status: 'pending',
-          moderation_status: 'pending',
-          is_admin_content: false,
-          max_plays: 1,
-          auto_complete_after_play: true
-        })
-        .select()
-        .single();
-
-      if (orderError) {
-        throw orderError;
+      if (selectedPlanData?.type === "photo") {
+        metadata.processedWidth = settings.screenWidth;
+        metadata.processedHeight = settings.screenHeight;
       }
 
-      // Create Stripe checkout session
-      const { data: checkoutData, error: checkoutError } = await supabase.functions
-        .invoke('create-checkout-session', {
-          body: {
-            orderId: orderData.id,
-            planId: selectedPlan,
-            userEmail: 'guest@showyo.app'
-          }
-        });
+      const uploadResult = await firebaseStorageService.uploadBillboardAsset({
+        file: processedFile,
+        folder: "content",
+        metadata,
+      });
 
-      if (checkoutError || !checkoutData?.url) {
-        throw new Error('Failed to create checkout session');
+      const order = await firebaseOrderService.createOrder({
+        userEmail: "guest@showyo.app",
+        pricingOptionId: selectedPlan,
+        priceCents: selectedPlanData!.price * 100,
+        fileName: processedFile.name,
+        fileType: processedFile.type,
+        filePath: uploadResult.filePath,
+        borderId: finalBorderStyle,
+        durationSeconds,
+        isAdminContent: false,
+        moderationStatus: "pending",
+        status: "pending",
+        displayStatus: "pending",
+        maxPlays: 1,
+        autoCompleteAfterPlay: true,
+      });
+
+      const checkoutData = await firebasePaymentService.createCheckoutSession({
+        orderId: order.id,
+        planId: selectedPlan,
+        userEmail: "guest@showyo.app",
+      });
+
+      if (!checkoutData?.url) {
+        throw new Error("Failed to create checkout session");
       }
 
-      // Redirect to Stripe Checkout (iOS Safari compatible)
       toast({
         title: "Opening Stripe Checkout",
         description: "Please complete your payment to submit your content.",
       });
-      
-      // Use href for better iOS Safari compatibility
+
       window.location.href = checkoutData.url;
 
-      // Clear form after opening checkout
-      setFile(null);
-      setPreviewUrl('');
-      setSelectedPlan('');
-      setBorderStyle('none');
-
+      setSourceFile(null);
+      setProcessedFile(null);
+      setUploadMetadata({});
+      setVideoTrim(null);
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setPreviewUrl("");
+      setSelectedPlan("");
+      setBorderStyle("none");
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       toast({
         title: "Upload Failed",
         description: "There was an error processing your request. Please try again.",
@@ -328,11 +379,87 @@ const ContentUpload = () => {
     }
   };
 
-  const selectedPlanData = plans.find(p => p.id === selectedPlan);
+  const selectedPlanData = selectedPlan ? planService.getPlan(selectedPlan) : undefined;
+  const handlePlanChange = (planId: string) => {
+    setSelectedPlan(planId);
+    if (sourceFile) {
+      const validation = planService.validateAssetForPlan(planId, sourceFile.type);
+      if (!validation.valid) {
+        const expectedLabel = validation.expectedType === "photo" ? "photo" : "video";
+        const actualLabel = sourceFile.type.startsWith("video/") ? "video" : "photo";
+        toast({
+          title: "Plan mismatch",
+          description: `This plan is designed for ${expectedLabel}s, but you uploaded a ${actualLabel}.`,
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleResetFile = () => {
+    setSourceFile(null);
+    setProcessedFile(null);
+    setUploadMetadata({});
+    setVideoTrim(null);
+    setFileError(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
+
+  const planMismatchMessage = React.useMemo(() => {
+    if (!sourceFile || !selectedPlan) {
+      return null;
+    }
+
+    const validation = planService.validateAssetForPlan(selectedPlan, sourceFile.type);
+    if (validation.valid) {
+      return null;
+    }
+
+    const expectedLabel = validation.expectedType === "photo" ? "photo" : "video";
+    const actualLabel = sourceFile.type.startsWith("video/") ? "video" : "photo";
+    return `Switch plans or upload a ${expectedLabel}. You selected a plan for ${expectedLabel}s but uploaded a ${actualLabel}.`;
+  }, [sourceFile, selectedPlan]);
+
+  const computedDurationSeconds = React.useMemo(() => {
+    if (!selectedPlanData) {
+      return null;
+    }
+
+    if (selectedPlanData.type === 'video') {
+      return videoTrim?.duration ?? selectedPlanData.displayDurationSeconds ?? settings.minVideoDurationSeconds;
+    }
+
+    return selectedPlanData.displayDurationSeconds ?? settings.photoDisplayDurationSeconds;
+  }, [
+    selectedPlanData,
+    videoTrim?.duration,
+    settings.minVideoDurationSeconds,
+    settings.photoDisplayDurationSeconds,
+  ]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-12">
       <div className="container mx-auto px-4 max-w-4xl">
+        <div className="mb-6">
+          <Button variant="ghost" size="sm" onClick={handleGoBack} className="inline-flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -344,6 +471,10 @@ const ContentUpload = () => {
           </p>
         </div>
 
+        <div className="mb-8">
+          <MediaGuidelines settings={settings} />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Upload Section */}
           <Card>
@@ -353,39 +484,107 @@ const ContentUpload = () => {
                 Upload Content
               </CardTitle>
               <CardDescription>
-                Select your photo or video file (max 600 MB)
+                Drag &amp; drop or browse. We’ll help you match the billboard resolution.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label htmlFor="file-upload">Choose File</Label>
-                <Input
-                  id="file-upload"
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleFileChange}
-                  className="mt-2"
-                />
+                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center bg-muted/30 hover:bg-muted/40 transition">
+                  <input
+                    ref={fileInputRef}
+                    id="file-upload"
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <label htmlFor="file-upload" className="flex flex-col items-center gap-3 cursor-pointer">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <Upload className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Drop your file here or click to browse</p>
+                      <p className="text-xs text-muted-foreground">
+                        JPG, PNG up to {settings.maxImageFileSizeMB} MB or MP4, MOV up to {settings.maxVideoFileSizeMB} MB.
+                      </p>
+                    </div>
+                  </label>
+                  {fileError && (
+                    <div className="mt-3 inline-flex items-center gap-2 text-xs text-destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{fileError}</span>
+                    </div>
+                  )}
+                </div>
+                {sourceFile && (
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+                    <div className="text-left">
+                      <p className="font-medium text-foreground">{sourceFile.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(sourceFile.size / 1024 / 1024).toFixed(2)} MB • {sourceFile.type}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                        Change file
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={handleResetFile}>
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {previewUrl && (
-                <div className="space-y-2">
-                  <Label>Preview</Label>
-                  <div className="relative border-2 border-dashed border-border rounded-lg p-4">
-                    {file?.type.startsWith('image/') ? (
-                      <img src={previewUrl} alt="Preview" className="max-w-full h-48 object-contain mx-auto" />
-                    ) : (
-                      <video src={previewUrl} controls className="max-w-full h-48 mx-auto" />
-                    )}
+              {sourceFile && (
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label>Adjust &amp; Preview</Label>
+                    <MediaEditor
+                      file={sourceFile}
+                      settings={settings}
+                      onImageChange={handleImageAdjustments}
+                      onVideoChange={handleVideoAdjustments}
+                    />
                   </div>
+
+                  {previewUrl && processedFile && (
+                    <div className="space-y-2">
+                      <Label>Processed Preview</Label>
+                      <div className="relative border-2 border-dashed border-border rounded-lg p-4 bg-background">
+                        {processedFile.type.startsWith("image/") ? (
+                          <img src={previewUrl} alt="Processed preview" className="max-w-full h-48 object-contain mx-auto" />
+                        ) : (
+                          <video src={previewUrl} controls className="max-w-full h-48 mx-auto" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Output: {(processedFile.size / 1024 / 1024).toFixed(2)} MB • {processedFile.type}
+                      </p>
+                      {videoTrim && (
+                        <p className="text-xs text-muted-foreground">
+                          Trim: {videoTrim.start.toFixed(1)}s → {videoTrim.end.toFixed(1)}s ({videoTrim.duration.toFixed(1)}s)
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
               <div>
                 <Label htmlFor="duration">Display Duration</Label>
-                <div className="mt-2 p-4 bg-muted/50 rounded-lg border-2 border-dashed border-border text-center">
-                  <div className="text-xl font-bold text-primary">10 Seconds</div>
-                  <p className="text-sm text-muted-foreground mt-1">Fixed duration for all paid content</p>
+                <div className="mt-2 p-4 bg-muted/50 rounded-lg border-2 border-dashed border-border text-center space-y-1">
+                  <div className="text-xl font-bold text-primary">
+                    {computedDurationSeconds ? `${computedDurationSeconds.toFixed(1)} Seconds` : "Select a plan"}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedPlanData
+                      ? selectedPlanData.type === 'video'
+                        ? `Videos must run between ${settings.minVideoDurationSeconds}-${settings.maxVideoDurationSeconds} seconds.`
+                        : `Photos display for ${computedDurationSeconds?.toFixed(0)} seconds on the billboard.`
+                      : "Pick a plan to see the runtime for your creative."}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -403,19 +602,18 @@ const ContentUpload = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan} className="space-y-4">
+              <RadioGroup value={selectedPlan} onValueChange={handlePlanChange} className="space-y-4">
                 {plans
                   .filter(plan => {
                     // If no file selected, show all plans
-                    if (!file) return true;
-                    // If file is selected, only show matching type
-                    if (file.type.startsWith('video/')) return plan.type === 'video';
-                    if (file.type.startsWith('image/')) return plan.type === 'photo';
+                    if (!sourceFile) return true;
+                    if (sourceFile.type.startsWith('video/')) return plan.type === 'video';
+                    if (sourceFile.type.startsWith('image/')) return plan.type === 'photo';
                     return true;
                   })
                   .map((plan) => (
-                  <div key={plan.id} className={`relative p-4 border rounded-lg ${plan.popular ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                    {plan.popular && (
+                  <div key={plan.id} className={`relative p-4 border rounded-lg ${plan.isPopular ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                    {plan.isPopular && (
                       <div className="absolute -top-2 left-4 bg-primary text-primary-foreground px-2 py-1 text-xs rounded">
                         Most Popular
                       </div>
@@ -431,7 +629,7 @@ const ContentUpload = () => {
                           <span className="font-bold text-lg">${plan.price}</span>
                         </div>
                         <ul className="text-sm text-muted-foreground mt-1">
-                          {plan.features.map((feature, idx) => (
+                          {planService.getDisplayFeatures(plan).map((feature, idx) => (
                             <li key={idx}>• {feature}</li>
                           ))}
                         </ul>
@@ -440,12 +638,18 @@ const ContentUpload = () => {
                   </div>
                 ))}
               </RadioGroup>
+              {planMismatchMessage && (
+                <div className="mt-4 inline-flex items-center gap-2 text-sm text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>{planMismatchMessage}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         {/* Border Selection */}
-        {selectedPlan.includes('border') && (
+        {selectedPlanData && planService.planSupportsBorderSelection(selectedPlanData.id) && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle>Choose Your Border Style</CardTitle>
@@ -458,14 +662,14 @@ const ContentUpload = () => {
                 <p className="text-sm text-destructive mb-4">⚠️ Please select a border style for your border plan</p>
               )}
               <div className="space-y-6">
-                {["Basic", "Holiday", "Special Occasions", "Futuristic", "Seasonal"].map((category) => {
-                  const categoryBorders = borderOptions.filter(border => border.category === category);
+                {borderCategories.map((category) => {
+                  const categoryBorders = borderThemes.filter(border => border.category === category);
                   if (categoryBorders.length === 0) return null;
-                  
+
                   return (
                     <div key={category} className="space-y-4">
                       <h4 className="font-semibold text-base text-foreground flex items-center gap-2">
-                        <span className="text-primary">{category}</span>
+                        <span className="text-primary">{borderCategoryLabels[category] ?? category}</span>
                         <span className="text-sm text-muted-foreground font-normal">({categoryBorders.length})</span>
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -487,7 +691,7 @@ const ContentUpload = () => {
         )}
 
         {/* Logo Preview */}
-        {selectedPlan && (selectedPlan.includes('logo') && !selectedPlan.includes('border')) && (
+        {selectedPlanData && selectedPlanData.includesLogo && !selectedPlanData.includesBorder && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -532,15 +736,19 @@ const ContentUpload = () => {
                 </div>
                 <div className="flex justify-between items-center text-sm text-muted-foreground">
                   <span>Display Duration</span>
-                  <span>10 seconds (fixed)</span>
+                  <span>
+                    {computedDurationSeconds
+                      ? `${computedDurationSeconds.toFixed(1)} seconds`
+                      : 'Pending selection'}
+                  </span>
                 </div>
-                {selectedPlan.includes('border') && (
+                {planService.planSupportsBorderSelection(selectedPlanData.id) && (
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
                     <span>Border Style</span>
-                    <span>{borderOptions.find(b => b.id === borderStyle)?.name}</span>
+                    <span>{borderService.getById(borderStyle)?.name ?? 'Not selected'}</span>
                   </div>
                 )}
-                {selectedPlan.includes('clean') && (
+                {selectedPlanData && !selectedPlanData.includesBorder && !selectedPlanData.includesLogo && (
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
                     <span>Style</span>
                     <span className="text-primary font-medium">✨ Clean - No Border, No Logo</span>
@@ -552,9 +760,9 @@ const ContentUpload = () => {
                   <span>${selectedPlanData.price}</span>
                 </div>
                 
-                <Button 
+                <Button
                   onClick={handlePaymentAndUpload}
-                  disabled={!file || !selectedPlan || isUploading}
+                  disabled={!processedFile || !selectedPlan || isUploading}
                   className="w-full"
                   variant="electric"
                   size="lg"

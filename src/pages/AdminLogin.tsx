@@ -5,12 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield, LogIn } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { firebaseAuthService } from "@/domain/services/firebase/authService";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { refresh } = useAuth();
   const [credentials, setCredentials] = useState({
     username: 'admin',
     password: ''
@@ -23,27 +25,13 @@ const AdminLogin = () => {
 
     try {
       const email = credentials.username === 'admin' ? 'admin@showyo.app' : credentials.username;
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: credentials.password
+
+      await firebaseAuthService.login({
+        email,
+        password: credentials.password,
       });
 
-      if (error) {
-        throw error;
-      }
-
-      // Verify admin role
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', data.user.id)
-        .eq('role', 'admin')
-        .single();
-
-      if (roleError || !roleData) {
-        throw new Error('Admin access required');
-      }
+      await refresh();
 
       toast({
         title: "Login Successful",
@@ -54,7 +42,7 @@ const AdminLogin = () => {
     } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid username or password",
+        description: error?.message || "Invalid username or password",
         variant: "destructive",
       });
     } finally {

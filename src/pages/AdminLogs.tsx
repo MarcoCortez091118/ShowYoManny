@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseLogService } from "@/domain/services/firebase/logService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface LogEntry {
   id: string;
@@ -17,34 +18,64 @@ interface LogEntry {
 
 const AdminLogs = () => {
   const navigate = useNavigate();
+  const { isAdmin, loading } = useAuth();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [playlistAge, setPlaylistAge] = useState<string>('');
+  const [healthStatus, setHealthStatus] = useState<'healthy' | 'error'>('healthy');
 
   useEffect(() => {
-    fetchLogs();
-    checkPlaylistHealth();
-  }, []);
+    if (!loading && isAdmin) {
+      fetchLogs();
+      checkPlaylistHealth();
+    }
+  }, [loading, isAdmin]);
 
   const fetchLogs = async () => {
-    const { data } = await supabase
-      .from('played_content_history')
-      .select('*')
-      .order('completed_at', { ascending: false })
-      .limit(100);
-
-    if (data) setLogs(data);
+    try {
+      const data = await firebaseLogService.fetchRecentPlays();
+      setLogs(data);
+    } catch (error) {
+      console.error('Failed to fetch play logs', error);
+    }
   };
 
   const checkPlaylistHealth = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-playlist`);
-      const playlist = await response.json();
-      const age = Math.floor((Date.now() - new Date(playlist.generated_at).getTime()) / 1000);
+      const health = await firebaseLogService.fetchSystemHealth();
+      const age = Math.floor((Date.now() - new Date(health.playlistGeneratedAt).getTime()) / 1000);
       setPlaylistAge(`${age}s ago`);
+      setHealthStatus('healthy');
     } catch (error) {
       setPlaylistAge('Error checking');
+      setHealthStatus('error');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        Loading logs...
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Access Restricted</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              You need administrative privileges to view system logs.
+            </p>
+            <Button variant="ghost" className="mt-4" onClick={() => navigate('/')}>Return Home</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,8 +100,8 @@ const AdminLogs = () => {
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground mb-1">Status</div>
-                  <Badge variant={playlistAge.includes('Error') ? 'destructive' : 'default'}>
-                    {playlistAge.includes('Error') ? 'Error' : 'Healthy'}
+                  <Badge variant={healthStatus === 'error' ? 'destructive' : 'default'}>
+                    {healthStatus === 'error' ? 'Error' : 'Healthy'}
                   </Badge>
                 </div>
                 <div>

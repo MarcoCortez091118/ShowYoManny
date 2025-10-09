@@ -1,99 +1,81 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  AuthenticatedUser,
+  AuthSession,
+  firebaseAuthService,
+} from "@/domain/services/firebase/authService";
 
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+interface AuthContextValue {
+  user: AuthenticatedUser | null;
+  session: AuthSession | null;
+  token: string | null;
   isAdmin: boolean;
   loading: boolean;
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  session: null,
-  isAdmin: false,
-  loading: true,
-});
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextValue => {
   const context = useContext(AuthContext);
+
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
+
   return context;
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Check admin role
-          setTimeout(async () => {
-            try {
-              const { data: roleData } = await supabase
-                .from("user_roles")
-                .select("role")
-                .eq("user_id", session.user.id)
-                .eq("role", "admin")
-                .single();
-              
-              setIsAdmin(!!roleData);
-            } catch (error) {
-              setIsAdmin(false);
-            }
-            setLoading(false);
-          }, 0);
-        } else {
-          setIsAdmin(false);
+    let isMounted = true;
+
+    firebaseAuthService
+      .initializeFromStorage()
+      .finally(() => {
+        if (isMounted) {
           setLoading(false);
         }
-      }
-    );
+      });
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Check admin role for existing session
-        setTimeout(async () => {
-          try {
-            const { data: roleData } = await supabase
-              .from("user_roles")
-              .select("role")
-              .eq("user_id", session.user.id)
-              .eq("role", "admin")
-              .single();
-            
-            setIsAdmin(!!roleData);
-          } catch (error) {
-            setIsAdmin(false);
-          }
-          setLoading(false);
-        }, 0);
-      } else {
-        setLoading(false);
-      }
+    const unsubscribe = firebaseAuthService.onSessionChanged((newSession) => {
+      if (!isMounted) return;
+      setSession(newSession);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, session, isAdmin, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const logout = async () => {
+    await firebaseAuthService.logout();
+  };
+
+  const refresh = async () => {
+    await firebaseAuthService.initializeFromStorage();
+  };
+
+  const value = useMemo<AuthContextValue>(() => {
+    const user = session?.user ?? null;
+    const roles = user?.roles ?? [];
+    const isAdmin = roles.includes("admin");
+
+    return {
+      user,
+      session,
+      token: session?.token ?? null,
+      isAdmin,
+      loading,
+      logout,
+      refresh,
+    };
+  }, [session, loading]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
