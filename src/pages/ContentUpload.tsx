@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Upload, Camera, Video, CreditCard, Image, Clock } from "lucide-react";
@@ -12,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BorderPreview } from "@/components/BorderPreview";
 import showYoLogo from "@/assets/showyo-logo-color.png";
+import { planService } from "@/domain/services/planService";
+import { borderService } from "@/domain/services/borderService";
 
 const ContentUpload = () => {
   const navigate = useNavigate();
@@ -20,167 +21,32 @@ const ContentUpload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
   const [borderStyle, setBorderStyle] = useState("none");
-  const [displayDuration, setDisplayDuration] = useState(10);
   const [previewUrl, setPreviewUrl] = useState("");
+
+  const plans = useMemo(() => planService.getAllPlans(), []);
+  const borderThemes = useMemo(() => borderService.getAll(), []);
+  const borderCategories = useMemo(() => borderService.getCategories(), []);
+  const borderCategoryLabels = useMemo(
+    () => ({
+      Holiday: "🎄 Holiday Borders",
+      "Special Occasions": "🎓 Special Occasions",
+      Futuristic: "🚀 Futuristic Borders",
+      Seasonal: "🌤️ Seasonal Borders",
+    }),
+    []
+  );
 
   // Reset border when switching to/from clean plans
   React.useEffect(() => {
-    if (selectedPlan && (selectedPlan.includes('clean') || !selectedPlan.includes('border'))) {
+    if (!selectedPlan) {
+      setBorderStyle("none");
+      return;
+    }
+
+    if (!planService.planSupportsBorderSelection(selectedPlan)) {
       setBorderStyle("none");
     }
   }, [selectedPlan]);
-
-  const plans = [
-    { id: "photo-logo", title: "Photo with Logo", price: 10, type: "photo", features: ["ShowYo watermark", "Content protection"] },
-    { id: "photo-border-logo", title: "Photo with Border", price: 15, type: "photo", features: ["Custom border", "ShowYo watermark"], popular: true },
-    { id: "photo-clean", title: "Clean Photo", price: 15, type: "photo", features: ["No watermarks", "Full flexibility"] },
-    { id: "video-logo", title: "Video with Logo", price: 20, type: "video", features: ["ShowYo watermark", "Brand protection"] },
-    { id: "video-border-logo", title: "Video with Border", price: 25, type: "video", features: ["Custom border", "ShowYo watermark"], popular: true },
-    { id: "video-clean", title: "Clean Video", price: 30, type: "video", features: ["Premium quality", "No restrictions"] },
-  ];
-
-  const borderOptions = [
-    // 🎄 Holiday Borders
-    { 
-      id: "merry-christmas", 
-      name: "🎄 Merry Christmas",
-      category: "Holiday",
-      preview: "border-4 border-red-600 bg-gradient-to-r from-red-100 via-green-100 to-red-100",
-      description: "Festive Christmas celebration",
-      message: "Merry Christmas"
-    },
-    { 
-      id: "happy-new-year", 
-      name: "🎊 Happy New Year",
-      category: "Holiday",
-      preview: "border-4 border-yellow-500 bg-gradient-to-r from-yellow-100 via-orange-100 to-yellow-100",
-      description: "New Year celebration",
-      message: "Happy New Year"
-    },
-    { 
-      id: "happy-valentines", 
-      name: "💝 Happy Valentine's Day",
-      category: "Holiday",
-      preview: "border-4 border-pink-500 bg-gradient-to-r from-pink-100 via-red-100 to-pink-100",
-      description: "Love and romance celebration",
-      message: "Happy Valentine's Day"
-    },
-    { 
-      id: "happy-halloween", 
-      name: "🎃 Happy Halloween",
-      category: "Holiday",
-      preview: "border-4 border-orange-600 bg-gradient-to-r from-orange-100 via-black/10 to-orange-100",
-      description: "Spooky Halloween fun",
-      message: "Happy Halloween"
-    },
-    { 
-      id: "happy-easter", 
-      name: "🐰 Happy Easter",
-      category: "Holiday",
-      preview: "border-4 border-purple-500 bg-gradient-to-r from-purple-100 via-yellow-100 to-purple-100",
-      description: "Easter celebration",
-      message: "Happy Easter"
-    },
-    { 
-      id: "happy-thanksgiving", 
-      name: "🦃 Happy Thanksgiving",
-      category: "Holiday",
-      preview: "border-4 border-amber-600 bg-gradient-to-r from-amber-100 via-orange-100 to-amber-100",
-      description: "Thanksgiving gratitude",
-      message: "Happy Thanksgiving"
-    },
-    // 🎓 Special Occasions
-    { 
-      id: "happy-birthday", 
-      name: "🎂 Happy Birthday",
-      category: "Special Occasions",
-      preview: "border-4 border-blue-500 bg-gradient-to-r from-blue-100 via-pink-100 to-blue-100",
-      description: "Birthday celebration",
-      message: "Happy Birthday"
-    },
-    { 
-      id: "congrats-graduate", 
-      name: "🎓 Congrats Graduate",
-      category: "Special Occasions",
-      preview: "border-4 border-indigo-600 bg-gradient-to-r from-indigo-100 via-yellow-100 to-indigo-100",
-      description: "Graduation achievement",
-      message: "Congrats Graduate"
-    },
-    { 
-      id: "happy-anniversary", 
-      name: "💍 Happy Anniversary",
-      category: "Special Occasions",
-      preview: "border-4 border-rose-500 bg-gradient-to-r from-rose-100 via-gold-100 to-rose-100",
-      description: "Anniversary celebration",
-      message: "Happy Anniversary"
-    },
-    { 
-      id: "wedding-day", 
-      name: "👰 Wedding Day",
-      category: "Special Occasions",
-      preview: "border-4 border-white bg-gradient-to-r from-white via-pink-50 to-white",
-      description: "Wedding celebration",
-      message: "Wedding Day"
-    },
-    // 🚀 Futuristic Borders
-    { 
-      id: "neon-glow", 
-      name: "🌐 Neon Glow",
-      category: "Futuristic",
-      preview: "border-4 border-cyan-400 bg-gradient-to-r from-cyan-100 via-purple-100 to-cyan-100",
-      description: "Neon glow effects",
-      message: "Neon Glow"
-    },
-    { 
-      id: "tech-circuit", 
-      name: "⚡ Tech Circuit",
-      category: "Futuristic",
-      preview: "border-4 border-blue-600 bg-gradient-to-r from-blue-100 via-cyan-100 to-blue-100",
-      description: "Tech circuit pattern",
-      message: "Tech Circuit"
-    },
-    { 
-      id: "galaxy", 
-      name: "🌌 Galaxy",
-      category: "Futuristic",
-      preview: "border-4 border-indigo-600 bg-gradient-to-r from-indigo-100 via-purple-100 to-pink-100",
-      description: "Stars and space",
-      message: "Galaxy"
-    },
-    { 
-      id: "cyberpunk", 
-      name: "💠 Cyberpunk",
-      category: "Futuristic",
-      preview: "border-4 border-fuchsia-500 bg-gradient-to-r from-fuchsia-100 via-cyan-100 to-fuchsia-100",
-      description: "Cyberpunk neon grid",
-      message: "Cyberpunk"
-    },
-    // 🌤️ Seasonal Borders
-    { 
-      id: "summer", 
-      name: "☀️ Summer",
-      category: "Seasonal",
-      preview: "border-4 border-yellow-400 bg-gradient-to-r from-yellow-100 via-orange-100 to-yellow-100",
-      description: "Summer vibes",
-      message: "Summer"
-    },
-    { 
-      id: "winter", 
-      name: "❄️ Winter",
-      category: "Seasonal",
-      preview: "border-4 border-blue-300 bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50",
-      description: "Winter wonderland",
-      message: "Winter"
-    },
-    { 
-      id: "autumn", 
-      name: "🍂 Autumn",
-      category: "Seasonal",
-      preview: "border-4 border-orange-500 bg-gradient-to-r from-orange-100 via-red-100 to-orange-100",
-      description: "Fall leaves",
-      message: "Autumn"
-    },
-  ];
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -232,7 +98,7 @@ const ContentUpload = () => {
     }
 
     // Validate border selection for border plans
-    if (selectedPlan.includes('border') && borderStyle === 'none') {
+    if (planService.planRequiresBorder(selectedPlan) && borderStyle === 'none') {
       toast({
         title: "Border Required",
         description: "Please select a border style for your border plan",
@@ -242,12 +108,12 @@ const ContentUpload = () => {
     }
 
     // Ensure clean plans don't have borders
-    const finalBorderStyle = selectedPlan.includes('clean') ? 'none' : borderStyle;
+    const finalBorderStyle = planService.planSupportsBorderSelection(selectedPlan) ? borderStyle : 'none';
 
     setIsUploading(true);
 
     try {
-      const selectedPlanData = plans.find(p => p.id === selectedPlan);
+      const selectedPlanData = planService.getPlan(selectedPlan);
       
       // Upload file to Supabase Storage
       const fileExt = file.name.split('.').pop();
@@ -272,8 +138,8 @@ const ContentUpload = () => {
           file_name: file.name,
           file_type: file.type,
           file_path: filePath,
-          border_id: selectedPlan.includes('border') ? borderStyle : 'none',
-          duration_seconds: 10,
+          border_id: planService.planSupportsBorderSelection(selectedPlan) ? borderStyle : 'none',
+          duration_seconds: selectedPlanData?.displayDurationSeconds ?? 10,
           status: 'pending',
           moderation_status: 'pending',
           is_admin_content: false,
@@ -328,7 +194,7 @@ const ContentUpload = () => {
     }
   };
 
-  const selectedPlanData = plans.find(p => p.id === selectedPlan);
+  const selectedPlanData = selectedPlan ? planService.getPlan(selectedPlan) : undefined;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-12">
@@ -414,8 +280,8 @@ const ContentUpload = () => {
                     return true;
                   })
                   .map((plan) => (
-                  <div key={plan.id} className={`relative p-4 border rounded-lg ${plan.popular ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                    {plan.popular && (
+                  <div key={plan.id} className={`relative p-4 border rounded-lg ${plan.isPopular ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                    {plan.isPopular && (
                       <div className="absolute -top-2 left-4 bg-primary text-primary-foreground px-2 py-1 text-xs rounded">
                         Most Popular
                       </div>
@@ -431,7 +297,7 @@ const ContentUpload = () => {
                           <span className="font-bold text-lg">${plan.price}</span>
                         </div>
                         <ul className="text-sm text-muted-foreground mt-1">
-                          {plan.features.map((feature, idx) => (
+                          {planService.getDisplayFeatures(plan).map((feature, idx) => (
                             <li key={idx}>• {feature}</li>
                           ))}
                         </ul>
@@ -445,7 +311,7 @@ const ContentUpload = () => {
         </div>
 
         {/* Border Selection */}
-        {selectedPlan.includes('border') && (
+        {selectedPlanData && planService.planSupportsBorderSelection(selectedPlanData.id) && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle>Choose Your Border Style</CardTitle>
@@ -458,14 +324,14 @@ const ContentUpload = () => {
                 <p className="text-sm text-destructive mb-4">⚠️ Please select a border style for your border plan</p>
               )}
               <div className="space-y-6">
-                {["Basic", "Holiday", "Special Occasions", "Futuristic", "Seasonal"].map((category) => {
-                  const categoryBorders = borderOptions.filter(border => border.category === category);
+                {borderCategories.map((category) => {
+                  const categoryBorders = borderThemes.filter(border => border.category === category);
                   if (categoryBorders.length === 0) return null;
-                  
+
                   return (
                     <div key={category} className="space-y-4">
                       <h4 className="font-semibold text-base text-foreground flex items-center gap-2">
-                        <span className="text-primary">{category}</span>
+                        <span className="text-primary">{borderCategoryLabels[category] ?? category}</span>
                         <span className="text-sm text-muted-foreground font-normal">({categoryBorders.length})</span>
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -487,7 +353,7 @@ const ContentUpload = () => {
         )}
 
         {/* Logo Preview */}
-        {selectedPlan && (selectedPlan.includes('logo') && !selectedPlan.includes('border')) && (
+        {selectedPlanData && selectedPlanData.includesLogo && !selectedPlanData.includesBorder && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -534,13 +400,13 @@ const ContentUpload = () => {
                   <span>Display Duration</span>
                   <span>10 seconds (fixed)</span>
                 </div>
-                {selectedPlan.includes('border') && (
+                {planService.planSupportsBorderSelection(selectedPlanData.id) && (
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
                     <span>Border Style</span>
-                    <span>{borderOptions.find(b => b.id === borderStyle)?.name}</span>
+                    <span>{borderService.getById(borderStyle)?.name ?? 'Not selected'}</span>
                   </div>
                 )}
-                {selectedPlan.includes('clean') && (
+                {selectedPlanData && !selectedPlanData.includesBorder && !selectedPlanData.includesLogo && (
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
                     <span>Style</span>
                     <span className="text-primary font-medium">✨ Clean - No Border, No Logo</span>
