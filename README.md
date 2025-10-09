@@ -47,13 +47,23 @@ npm install
 
 ### 3. Environment Setup
 
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` and fill in the values that correspond to your Firebase
+project:
 
 ```env
-VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_PROJECT_ID=showyo-20c51
 VITE_FIREBASE_REGION=us-central1
-# Optional override if you expose Cloud Functions at a custom domain
-VITE_FIREBASE_API_BASE_URL=https://us-central1-your-project.cloudfunctions.net
+# Optional override if you expose Cloud Functions at a custom domain. Leaving this blank
+# will default to https://<region>-<project>.cloudfunctions.net
+VITE_FIREBASE_API_BASE_URL=
+
+# Backend-only secrets (never commit them). Configure them via `firebase functions:config:set`
+# or environment variables on your deployment targets.
+# FIREBASE_SERVICE_ACCOUNT_TYPE=service_account
+# FIREBASE_SERVICE_ACCOUNT_PROJECT_ID=showyo-20c51
+# FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL=firebase-adminsdk-fbsvc@showyo-20c51.iam.gserviceaccount.com
+# FIREBASE_SERVICE_ACCOUNT_CLIENT_ID=118218318549391271744
+# FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n<your-private-key>\n-----END PRIVATE KEY-----\n"
 ```
 
 ### 4. Firebase Setup
