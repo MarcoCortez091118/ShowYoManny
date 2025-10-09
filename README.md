@@ -18,7 +18,7 @@ A digital billboard management system for displaying user-submitted content with
 
 - **Frontend**: React 18, TypeScript, Vite
 - **UI Components**: shadcn-ui with Tailwind CSS
-- **Backend**: Supabase (Database, Auth, Storage, Edge Functions)
+- **Backend**: Firebase (Authentication, Firestore, Cloud Functions, Storage)
 - **Payment**: Stripe
 - **AI Moderation**: OpenAI GPT-4o
 - **Mobile**: Capacitor (iOS & Android)
@@ -26,7 +26,7 @@ A digital billboard management system for displaying user-submitted content with
 ## Prerequisites
 
 - Node.js 18+ and npm
-- Supabase account
+- Firebase project with Firestore, Storage, and Cloud Functions enabled
 - Stripe account
 - OpenAI API key
 
@@ -50,30 +50,33 @@ npm install
 Create a `.env` file in the root directory:
 
 ```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
-VITE_SUPABASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_REGION=us-central1
+# Optional override if you expose Cloud Functions at a custom domain
+VITE_FIREBASE_API_BASE_URL=https://us-central1-your-project.cloudfunctions.net
 ```
 
-### 4. Supabase Setup
+### 4. Firebase Setup
 
-1. Create a new Supabase project at [supabase.com](https://supabase.com)
-2. Run migrations from `supabase/migrations/` directory
-3. Configure the following secrets in your Supabase project settings:
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `SUPABASE_DB_URL`
-   - `OPENAI_API_KEY`
-   - `STRIPE_SECRET_KEY`
-4. Deploy edge functions using Supabase CLI:
-   ```bash
-   supabase functions deploy
-   ```
+1. Create a Firebase project at [firebase.google.com](https://firebase.google.com)
+2. Enable Authentication, Firestore, Storage, and Cloud Functions
+3. Deploy Cloud Functions that expose the following HTTP endpoints consumed by the app:
+   - `auth/login`, `auth/logout`, `auth/session`
+   - `auth/create-admin`, `auth/update-admin-password`
+   - `orders` REST endpoints for CRUD and filtering
+   - `queue` REST endpoints for playlist management
+   - `kiosk/playlist` and `kiosk/report-play`
+   - `payments/create-checkout-session` and `payments/confirm`
+   - `logs/plays` and `logs/system-health`
+4. Store your Firebase service account credentials securely in your Cloud Functions environment variables (for example, by
+   setting `GOOGLE_APPLICATION_CREDENTIALS` to a JSON file that contains the provided service account from `firebase-adminsdk-fbsvc@showyo-20c51`). Do **not** commit these credentials.
+5. Configure Firebase Storage and Firestore security rules to allow only authenticated admin access for management endpoints.
 
 ### 5. Stripe Setup
 
 1. Create a Stripe account at [stripe.com](https://stripe.com)
-2. Add your Stripe secret key to Supabase secrets
-3. Configure webhook endpoints in Stripe dashboard for payment events
+2. Add your Stripe secret key to your Firebase Functions environment (`firebase functions:config:set stripe.secret=sk_live_...`)
+3. Configure webhook endpoints in the Stripe dashboard for payment events that hit your deployed Cloud Function
 
 ### 6. Run Development Server
 
@@ -81,7 +84,7 @@ VITE_SUPABASE_PROJECT_ID=your_project_id
 npm run dev
 ```
 
-The application will be available at `http://localhost:8080`
+The application will be available at `http://localhost:5173`
 
 ## Project Structure
 
@@ -92,13 +95,11 @@ The application will be available at `http://localhost:8080`
 │   │   └── ...           # Feature components
 │   ├── pages/            # Page components
 │   ├── contexts/         # React contexts (Auth, etc.)
-│   ├── integrations/     # Supabase integration
+│   ├── integrations/     # Firebase HTTP client
 │   ├── hooks/            # Custom React hooks
 │   ├── utils/            # Utility functions
 │   └── assets/           # Static assets
-├── supabase/
-│   ├── functions/        # Edge functions
-│   └── migrations/       # Database migrations
+├── shared/               # Cross-platform domain definitions (plans, borders)
 └── public/               # Public static files
 ```
 
@@ -165,24 +166,23 @@ Access the admin dashboard at `/admin` with admin credentials to:
 
 ## API Documentation
 
-### Edge Functions
+All backend interactions are routed through Firebase Cloud Functions. The application expects the following HTTPS endpoints to
+be available:
 
-- `content-upload` - Handle file uploads
-- `ai-moderator` - AI content moderation
-- `process-content` - Process uploaded content
-- `get-queue` - Retrieve content queue
-- `create-checkout-session` - Stripe checkout
-- `cleanup-expired-content` - Clean expired content
-- `generate-playlist` - Generate display playlist
-- `report-play` - Track content plays
+- `auth/login`, `auth/logout`, `auth/session`
+- `auth/create-admin`, `auth/update-admin-password`
+- `orders` (GET/POST/PATCH/DELETE) with support for query filters such as `moderationStatus`, `status`, and `isAdminContent`
+- `queue` (GET/POST/PATCH/DELETE) for playlist management
+- `kiosk/playlist` and `kiosk/report-play`
+- `payments/create-checkout-session` and `payments/confirm`
+- `logs/plays` and `logs/system-health`
 
 ## Security
 
-- Row Level Security (RLS) enabled on all tables
-- Admin authentication required for management functions
-- AI moderation for all user-submitted content
-- Secure file storage with Supabase Storage
-- Environment variables for sensitive data
+- Enforce Firebase Authentication for all admin management functions
+- Protect Firestore/Storage with restrictive security rules and service accounts
+- Run AI moderation for all user-submitted content before activation
+- Store service account JSON, Stripe secrets, and OpenAI keys outside of source control
 
 ## License
 

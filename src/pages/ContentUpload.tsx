@@ -7,12 +7,14 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Upload, Camera, Video, CreditCard, Image, Clock } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BorderPreview } from "@/components/BorderPreview";
 import showYoLogo from "@/assets/showyo-logo-color.png";
 import { planService } from "@/domain/services/planService";
 import { borderService } from "@/domain/services/borderService";
+import { firebaseStorageService } from "@/domain/services/firebase/storageService";
+import { firebaseOrderService } from "@/domain/services/firebase/orderService";
+import { firebasePaymentService } from "@/domain/services/firebase/paymentService";
 
 const ContentUpload = () => {
   const navigate = useNavigate();
@@ -115,55 +117,40 @@ const ContentUpload = () => {
     try {
       const selectedPlanData = planService.getPlan(selectedPlan);
       
-      // Upload file to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `content/${fileName}`;
+      const uploadResult = await firebaseStorageService.uploadBillboardAsset({
+        file,
+        folder: 'content',
+        metadata: {
+          plan: selectedPlan,
+          border: finalBorderStyle,
+          source: 'public-upload',
+        },
+      });
 
-      const { error: uploadError } = await supabase.storage
-        .from('billboard-content')
-        .upload(filePath, file);
+      const order = await firebaseOrderService.createOrder({
+        userEmail: 'guest@showyo.app',
+        pricingOptionId: selectedPlan,
+        priceCents: selectedPlanData!.price * 100,
+        fileName: file.name,
+        fileType: file.type,
+        filePath: uploadResult.filePath,
+        borderId: finalBorderStyle,
+        durationSeconds: selectedPlanData?.displayDurationSeconds ?? 10,
+        isAdminContent: false,
+        moderationStatus: 'pending',
+        status: 'pending',
+        displayStatus: 'pending',
+        maxPlays: 1,
+        autoCompleteAfterPlay: true,
+      });
 
-      if (uploadError) {
-        throw uploadError;
-      }
+      const checkoutData = await firebasePaymentService.createCheckoutSession({
+        orderId: order.id,
+        planId: selectedPlan,
+        userEmail: 'guest@showyo.app',
+      });
 
-      // Create order for paid content
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_email: 'guest@showyo.app',
-          pricing_option_id: selectedPlan,
-          price_cents: selectedPlanData!.price * 100,
-          file_name: file.name,
-          file_type: file.type,
-          file_path: filePath,
-          border_id: planService.planSupportsBorderSelection(selectedPlan) ? borderStyle : 'none',
-          duration_seconds: selectedPlanData?.displayDurationSeconds ?? 10,
-          status: 'pending',
-          moderation_status: 'pending',
-          is_admin_content: false,
-          max_plays: 1,
-          auto_complete_after_play: true
-        })
-        .select()
-        .single();
-
-      if (orderError) {
-        throw orderError;
-      }
-
-      // Create Stripe checkout session
-      const { data: checkoutData, error: checkoutError } = await supabase.functions
-        .invoke('create-checkout-session', {
-          body: {
-            orderId: orderData.id,
-            planId: selectedPlan,
-            userEmail: 'guest@showyo.app'
-          }
-        });
-
-      if (checkoutError || !checkoutData?.url) {
+      if (!checkoutData?.url) {
         throw new Error('Failed to create checkout session');
       }
 
@@ -172,7 +159,7 @@ const ContentUpload = () => {
         title: "Opening Stripe Checkout",
         description: "Please complete your payment to submit your content.",
       });
-      
+
       // Use href for better iOS Safari compatibility
       window.location.href = checkoutData.url;
 

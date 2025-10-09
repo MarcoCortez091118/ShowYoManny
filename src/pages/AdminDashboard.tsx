@@ -37,10 +37,13 @@ import {
   Sparkles,
   GripVertical
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { borderService } from "@/domain/services/borderService";
+import { firebaseStorageService } from "@/domain/services/firebase/storageService";
+import { firebaseOrderService, OrderRecord } from "@/domain/services/firebase/orderService";
+import { firebaseQueueService, QueueItemRecord } from "@/domain/services/firebase/queueService";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   DndContext,
   closestCenter,
@@ -62,13 +65,16 @@ import { CSS } from '@dnd-kit/utilities';
 const AdminDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [contentQueue, setContentQueue] = useState<any[]>([]);
-  const [pendingOrders, setPendingOrders] = useState<any[]>([]);
+  const { isAdmin, loading: authLoading } = useAuth();
+  const [contentQueue, setContentQueue] = useState<QueueItemRecord[]>([]);
+  const [pendingOrders, setPendingOrders] = useState<OrderRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isQueueLoading, setIsQueueLoading] = useState(true);
+  const [isPendingLoading, setIsPendingLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [borderStyle, setBorderStyle] = useState("none");
   const [displayDuration, setDisplayDuration] = useState(10);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [isSchedulerOpen, setIsSchedulerOpen] = useState(false);
   const [previewOrderId, setPreviewOrderId] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -106,19 +112,22 @@ const AdminDashboard = () => {
   );
 
   useEffect(() => {
-    fetchContentQueue();
-    fetchPendingOrders();
-  }, []);
+    if (!authLoading && isAdmin) {
+      fetchContentQueue();
+      fetchPendingOrders();
+    }
+  }, [authLoading, isAdmin]);
 
   const fetchContentQueue = async () => {
-    try {
-      const { data, error } = await supabase.functions
-        .invoke('content-upload', {
-          body: { action: 'get_queue' }
-        });
+    if (!isAdmin) {
+      setIsQueueLoading(false);
+      return;
+    }
 
-      if (error) throw error;
-      setContentQueue(data.queue || []);
+    try {
+      setIsQueueLoading(true);
+      const queue = await firebaseQueueService.fetchQueue();
+      setContentQueue(queue);
     } catch (error) {
       console.error('Error fetching queue:', error);
       toast({
@@ -126,20 +135,21 @@ const AdminDashboard = () => {
         description: "Failed to fetch content queue",
         variant: "destructive",
       });
+    } finally {
+      setIsQueueLoading(false);
     }
   };
 
   const fetchPendingOrders = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('moderation_status', 'pending')
-        .eq('is_admin_content', false)
-        .order('created_at', { ascending: false });
+    if (!isAdmin) {
+      setIsPendingLoading(false);
+      return;
+    }
 
-      if (error) throw error;
-      setPendingOrders(data || []);
+    try {
+      setIsPendingLoading(true);
+      const orders = await firebaseOrderService.listPendingOrders();
+      setPendingOrders(orders);
     } catch (error) {
       console.error('Error fetching pending orders:', error);
       toast({
@@ -147,6 +157,8 @@ const AdminDashboard = () => {
         description: "Failed to fetch pending orders",
         variant: "destructive",
       });
+    } finally {
+      setIsPendingLoading(false);
     }
   };
 
@@ -163,16 +175,13 @@ const AdminDashboard = () => {
     setIsLoading(true);
 
     try {
-      // Upload file to Supabase Storage
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `admin-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `content/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('billboard-content')
-        .upload(filePath, selectedFile);
-
-      if (uploadError) throw uploadError;
+      const uploadResult = await firebaseStorageService.uploadBillboardAsset({
+        file: selectedFile,
+        folder: 'content',
+        metadata: {
+          source: 'admin-dashboard',
+        },
+      });
 
       // Create admin order with scheduling and repeat options
       // Combine date and time for scheduling
@@ -187,24 +196,27 @@ const AdminDashboard = () => {
       const scheduled_start = isScheduled ? getScheduledDateTime(scheduledStartDate, scheduledStartTime) : null;
       const scheduled_end = isScheduled ? getScheduledDateTime(scheduledEndDate, scheduledEndTime) : null;
 
-      const { error: orderError } = await supabase.functions
-        .invoke('content-upload', {
-          body: {
-            action: 'create_order',
-            fileName: selectedFile.name,
-            fileType: selectedFile.type,
-            filePath: filePath,
-            borderStyle,
-            displayDuration,
-            scheduled_start,
-            scheduled_end,
-            timer_loop_enabled: timerLoopEnabled,
-            timer_loop_minutes: timerLoopEnabled ? timerLoopMinutes : null,
-            userEmail: 'admin@showyo.app' // Admin uploads
-          }
-        });
+      const order = await firebaseOrderService.createOrder({
+        userEmail: 'admin@showyo.app',
+        pricingOptionId: 'admin-upload',
+        priceCents: 0,
+        fileName: selectedFile.name,
+        fileType: selectedFile.type,
+        filePath: uploadResult.filePath,
+        borderId: borderStyle,
+        durationSeconds: displayDuration,
+        isAdminContent: true,
+        moderationStatus: 'approved',
+        status: 'completed',
+        displayStatus: 'queued',
+        scheduledStart: scheduled_start,
+        scheduledEnd: scheduled_end,
+        timerLoopEnabled,
+        timerLoopMinutes: timerLoopEnabled ? timerLoopMinutes : null,
+        autoCompleteAfterPlay: false,
+      });
 
-      if (orderError) throw orderError;
+      await firebaseQueueService.enqueueOrder({ orderId: order.id });
 
       // Show upload reaction
       setShowUploadReaction(true);
@@ -240,7 +252,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleSchedule = (order: any) => {
+  const handleSchedule = (order: OrderRecord) => {
     setSelectedOrder(order);
     setIsSchedulerOpen(true);
   };
@@ -249,15 +261,9 @@ const AdminDashboard = () => {
     if (!selectedOrder) return;
 
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          ...scheduleData,
-          is_admin_content: true
-        })
-        .eq('id', selectedOrder.id);
-
-      if (error) throw error;
+      await firebaseOrderService.updateOrder(selectedOrder.id, {
+        ...scheduleData,
+      });
 
       toast({
         title: "Schedule Updated",
@@ -275,10 +281,10 @@ const AdminDashboard = () => {
     }
   };
 
-  const handlePreview = (order: any) => {
+  const handlePreview = (order: OrderRecord | null) => {
     console.log('handlePreview called with order:', order);
     console.log('Order ID:', order?.id);
-    
+
     if (!order || !order.id) {
       toast({
         title: "Preview Error",
@@ -344,19 +350,15 @@ const AdminDashboard = () => {
     }
 
     try {
-      // Delete from content_queue first
-      await supabase
-        .from('content_queue')
-        .delete()
-        .eq('order_id', orderId);
+      const queueItem = contentQueue.find((item) => item.order?.id === orderId);
+      const filePath = queueItem?.order?.file_path;
 
-      // Then delete from orders
-      const { error } = await supabase
-        .from('orders')
-        .delete()
-        .eq('id', orderId);
+      await firebaseQueueService.removeOrder(orderId);
+      await firebaseOrderService.deleteOrder(orderId);
 
-      if (error) throw error;
+      if (filePath) {
+        await firebaseStorageService.deleteAsset(filePath);
+      }
 
       toast({
         title: "Content Deleted",
@@ -376,38 +378,15 @@ const AdminDashboard = () => {
 
   const moderateContent = async (orderId: string, action: 'approve' | 'reject') => {
     try {
-      // Update order status
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          moderation_status: action === 'approve' ? 'approved' : 'rejected',
-          display_status: action === 'approve' ? 'queued' : 'rejected'
-        })
-        .eq('id', orderId);
+      await firebaseOrderService.updateOrder(orderId, {
+        moderation_status: action === 'approve' ? 'approved' : 'rejected',
+        display_status: action === 'approve' ? 'queued' : 'rejected',
+      });
 
-      if (updateError) throw updateError;
-
-      // If approved, add to content queue
       if (action === 'approve') {
-        // Get next queue position
-        const { data: queueData } = await supabase
-          .from('content_queue')
-          .select('queue_position')
-          .order('queue_position', { ascending: false })
-          .limit(1);
-
-        const nextPosition = queueData && queueData.length > 0 ? queueData[0].queue_position + 1 : 1;
-
-        // Add to queue
-        const { error: queueError } = await supabase
-          .from('content_queue')
-          .insert({
-            order_id: orderId,
-            queue_position: nextPosition,
-            is_active: false
-          });
-
-        if (queueError) throw queueError;
+        await firebaseQueueService.enqueueOrder({ orderId });
+      } else {
+        await firebaseQueueService.removeOrder(orderId).catch(() => undefined);
       }
 
       toast({
@@ -431,12 +410,12 @@ const AdminDashboard = () => {
     try {
       // Update the current active content based on action
       if (action === 'next') {
-        const activeItem = contentQueue.find(item => item.is_active);
-        if (activeItem) {
-          await supabase
-            .from('orders')
-            .update({ display_status: 'completed' })
-            .eq('id', activeItem.order_id);
+        const activeItem = contentQueue.find(item => item.is_active && item.order);
+        if (activeItem?.order) {
+          await firebaseOrderService.updateOrder(activeItem.order.id, {
+            display_status: 'completed',
+          });
+          await firebaseQueueService.removeOrder(activeItem.order.id).catch(() => undefined);
         }
       }
 
@@ -467,19 +446,20 @@ const AdminDashboard = () => {
     const newIndex = contentQueue.findIndex((item) => item.id === over.id);
 
     // Optimistically update UI
-    const newQueue = arrayMove(contentQueue, oldIndex, newIndex);
-    setContentQueue(newQueue);
+    const reordered = arrayMove(contentQueue, oldIndex, newIndex).map((item, index) => ({
+      ...item,
+      queue_position: index + 1,
+    }));
+
+    setContentQueue(reordered);
 
     try {
-      // Update all queue positions in database
-      const updates = newQueue.map((item, index) => 
-        supabase
-          .from('content_queue')
-          .update({ queue_position: index + 1 })
-          .eq('id', item.id)
-      );
-
-      await Promise.all(updates);
+      await firebaseQueueService.updateQueueOrder({
+        queue: reordered.map((item) => ({
+          id: item.id,
+          queue_position: item.queue_position,
+        })),
+      });
 
       toast({
         title: "Queue Updated",
@@ -487,7 +467,6 @@ const AdminDashboard = () => {
       });
     } catch (error) {
       console.error('Queue reorder error:', error);
-      // Revert on error
       fetchContentQueue();
       toast({
         title: "Update Failed",
@@ -496,6 +475,30 @@ const AdminDashboard = () => {
       });
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        Validating admin session...
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-lg">
+          <CardHeader>
+            <CardTitle>Access Restricted</CardTitle>
+            <CardDescription>Only administrators can manage the billboard.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="ghost" onClick={() => navigate('/')}>Return Home</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 p-3 sm:p-4 md:p-6">
@@ -844,49 +847,54 @@ const AdminDashboard = () => {
                   </p>
                 </div>
 
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={contentQueue.map(item => item.id)}
-                    strategy={verticalListSortingStrategy}
+                {isQueueLoading ? (
+                  <div className="py-8 text-center text-muted-foreground">Loading queue...</div>
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
                   >
-                    <div className="space-y-4">
-                      {contentQueue.map((item, index) => (
-                        <DraggableQueueItem
-                          key={item.id}
-                          item={item}
-                          index={index}
-                          onEdit={(order) => {
-                            setSelectedOrder(order);
-                            setBorderStyle(order.border_id || 'none');
-                            setDisplayDuration(order.duration_seconds || 10);
-                            setIsScheduled(!!order.scheduled_start);
-                            if (order.scheduled_start) {
-                              const startDate = new Date(order.scheduled_start);
-                              setScheduledStartDate(startDate);
-                              setScheduledStartTime(format(startDate, 'HH:mm'));
-                            }
-                            if (order.scheduled_end) {
-                              const endDate = new Date(order.scheduled_end);
-                              setScheduledEndDate(endDate);
-                            setScheduledEndTime(format(endDate, 'HH:mm'));
-                          }
-                          setTimerLoopEnabled(order.timer_loop_enabled || false);
-                          setTimerLoopMinutes(order.timer_loop_minutes || 30);
-                          setIsSchedulerOpen(true);
-                          }}
-                          onPreview={handlePreview}
-                          onDelete={handleDeleteContent}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-                
-                {contentQueue.length === 0 && (
+                    <SortableContext
+                      items={contentQueue.map(item => item.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-4">
+                        {contentQueue.map((item, index) => (
+                          <DraggableQueueItem
+                            key={item.id}
+                            item={item}
+                            order={item.order}
+                            index={index}
+                            onEdit={(order) => {
+                              setSelectedOrder(order);
+                              setBorderStyle(order.border_id || 'none');
+                              setDisplayDuration(order.duration_seconds || 10);
+                              setIsScheduled(!!order.scheduled_start);
+                              if (order.scheduled_start) {
+                                const startDate = new Date(order.scheduled_start);
+                                setScheduledStartDate(startDate);
+                                setScheduledStartTime(format(startDate, 'HH:mm'));
+                              }
+                              if (order.scheduled_end) {
+                                const endDate = new Date(order.scheduled_end);
+                                setScheduledEndDate(endDate);
+                                setScheduledEndTime(format(endDate, 'HH:mm'));
+                              }
+                              setTimerLoopEnabled(order.timer_loop_enabled || false);
+                              setTimerLoopMinutes(order.timer_loop_minutes || 30);
+                              setIsSchedulerOpen(true);
+                            }}
+                            onPreview={handlePreview}
+                            onDelete={handleDeleteContent}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                )}
+
+                {!isQueueLoading && contentQueue.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     No content in queue
                   </div>
@@ -908,43 +916,47 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {pendingOrders.map((order) => (
-                    <div key={order.id} className="p-4 border rounded-lg border-warning bg-warning/5">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <p className="font-medium">{order.file_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Uploaded by: {order.user_email}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(order.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => moderateContent(order.id, 'approve')}
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => moderateContent(order.id, 'reject')}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Reject
-                          </Button>
+                  {isPendingLoading ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Loading pending submissions...
+                    </div>
+                  ) : pendingOrders.length > 0 ? (
+                    pendingOrders.map((order) => (
+                      <div key={order.id} className="p-4 border rounded-lg border-warning bg-warning/5">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <p className="font-medium">{order.file_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Uploaded by: {order.user_email}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(order.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => moderateContent(order.id, 'approve')}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => moderateContent(order.id, 'reject')}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                  
-                  {pendingOrders.length === 0 && (
+                    ))
+                  ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       No content pending moderation
                     </div>

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
 import { Monitor } from 'lucide-react';
+import { firebaseOrderService, OrderRecord } from "@/domain/services/firebase/orderService";
+import { firebaseStorageService } from "@/domain/services/firebase/storageService";
 
 interface PreviewModalProps {
   isOpen: boolean;
@@ -10,8 +11,9 @@ interface PreviewModalProps {
 }
 
 const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, orderId }) => {
-  const [contentData, setContentData] = useState<any>(null);
+  const [contentData, setContentData] = useState<OrderRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('PreviewModal: isOpen:', isOpen, 'orderId:', orderId);
@@ -27,29 +29,29 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, orderId })
     try {
       setIsLoading(true);
       console.log('PreviewModal: Querying order:', orderId);
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
+      const data = await firebaseOrderService.getOrderById(orderId);
 
-      if (error) {
-        console.error('PreviewModal: Error fetching content:', error);
-        throw error;
+      if (!data) {
+        console.warn('PreviewModal: No content found for order', orderId);
+        setContentData(null);
+        setMediaUrl(null);
+        return;
       }
-      
+
       console.log('PreviewModal: Content loaded:', data);
       setContentData(data);
+
+      if (data.file_path) {
+        const url = await firebaseStorageService.getPublicUrl(data.file_path);
+        setMediaUrl(url);
+      } else {
+        setMediaUrl(null);
+      }
     } catch (error) {
       console.error('PreviewModal: Error in fetchContent:', error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getImageUrl = (filePath: string) => {
-    if (!filePath) return null;
-    return supabase.storage.from('billboard-content').getPublicUrl(filePath).data.publicUrl;
   };
 
   const isImage = contentData?.file_type?.startsWith('image/');
@@ -76,7 +78,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, orderId })
             <div className="w-full h-full flex items-center justify-center">
               {isImage && (
                 <img
-                  src={getImageUrl(contentData.file_path)}
+                  src={mediaUrl ?? ''}
                   alt={contentData.file_name}
                   className="w-full h-full object-cover"
                   onLoad={() => {
@@ -84,11 +86,11 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, orderId })
                   }}
                   onError={(e) => {
                     console.error('PreviewModal: Image failed to load:', contentData.file_path);
-                    console.error('PreviewModal: URL:', getImageUrl(contentData.file_path));
+                    console.error('PreviewModal: URL:', mediaUrl);
                   }}
                 />
               )}
-              
+
               {isVideo && (
                 <video
                   autoPlay
@@ -99,7 +101,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, orderId })
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     console.error('PreviewModal: Video failed to load:', contentData.file_path);
-                    console.error('PreviewModal: URL:', getImageUrl(contentData.file_path));
+                    console.error('PreviewModal: URL:', mediaUrl);
                     console.error('PreviewModal: File type:', contentData.file_type);
                   }}
                   onLoadedData={() => {
@@ -107,7 +109,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, orderId })
                   }}
                 >
                   {/* Use original file type as primary source */}
-                  <source src={getImageUrl(contentData.file_path)} type={contentData.file_type || 'video/mp4'} />
+                  <source src={mediaUrl ?? undefined} type={contentData.file_type || 'video/mp4'} />
                   Your browser does not support the video tag.
                 </video>
               )}

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Monitor } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import showYoLogo from "@/assets/showyo-logo-overlay.png";
+import { firebaseKioskService } from "@/domain/services/firebase/kioskService";
+import { firebaseStorageService } from "@/domain/services/firebase/storageService";
 
 interface PlaylistItem {
   id: string;
@@ -57,41 +58,10 @@ const KioskDisplay = () => {
   // Fetch playlist on mount and set up real-time subscriptions
   useEffect(() => {
     fetchPlaylist();
-    
-    // Set up real-time subscriptions for content changes
-    const contentChannel = supabase
-      .channel('content-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'content_queue'
-        },
-        (payload) => {
-          console.log('KioskDisplay: Content queue changed, refetching playlist');
-          fetchPlaylist();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'orders'
-        },
-        (payload) => {
-          console.log('KioskDisplay: Order updated, refetching playlist');
-          fetchPlaylist();
-        }
-      )
-      .subscribe();
-    
-    // Also poll every 30 seconds as backup
+
     const interval = setInterval(fetchPlaylist, 30000);
-    
+
     return () => {
-      supabase.removeChannel(contentChannel);
       clearInterval(interval);
     };
   }, []);
@@ -99,12 +69,8 @@ const KioskDisplay = () => {
   const fetchPlaylist = async () => {
     try {
       console.log('KioskDisplay: Fetching playlist...');
-      const { data, error } = await supabase.functions.invoke('generate-playlist', {
-        method: 'GET',
-      });
-      
-      if (error) throw error;
-      
+      const data = await firebaseKioskService.fetchPlaylist(previewId);
+
       console.log('KioskDisplay: Playlist loaded with', data.items.length, 'items');
       
       // Reset index if current index is out of bounds
@@ -152,13 +118,11 @@ const KioskDisplay = () => {
     autoAdvanceTimer.current = setTimeout(async () => {
       try {
         // Report play completion
-        await supabase.functions.invoke('report-play', {
-          body: {
-            item_id: currentItem.id,
-            started_at: playStartTime.current?.toISOString(),
-            completed_at: new Date().toISOString(),
-            success: true
-          }
+        await firebaseKioskService.reportPlay({
+          itemId: currentItem.id,
+          startedAt: playStartTime.current?.toISOString() ?? new Date().toISOString(),
+          completedAt: new Date().toISOString(),
+          success: true,
         });
         
         console.log('KioskDisplay: Play reported for', currentItem.file_name);
@@ -211,7 +175,7 @@ const KioskDisplay = () => {
   const currentItem = playlist.items[currentIndex];
   const getImageUrl = (filePath: string) => {
     if (!filePath) return null;
-    return supabase.storage.from('billboard-content').getPublicUrl(filePath).data.publicUrl;
+    return firebaseStorageService.getPublicUrl(filePath);
   };
 
   const getBorderClass = (borderId: string) => {
