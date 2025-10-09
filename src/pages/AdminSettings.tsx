@@ -4,16 +4,94 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { updateAdminPassword } from "@/utils/updateAdminPassword";
 import { useToast } from "@/hooks/use-toast";
+import { useDisplaySettings } from "@/hooks/use-display-settings";
+import { DisplaySettings } from "@/domain/services/displaySettingsService";
 
 const AdminSettings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { settings, updateSettings } = useDisplaySettings();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [draft, setDraft] = useState<DisplaySettings>(settings);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  useEffect(() => {
+    setDraft(settings);
+  }, [settings]);
+
+  const aspectRatio = useMemo(() => {
+    if (draft.screenHeight === 0) return "--";
+    return (draft.screenWidth / draft.screenHeight).toFixed(2);
+  }, [draft.screenWidth, draft.screenHeight]);
+
+  const handleNumberChange = (field: keyof DisplaySettings) => (event: ChangeEvent<HTMLInputElement>) => {
+    const value = Number(event.target.value);
+    setDraft((prev) => ({
+      ...prev,
+      [field]: Number.isFinite(value) ? value : prev[field],
+    }));
+  };
+
+  const handleTextChange = (field: keyof DisplaySettings) => (event: ChangeEvent<HTMLInputElement>) => {
+    setDraft((prev) => ({
+      ...prev,
+      [field]: event.target.value,
+    }));
+  };
+
+  const handleSaveSettings = async () => {
+    if (draft.screenWidth <= 0 || draft.screenHeight <= 0) {
+      toast({
+        title: "Invalid dimensions",
+        description: "Screen width and height must be greater than zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (draft.photoDisplayDurationSeconds <= 0) {
+      toast({
+        title: "Invalid duration",
+        description: "Photo display duration must be greater than zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (draft.minVideoDurationSeconds <= 0 || draft.maxVideoDurationSeconds <= 0) {
+      toast({
+        title: "Invalid video duration",
+        description: "Video duration limits must be greater than zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (draft.minVideoDurationSeconds >= draft.maxVideoDurationSeconds) {
+      toast({
+        title: "Duration mismatch",
+        description: "Minimum video duration must be less than the maximum.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSavingSettings(true);
+    try {
+      updateSettings(draft);
+      toast({
+        title: "Display settings saved",
+        description: "New constraints will apply to future uploads immediately.",
+      });
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
 
   const handlePasswordChange = async () => {
     if (!newPassword || !confirmPassword) {
@@ -81,34 +159,109 @@ const AdminSettings = () => {
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Canvas Width</Label>
-                  <Input type="number" defaultValue="2048" />
+                  <Label htmlFor="screen-width">Canvas Width (px)</Label>
+                  <Input
+                    id="screen-width"
+                    type="number"
+                    min={1}
+                    value={draft.screenWidth}
+                    onChange={handleNumberChange("screenWidth")}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Canvas Height</Label>
-                  <Input type="number" defaultValue="2432" />
+                  <Label htmlFor="screen-height">Canvas Height (px)</Label>
+                  <Input
+                    id="screen-height"
+                    type="number"
+                    min={1}
+                    value={draft.screenHeight}
+                    onChange={handleNumberChange("screenHeight")}
+                  />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Timezone</Label>
-                <Input defaultValue="America/New_York" />
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Aspect ratio: <span className="font-semibold text-foreground">{aspectRatio}:1</span> — used across previews and content validation.
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Default Durations</CardTitle>
+              <CardTitle>Media Constraints</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+            <CardContent className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label>Photo Duration (seconds)</Label>
-                  <Input type="number" defaultValue="10" />
+                  <Label htmlFor="photo-duration">Photo Duration (seconds)</Label>
+                  <Input
+                    id="photo-duration"
+                    type="number"
+                    min={1}
+                    value={draft.photoDisplayDurationSeconds}
+                    onChange={handleNumberChange("photoDisplayDurationSeconds")}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Video Max Duration (seconds)</Label>
-                  <Input type="number" defaultValue="30" />
+                  <Label htmlFor="video-min">Video Min Duration (seconds)</Label>
+                  <Input
+                    id="video-min"
+                    type="number"
+                    min={1}
+                    value={draft.minVideoDurationSeconds}
+                    onChange={handleNumberChange("minVideoDurationSeconds")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="video-max">Video Max Duration (seconds)</Label>
+                  <Input
+                    id="video-max"
+                    type="number"
+                    min={1}
+                    value={draft.maxVideoDurationSeconds}
+                    onChange={handleNumberChange("maxVideoDurationSeconds")}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="max-image-size">Max Image Size (MB)</Label>
+                  <Input
+                    id="max-image-size"
+                    type="number"
+                    min={1}
+                    value={draft.maxImageFileSizeMB}
+                    onChange={handleNumberChange("maxImageFileSizeMB")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="max-video-size">Max Video Size (MB)</Label>
+                  <Input
+                    id="max-video-size"
+                    type="number"
+                    min={1}
+                    value={draft.maxVideoFileSizeMB}
+                    onChange={handleNumberChange("maxVideoFileSizeMB")}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="image-format">Recommended Image Format</Label>
+                  <Input
+                    id="image-format"
+                    value={draft.recommendedImageFormat}
+                    onChange={handleTextChange("recommendedImageFormat")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="video-format">Recommended Video Format</Label>
+                  <Input
+                    id="video-format"
+                    value={draft.recommendedVideoFormat}
+                    onChange={handleTextChange("recommendedVideoFormat")}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -164,7 +317,9 @@ const AdminSettings = () => {
           </Card>
 
           <div className="flex justify-end">
-            <Button>Save Settings</Button>
+            <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
+              {isSavingSettings ? "Saving..." : "Save Settings"}
+            </Button>
           </div>
         </div>
       </div>
