@@ -32,6 +32,14 @@ export const planService = {
     return getPlanById(planId);
   },
 
+  getDefaultPlanForType(planType: PlanType): PlanDefinition | undefined {
+    const plans = this.getPlansByType(planType);
+    if (!plans.length) {
+      return undefined;
+    }
+    return plans.find((plan) => plan.isPopular) ?? plans[0];
+  },
+
   getPlanSummariesByType(planType: PlanType): readonly PlanSummary[] {
     return this.getPlansByType(planType).map((plan) => ({
       id: plan.id,
@@ -68,5 +76,25 @@ export const planService = {
       `${plan.displayDurationSeconds} seconds display`,
       ...plan.features,
     ];
+  },
+
+  validateAssetForPlan(planId: string, mimeType: string): {
+    valid: boolean;
+    expectedType: PlanType | null;
+  } {
+    const plan = this.getPlan(planId);
+    if (!plan) {
+      return { valid: false, expectedType: null };
+    }
+
+    const type = mimeType.startsWith("video/") ? "video" : mimeType.startsWith("image/") ? "photo" : null;
+    if (!type) {
+      return { valid: false, expectedType: plan.type };
+    }
+
+    return {
+      valid: plan.type === type,
+      expectedType: plan.type,
+    };
   },
 };

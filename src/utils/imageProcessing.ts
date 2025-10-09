@@ -1,9 +1,13 @@
+export type ImageFitMode = "cover" | "contain";
+
 export interface ImageTransformOptions {
   targetWidth: number;
   targetHeight: number;
   zoom: number;
   offsetXPercent: number;
   offsetYPercent: number;
+  fitMode?: ImageFitMode;
+  backgroundColor?: string;
 }
 
 interface ImageMetrics {
@@ -65,14 +69,18 @@ function calculateCropArea(metrics: ImageMetrics, options: ImageTransformOptions
 export async function transformImageToResolution(
   file: File,
   options: ImageTransformOptions
-): Promise<{ file: File; previewUrl: string; width: number; height: number }> {
+): Promise<{
+  file: File;
+  previewUrl: string;
+  width: number;
+  height: number;
+  fitMode: ImageFitMode;
+}> {
   const image = await readImage(file);
   const metrics: ImageMetrics = {
     width: image.naturalWidth,
     height: image.naturalHeight,
   };
-
-  const { sourceX, sourceY, cropWidth, cropHeight } = calculateCropArea(metrics, options);
 
   const canvas = document.createElement("canvas");
   canvas.width = options.targetWidth;
@@ -83,17 +91,54 @@ export async function transformImageToResolution(
     throw new Error("Unable to process image - canvas context unavailable");
   }
 
-  context.drawImage(
-    image,
-    sourceX,
-    sourceY,
-    cropWidth,
-    cropHeight,
-    0,
-    0,
-    options.targetWidth,
-    options.targetHeight
-  );
+  const fitMode: ImageFitMode = options.fitMode ?? "cover";
+
+  if (fitMode === "contain") {
+    const scale = Math.min(
+      options.targetWidth / metrics.width,
+      options.targetHeight / metrics.height
+    );
+    const drawWidth = metrics.width * scale;
+    const drawHeight = metrics.height * scale;
+
+    const maxOffsetX = Math.max(0, (options.targetWidth - drawWidth) / 2);
+    const maxOffsetY = Math.max(0, (options.targetHeight - drawHeight) / 2);
+
+    const offsetX = clamp(options.offsetXPercent, -1, 1) * maxOffsetX;
+    const offsetY = clamp(options.offsetYPercent, -1, 1) * maxOffsetY;
+
+    const destX = clamp(
+      (options.targetWidth - drawWidth) / 2 + offsetX,
+      0,
+      Math.max(0, options.targetWidth - drawWidth)
+    );
+    const destY = clamp(
+      (options.targetHeight - drawHeight) / 2 + offsetY,
+      0,
+      Math.max(0, options.targetHeight - drawHeight)
+    );
+
+    if (options.backgroundColor) {
+      context.fillStyle = options.backgroundColor;
+      context.fillRect(0, 0, options.targetWidth, options.targetHeight);
+    }
+
+    context.drawImage(image, 0, 0, metrics.width, metrics.height, destX, destY, drawWidth, drawHeight);
+  } else {
+    const { sourceX, sourceY, cropWidth, cropHeight } = calculateCropArea(metrics, options);
+
+    context.drawImage(
+      image,
+      sourceX,
+      sourceY,
+      cropWidth,
+      cropHeight,
+      0,
+      0,
+      options.targetWidth,
+      options.targetHeight
+    );
+  }
 
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob(resolve, file.type || "image/png", 0.92)
@@ -111,5 +156,6 @@ export async function transformImageToResolution(
     previewUrl,
     width: options.targetWidth,
     height: options.targetHeight,
+    fitMode,
   };
 }

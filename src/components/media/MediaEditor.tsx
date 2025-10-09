@@ -1,4 +1,5 @@
 import { DisplaySettings } from "@/domain/services/displaySettingsService";
+import { ImageFitMode } from "@/utils/imageProcessing";
 import { ImageEditor } from "./ImageEditor";
 import { VideoEditor } from "./VideoEditor";
 
@@ -13,6 +14,7 @@ interface MediaEditorProps {
     zoom: number;
     offsetXPercent: number;
     offsetYPercent: number;
+    fitMode: ImageFitMode;
   }) => void;
   onVideoChange: (result: {
     file: File;

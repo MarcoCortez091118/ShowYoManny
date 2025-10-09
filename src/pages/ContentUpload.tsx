@@ -2,11 +2,20 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { Upload, Camera, Video, CreditCard, Image, Clock } from "lucide-react";
+import {
+  Upload,
+  Camera,
+  Video,
+  CreditCard,
+  Image,
+  Clock,
+  ArrowLeft,
+  AlertCircle,
+  Trash2,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BorderPreview } from "@/components/BorderPreview";
 import showYoLogo from "@/assets/showyo-logo-color.png";
@@ -18,6 +27,7 @@ import { firebasePaymentService } from "@/domain/services/firebase/paymentServic
 import { MediaEditor } from "@/components/media/MediaEditor";
 import { MediaGuidelines } from "@/components/media/MediaGuidelines";
 import { useDisplaySettings } from "@/hooks/use-display-settings";
+import type { ImageFitMode } from "@/utils/imageProcessing";
 
 const ContentUpload = () => {
   const navigate = useNavigate();
@@ -31,6 +41,8 @@ const ContentUpload = () => {
   const [previewUrl, setPreviewUrl] = useState("");
   const [uploadMetadata, setUploadMetadata] = useState<Record<string, string | number | boolean>>({});
   const [videoTrim, setVideoTrim] = useState<{ start: number; end: number; duration: number } | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const plans = useMemo(() => planService.getAllPlans(), []);
   const borderThemes = useMemo(() => borderService.getAll(), []);
@@ -71,7 +83,43 @@ const ContentUpload = () => {
       return;
     }
 
+    setFileError(null);
+
     const isVideo = selectedFile.type.startsWith("video/");
+    const isImage = selectedFile.type.startsWith("image/");
+
+    if (!isVideo && !isImage) {
+      setFileError("Unsupported file type. Upload a JPG, PNG, MP4, or MOV file.");
+      toast({
+        title: "Unsupported file",
+        description: "Please choose a photo (.jpg, .png) or video (.mp4, .mov) file.",
+        variant: "destructive",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    if (selectedPlan) {
+      const validation = planService.validateAssetForPlan(selectedPlan, selectedFile.type);
+      if (!validation.valid) {
+        const expectedLabel = validation.expectedType === "photo" ? "photo" : "video";
+        const actualLabel = isVideo ? "video" : "photo";
+        setFileError(`The selected plan expects a ${expectedLabel}, but you chose a ${actualLabel}.`);
+        toast({
+          title: "Plan mismatch",
+          description: `Switch to a ${actualLabel}-ready plan or upload a ${expectedLabel} file to continue.`,
+          variant: "destructive",
+        });
+        event.target.value = "";
+        return;
+      }
+    } else {
+      const defaultPlan = planService.getDefaultPlanForType(isVideo ? "video" : "photo");
+      if (defaultPlan) {
+        setSelectedPlan(defaultPlan.id);
+      }
+    }
+
     const maxBytes = (isVideo ? settings.maxVideoFileSizeMB : settings.maxImageFileSizeMB) * 1024 * 1024;
 
     if (selectedFile.size > maxBytes) {
@@ -100,10 +148,18 @@ const ContentUpload = () => {
     });
     setVideoTrim(null);
 
-    if (selectedFile.type.startsWith("video/")) {
-      setSelectedPlan("video-logo");
-    } else if (selectedFile.type.startsWith("image/")) {
-      setSelectedPlan("photo-logo");
+    if (!selectedPlan) {
+      if (selectedFile.type.startsWith("video/")) {
+        const fallback = planService.getDefaultPlanForType("video");
+        if (fallback) {
+          setSelectedPlan(fallback.id);
+        }
+      } else if (selectedFile.type.startsWith("image/")) {
+        const fallback = planService.getDefaultPlanForType("photo");
+        if (fallback) {
+          setSelectedPlan(fallback.id);
+        }
+      }
     }
   };
 
@@ -116,6 +172,7 @@ const ContentUpload = () => {
       zoom: number;
       offsetXPercent: number;
       offsetYPercent: number;
+      fitMode: ImageFitMode;
     }) => {
       setProcessedFile(result.file);
       setPreviewUrl((previous) => {
@@ -131,6 +188,7 @@ const ContentUpload = () => {
         imageZoom: Number(result.zoom.toFixed(2)),
         imageOffsetXPercent: Number(result.offsetXPercent.toFixed(2)),
         imageOffsetYPercent: Number(result.offsetYPercent.toFixed(2)),
+        imageFitMode: result.fitMode,
       }));
       setVideoTrim(null);
     },
@@ -322,6 +380,60 @@ const ContentUpload = () => {
   };
 
   const selectedPlanData = selectedPlan ? planService.getPlan(selectedPlan) : undefined;
+  const handlePlanChange = (planId: string) => {
+    setSelectedPlan(planId);
+    if (sourceFile) {
+      const validation = planService.validateAssetForPlan(planId, sourceFile.type);
+      if (!validation.valid) {
+        const expectedLabel = validation.expectedType === "photo" ? "photo" : "video";
+        const actualLabel = sourceFile.type.startsWith("video/") ? "video" : "photo";
+        toast({
+          title: "Plan mismatch",
+          description: `This plan is designed for ${expectedLabel}s, but you uploaded a ${actualLabel}.`,
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleResetFile = () => {
+    setSourceFile(null);
+    setProcessedFile(null);
+    setUploadMetadata({});
+    setVideoTrim(null);
+    setFileError(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
+
+  const planMismatchMessage = React.useMemo(() => {
+    if (!sourceFile || !selectedPlan) {
+      return null;
+    }
+
+    const validation = planService.validateAssetForPlan(selectedPlan, sourceFile.type);
+    if (validation.valid) {
+      return null;
+    }
+
+    const expectedLabel = validation.expectedType === "photo" ? "photo" : "video";
+    const actualLabel = sourceFile.type.startsWith("video/") ? "video" : "photo";
+    return `Switch plans or upload a ${expectedLabel}. You selected a plan for ${expectedLabel}s but uploaded a ${actualLabel}.`;
+  }, [sourceFile, selectedPlan]);
+
   const computedDurationSeconds = React.useMemo(() => {
     if (!selectedPlanData) {
       return null;
@@ -342,6 +454,12 @@ const ContentUpload = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-12">
       <div className="container mx-auto px-4 max-w-4xl">
+        <div className="mb-6">
+          <Button variant="ghost" size="sm" onClick={handleGoBack} className="inline-flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -366,22 +484,57 @@ const ContentUpload = () => {
                 Upload Content
               </CardTitle>
               <CardDescription>
-                Images up to {settings.maxImageFileSizeMB} MB and videos up to {settings.maxVideoFileSizeMB} MB.
+                Drag &amp; drop or browse. We’ll help you match the billboard resolution.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label htmlFor="file-upload">Choose File</Label>
-                <Input
-                  id="file-upload"
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleFileChange}
-                  className="mt-2"
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Recommended formats: {settings.recommendedImageFormat} for photos and {settings.recommendedVideoFormat} for videos.
-                </p>
+                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center bg-muted/30 hover:bg-muted/40 transition">
+                  <input
+                    ref={fileInputRef}
+                    id="file-upload"
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <label htmlFor="file-upload" className="flex flex-col items-center gap-3 cursor-pointer">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <Upload className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Drop your file here or click to browse</p>
+                      <p className="text-xs text-muted-foreground">
+                        JPG, PNG up to {settings.maxImageFileSizeMB} MB or MP4, MOV up to {settings.maxVideoFileSizeMB} MB.
+                      </p>
+                    </div>
+                  </label>
+                  {fileError && (
+                    <div className="mt-3 inline-flex items-center gap-2 text-xs text-destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{fileError}</span>
+                    </div>
+                  )}
+                </div>
+                {sourceFile && (
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+                    <div className="text-left">
+                      <p className="font-medium text-foreground">{sourceFile.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(sourceFile.size / 1024 / 1024).toFixed(2)} MB • {sourceFile.type}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                        Change file
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={handleResetFile}>
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {sourceFile && (
@@ -449,7 +602,7 @@ const ContentUpload = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan} className="space-y-4">
+              <RadioGroup value={selectedPlan} onValueChange={handlePlanChange} className="space-y-4">
                 {plans
                   .filter(plan => {
                     // If no file selected, show all plans
@@ -485,6 +638,12 @@ const ContentUpload = () => {
                   </div>
                 ))}
               </RadioGroup>
+              {planMismatchMessage && (
+                <div className="mt-4 inline-flex items-center gap-2 text-sm text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>{planMismatchMessage}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

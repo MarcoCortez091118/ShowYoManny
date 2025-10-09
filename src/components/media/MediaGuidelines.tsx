@@ -27,7 +27,7 @@ export const MediaGuidelines = ({ settings }: MediaGuidelinesProps) => {
           <AlertTitle>Billboard Canvas</AlertTitle>
           <AlertDescription>
             Target resolution <span className="font-medium text-foreground">{resolution}</span> with a {aspectRatio}:1 aspect ratio.
-            Images are auto-cropped and videos scale to fill the canvas.
+            Use the editor’s Fill or Fit modes to control cropping while matching the billboard frame.
           </AlertDescription>
         </Alert>
 
