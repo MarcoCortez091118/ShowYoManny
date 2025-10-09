@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { PLAN_PRICE_ID_LOOKUP } from "../../../shared/plans.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,17 +27,7 @@ serve(async (req) => {
 
     console.log("Creating checkout session for order:", orderId, "plan:", planId);
 
-    // Map plan IDs to Stripe Price IDs
-    const stripePriceMap: Record<string, string> = {
-      "photo-logo": "price_1S8tkJF6Bz1PoBh55VqRIrC3",
-      "photo-border-logo": "price_1S8tn8F6Bz1PoBh5nT9k1JT3",
-      "photo-clean": "price_1S8tpmF6Bz1PoBh5FA5LLqTK",
-      "video-logo": "price_1S8tqdF6Bz1PoBh5PKK3WZe9",
-      "video-border-logo": "price_1S8trAF6Bz1PoBh5S1knkYcR",
-      "video-clean": "price_1S8treF6Bz1PoBh59KkmfJiu",
-    };
-
-    const stripePriceId = stripePriceMap[planId];
+    const stripePriceId = PLAN_PRICE_ID_LOOKUP[planId];
     if (!stripePriceId) {
       throw new Error(`Invalid plan ID: ${planId}`);
     }

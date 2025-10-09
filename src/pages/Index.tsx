@@ -1,20 +1,35 @@
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Camera, Video, Sparkles, Zap, Eye, Shield } from "lucide-react";
 import showYoLogo from "@/assets/showyo-logo-color.png";
+import { planService } from "@/domain/services/planService";
 
 const Index = () => {
   const navigate = useNavigate();
 
-  const pricingOptions = [
-    { id: "photo-logo", title: "Photo with Logo", price: 10, icon: Camera, features: ["10 seconds display", "ShowYo logo overlay", "Plays once"] },
-    { id: "photo-border", title: "Photo with Border", price: 15, icon: Sparkles, features: ["10 seconds display", "Custom border", "Plays once"], popular: true },
-    { id: "photo-clean", title: "Photo without Logo", price: 15, icon: Camera, features: ["10 seconds display", "No logo overlay", "Plays once"] },
-    { id: "video-logo", title: "Video with Logo", price: 20, icon: Video, features: ["10 seconds display", "ShowYo logo overlay", "Plays once"] },
-    { id: "video-border", title: "Video with Border", price: 25, icon: Sparkles, features: ["10 seconds display", "Custom border", "Plays once"], popular: true },
-    { id: "video-clean", title: "Video without Logo", price: 30, icon: Video, features: ["10 seconds display", "No logo overlay", "Plays once"] },
-  ];
+  const pricingOptions = useMemo(() => {
+    return planService.getAllPlans().map((plan) => {
+      const Icon = plan.type === "photo" ? Camera : Video;
+      const highlightIcon = plan.includesBorder ? Sparkles : Icon;
+      const features = [
+        `${plan.displayDurationSeconds} seconds display`,
+        ...(plan.includesBorder ? ["Custom border"] : []),
+        plan.includesLogo ? "ShowYo logo overlay" : "No logo overlay",
+        "Plays once",
+      ];
+
+      return {
+        id: plan.id,
+        title: plan.title,
+        price: plan.price,
+        icon: plan.includesBorder ? highlightIcon : Icon,
+        features,
+        popular: Boolean(plan.isPopular),
+      };
+    });
+  }, []);
 
   const features = [
     { icon: Zap, title: "Instant Upload", description: "Fast and easy content submission" },
