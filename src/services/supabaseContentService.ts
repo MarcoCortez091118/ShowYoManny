@@ -46,20 +46,30 @@ class SupabaseContentService {
   async createQueueItem(input: QueueItemInput): Promise<QueueItem> {
     const { file, borderStyle, duration, scheduledStart, scheduledEnd, timerLoopEnabled, timerLoopMinutes, timerLoopAutomatic, metadata } = input;
 
+    console.log('✅ Using Supabase Content Service - NOT Firebase');
+    console.log('📁 File to upload:', file.name, file.type, file.size);
+
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       throw new Error('User not authenticated');
     }
 
+    console.log('👤 User authenticated:', user.id);
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
     const filePath = `content/${fileName}`;
 
+    console.log('📤 Uploading to Supabase Storage bucket "media" at path:', filePath);
+
     const { url, error: uploadError } = await supabaseStorageService.uploadFile(file, filePath);
 
     if (uploadError || !url) {
+      console.error('❌ Supabase upload error:', uploadError);
       throw new Error(`Failed to upload file: ${uploadError?.message || 'Unknown error'}`);
     }
+
+    console.log('✅ File uploaded successfully. URL:', url);
 
     const mediaType = file.type.startsWith('image/') ? 'image' : 'video';
 

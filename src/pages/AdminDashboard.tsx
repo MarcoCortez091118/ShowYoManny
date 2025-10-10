@@ -197,23 +197,18 @@ const AdminDashboard = () => {
       return;
     }
 
-    try {
-      setIsPendingLoading(true);
-      const orders = await firebaseOrderService.listPendingOrders();
-      setPendingOrders(orders);
-    } catch (error) {
-      console.error('Error fetching pending orders:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch pending orders",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPendingLoading(false);
-    }
+    // Temporarily disabled - migrating to Supabase
+    console.log('⚠️ fetchPendingOrders disabled - migrating to Supabase');
+    setIsPendingLoading(false);
+    setPendingOrders([]);
   };
 
   const handleAdminUpload = async () => {
+    console.log('🚀 =====================================');
+    console.log('🚀 handleAdminUpload - USING SUPABASE');
+    console.log('🚀 NOT using Firebase Functions');
+    console.log('🚀 =====================================');
+
     if (!selectedFile) {
       toast({
         title: "No File Selected",
@@ -223,6 +218,7 @@ const AdminDashboard = () => {
       return;
     }
 
+    console.log('📁 File:', selectedFile.name, '|', selectedFile.type, '|', selectedFile.size, 'bytes');
     setIsLoading(true);
 
     try {
@@ -237,6 +233,7 @@ const AdminDashboard = () => {
       const scheduled_start = isScheduled ? getScheduledDateTime(scheduledStartDate, scheduledStartTime) : null;
       const scheduled_end = isScheduled ? getScheduledDateTime(scheduledEndDate, scheduledEndTime) : null;
 
+      console.log('📤 Calling supabaseContentService.createQueueItem...');
       await supabaseContentService.createQueueItem({
         file: selectedFile,
         borderStyle: borderStyle,
