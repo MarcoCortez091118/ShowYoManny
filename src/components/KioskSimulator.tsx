@@ -4,12 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Monitor, Maximize2, Play, Pause, SkipForward, SkipBack, RefreshCw } from 'lucide-react';
 import { BORDER_THEMES } from '../../shared/border-themes';
-import type { Database } from '@/lib/supabase';
-
-type QueueItem = Database['public']['Tables']['queue_items']['Row'];
+import type { EnrichedQueueItem } from '@/services/supabaseQueueService';
 
 interface KioskSimulatorProps {
-  queueItems: QueueItem[];
+  queueItems: EnrichedQueueItem[];
 }
 
 const SCREEN_WIDTH = 2048;
@@ -234,11 +232,14 @@ export const KioskSimulator = ({ queueItems }: KioskSimulatorProps) => {
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-base">{currentItem.title || 'Sin título'}</h4>
             <Badge className={
-              currentItem.status === 'active' ? 'bg-green-500' :
-              currentItem.status === 'pending' ? 'bg-yellow-500' :
+              currentItem.computed_status === 'published' ? 'bg-green-500' :
+              currentItem.computed_status === 'active' ? 'bg-green-500' :
+              currentItem.computed_status === 'scheduled' ? 'bg-blue-500' :
+              currentItem.computed_status === 'expired' ? 'bg-red-500' :
+              currentItem.computed_status === 'pending' ? 'bg-yellow-500' :
               'bg-gray-500'
             }>
-              {currentItem.status}
+              {currentItem.computed_status}
             </Badge>
           </div>
 
