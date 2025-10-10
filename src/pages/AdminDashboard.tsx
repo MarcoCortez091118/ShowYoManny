@@ -65,7 +65,7 @@ import { CSS } from '@dnd-kit/utilities';
 const AdminDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isAdmin, loading: authLoading, user } = useAuth();
+  const { isAdmin, loading: authLoading } = useAuth();
   const [contentQueue, setContentQueue] = useState<QueueItemRecord[]>([]);
   const [pendingOrders, setPendingOrders] = useState<OrderRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -508,15 +508,15 @@ const AdminDashboard = () => {
             <div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Admin Panel
+                  Admin Dashboard
                 </span>
               </h1>
               <p className="text-lg sm:text-xl text-muted-foreground">
                 Manage content, moderate uploads, and control the digital billboard
               </p>
             </div>
-            <Button
-              variant="outline"
+            <Button 
+              variant="outline" 
               size="icon"
               onClick={() => navigate('/admin/settings')}
               className="shrink-0"
