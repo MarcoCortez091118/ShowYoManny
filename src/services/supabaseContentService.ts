@@ -9,6 +9,7 @@ export interface QueueItemInput {
   scheduledEnd?: string | null;
   timerLoopEnabled?: boolean;
   timerLoopMinutes?: number | null;
+  timerLoopAutomatic?: boolean;
   metadata?: {
     fitMode?: string;
     zoom?: number;
@@ -35,6 +36,7 @@ export interface QueueItem {
   scheduled_end: string | null;
   timer_loop_enabled: boolean;
   timer_loop_minutes: number | null;
+  timer_loop_automatic: boolean;
   metadata: any;
   created_at: string;
   updated_at: string;
@@ -42,7 +44,7 @@ export interface QueueItem {
 
 class SupabaseContentService {
   async createQueueItem(input: QueueItemInput): Promise<QueueItem> {
-    const { file, borderStyle, duration, scheduledStart, scheduledEnd, timerLoopEnabled, timerLoopMinutes, metadata } = input;
+    const { file, borderStyle, duration, scheduledStart, scheduledEnd, timerLoopEnabled, timerLoopMinutes, timerLoopAutomatic, metadata } = input;
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
@@ -86,6 +88,7 @@ class SupabaseContentService {
         scheduled_end: scheduledEnd,
         timer_loop_enabled: timerLoopEnabled || false,
         timer_loop_minutes: timerLoopMinutes,
+        timer_loop_automatic: timerLoopAutomatic || false,
         metadata: metadata || null,
       })
       .select()

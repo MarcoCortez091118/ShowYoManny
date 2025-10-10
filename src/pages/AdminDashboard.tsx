@@ -119,6 +119,7 @@ const AdminDashboard = () => {
   // Timer loop options
   const [timerLoopEnabled, setTimerLoopEnabled] = useState(false);
   const [timerLoopMinutes, setTimerLoopMinutes] = useState(30);
+  const [timerLoopAutomatic, setTimerLoopAutomatic] = useState(false);
   
   const borderThemes = useMemo(() => borderService.getAll(), []);
   const borderCategories = useMemo(() => borderService.getCategories(), []);
@@ -243,7 +244,8 @@ const AdminDashboard = () => {
         scheduledStart: scheduled_start,
         scheduledEnd: scheduled_end,
         timerLoopEnabled,
-        timerLoopMinutes: timerLoopEnabled ? timerLoopMinutes : null,
+        timerLoopMinutes: timerLoopEnabled && !timerLoopAutomatic ? timerLoopMinutes : null,
+        timerLoopAutomatic,
         metadata: processedMediaMetadata,
       });
 
@@ -263,6 +265,7 @@ const AdminDashboard = () => {
       setScheduledEndTime("17:00");
       setTimerLoopEnabled(false);
       setTimerLoopMinutes(30);
+      setTimerLoopAutomatic(false);
       setBorderStyle("none");
       setDisplayDuration(10);
       setProcessedMediaMetadata(null);
@@ -883,22 +886,69 @@ const AdminDashboard = () => {
                   </div>
 
                   {timerLoopEnabled && (
-                    <div className="p-4 bg-muted/50 rounded-lg">
-                      <Label htmlFor="timer-interval">Loop Interval (minutes)</Label>
-                      <Select value={timerLoopMinutes.toString()} onValueChange={(value) => setTimerLoopMinutes(parseInt(value))}>
-                        <SelectTrigger className="mt-2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="15">15 minutes</SelectItem>
-                          <SelectItem value="30">30 minutes</SelectItem>
-                          <SelectItem value="60">1 hour</SelectItem>
-                          <SelectItem value="120">2 hours</SelectItem>
-                          <SelectItem value="180">3 hours</SelectItem>
-                          <SelectItem value="240">4 hours</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground mt-2">Content will repeat after this interval</p>
+                    <div className="p-4 bg-muted/50 rounded-lg space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="timer-automatic"
+                            checked={timerLoopAutomatic}
+                            onCheckedChange={(checked) => {
+                              setTimerLoopAutomatic(checked);
+                              if (checked) {
+                                setTimerLoopMinutes(0);
+                              } else {
+                                setTimerLoopMinutes(30);
+                              }
+                            }}
+                          />
+                          <Label htmlFor="timer-automatic" className="flex items-center gap-2">
+                            <Sparkles className="h-4 w-4" />
+                            Timer Automático
+                          </Label>
+                        </div>
+                        <p className="text-xs text-muted-foreground pl-10">
+                          El sistema calcula automáticamente el intervalo basándose en la duración total de la cola y la posición del contenido
+                        </p>
+                      </div>
+
+                      {!timerLoopAutomatic && (
+                        <div>
+                          <Label htmlFor="timer-interval">Intervalo Manual (minutos)</Label>
+                          <Select value={timerLoopMinutes.toString()} onValueChange={(value) => setTimerLoopMinutes(parseInt(value))}>
+                            <SelectTrigger className="mt-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="15">15 minutos</SelectItem>
+                              <SelectItem value="30">30 minutos</SelectItem>
+                              <SelectItem value="60">1 hora</SelectItem>
+                              <SelectItem value="120">2 horas</SelectItem>
+                              <SelectItem value="180">3 horas</SelectItem>
+                              <SelectItem value="240">4 horas</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground mt-2">El contenido se repetirá después de este intervalo</p>
+                        </div>
+                      )}
+
+                      {timerLoopAutomatic && (
+                        <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <Sparkles className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                            <div className="text-xs">
+                              <p className="font-medium text-primary mb-1">Cálculo Inteligente Activado</p>
+                              <p className="text-muted-foreground">
+                                El sistema distribuirá este contenido de forma óptima basándose en:
+                              </p>
+                              <ul className="list-disc list-inside mt-1 space-y-0.5 text-muted-foreground">
+                                <li>Duración total de todos los items en la cola</li>
+                                <li>Posición de este contenido</li>
+                                <li>Tiempo de reproducción de otros items</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -928,7 +978,11 @@ const AdminDashboard = () => {
                           {timerLoopEnabled && (
                             <div className="col-span-2">
                               <span className="text-muted-foreground">Timer Loop:</span>
-                              <p className="font-medium">Cada {timerLoopMinutes} minutos</p>
+                              <p className="font-medium">
+                                {timerLoopAutomatic
+                                  ? "Automático (calculado por el sistema)"
+                                  : `Cada ${timerLoopMinutes} minutos`}
+                              </p>
                             </div>
                           )}
                         </div>
