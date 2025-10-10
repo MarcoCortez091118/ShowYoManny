@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, LogIn } from "lucide-react";
+import { Shield, LogIn, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabaseAuthService } from "@/services/supabaseAuthService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,7 +54,17 @@ const AdminLogin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <div className="w-full max-w-md space-y-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/')}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Home
+        </Button>
+
+        <Card className="w-full">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
             <Shield className="h-6 w-6 text-primary" />
@@ -108,6 +118,7 @@ const AdminLogin = () => {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };
