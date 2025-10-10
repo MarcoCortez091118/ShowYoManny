@@ -475,25 +475,33 @@ export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => 
           )}
 
           {selectedFile && (
-            <div className="flex gap-3">
-              <Button
-                onClick={handleProcess}
-                className="flex-1"
-                size="lg"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Procesar y Usar
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSelectedFile(null);
-                  setPreviewUrl(null);
-                  setFileType(null);
-                }}
-              >
-                Cancelar
-              </Button>
+            <div className="space-y-3">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                  ⚠️ Paso importante: Haz click en "Procesar y Usar" para habilitar el botón de upload
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleProcess}
+                  className="flex-1 animate-pulse"
+                  size="lg"
+                  variant="default"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Procesar y Usar Este Archivo
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setPreviewUrl(null);
+                    setFileType(null);
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

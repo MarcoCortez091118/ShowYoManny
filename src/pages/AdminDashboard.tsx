@@ -988,6 +988,58 @@ const AdminDashboard = () => {
                   </Card>
                 )}
 
+                {/* Live Preview with Border */}
+                {selectedFile && processedMediaMetadata && (
+                  <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/30">
+                    <CardHeader>
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Eye className="h-4 w-4" />
+                        Vista Previa con Borde
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="relative aspect-[2048/2432] w-full max-w-md mx-auto bg-black rounded-lg overflow-hidden">
+                        {/* Border Overlay */}
+                        {borderStyle !== "none" && (
+                          <BorderPreview
+                            borderTheme={borderStyle}
+                            className="absolute inset-0 z-10 pointer-events-none"
+                          />
+                        )}
+                        {/* Media Content */}
+                        <div className="absolute inset-0 flex items-center justify-center p-4">
+                          {selectedFile.type.startsWith('image/') ? (
+                            <img
+                              src={URL.createObjectURL(selectedFile)}
+                              alt="Preview"
+                              className="max-w-full max-h-full object-contain"
+                              style={{
+                                transform: `scale(${(processedMediaMetadata.zoom || 100) / 100}) rotate(${processedMediaMetadata.rotation || 0}deg)`,
+                                objectPosition: `${processedMediaMetadata.positionX || 50}% ${processedMediaMetadata.positionY || 50}%`,
+                              }}
+                            />
+                          ) : (
+                            <video
+                              src={URL.createObjectURL(selectedFile)}
+                              className="max-w-full max-h-full object-contain"
+                              autoPlay
+                              muted
+                              loop
+                              style={{
+                                transform: `scale(${(processedMediaMetadata.zoom || 100) / 100}) rotate(${processedMediaMetadata.rotation || 0}deg)`,
+                                objectPosition: `${processedMediaMetadata.positionX || 50}% ${processedMediaMetadata.positionY || 50}%`,
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-xs text-center text-muted-foreground mt-3">
+                        Así se verá tu contenido en el kiosk {borderStyle !== "none" ? `con el borde "${borderStyle}"` : "sin borde"}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <Button
                   onClick={handleAdminUpload}
                   disabled={!selectedFile || isLoading}
