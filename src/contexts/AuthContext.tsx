@@ -2,8 +2,8 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import {
   AuthenticatedUser,
   AuthSession,
-  firebaseAuthService,
-} from "@/domain/services/firebase/authService";
+  supabaseAuthService,
+} from "@/services/supabaseAuthService";
 
 interface AuthContextValue {
   user: AuthenticatedUser | null;
@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let isMounted = true;
 
-    firebaseAuthService
+    supabaseAuthService
       .initializeFromStorage()
       .finally(() => {
         if (isMounted) {
@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-    const unsubscribe = firebaseAuthService.onSessionChanged((newSession) => {
+    const unsubscribe = supabaseAuthService.onSessionChanged((newSession) => {
       if (!isMounted) return;
       setSession(newSession);
     });
@@ -54,11 +54,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const logout = async () => {
-    await firebaseAuthService.logout();
+    await supabaseAuthService.logout();
   };
 
   const refresh = async () => {
-    await firebaseAuthService.initializeFromStorage();
+    await supabaseAuthService.initializeFromStorage();
   };
 
   const value = useMemo<AuthContextValue>(() => {

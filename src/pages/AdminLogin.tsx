@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { firebaseAuthService } from "@/domain/services/firebase/authService";
+import { supabaseAuthService } from "@/services/supabaseAuthService";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AdminLogin = () => {
@@ -14,7 +14,7 @@ const AdminLogin = () => {
   const { toast } = useToast();
   const { refresh } = useAuth();
   const [credentials, setCredentials] = useState({
-    username: 'admin',
+    email: '',
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -24,12 +24,14 @@ const AdminLogin = () => {
     setIsLoading(true);
 
     try {
-      const email = credentials.username === 'admin' ? 'admin@showyo.app' : credentials.username;
+      const { session, error } = await supabaseAuthService.signIn(
+        credentials.email,
+        credentials.password
+      );
 
-      await firebaseAuthService.login({
-        email,
-        password: credentials.password,
-      });
+      if (error || !session) {
+        throw new Error(error?.message || 'Login failed');
+      }
 
       await refresh();
 
@@ -65,13 +67,13 @@ const AdminLogin = () => {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                type="text"
-                value={credentials.username}
-                onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
-                placeholder="admin"
+                id="email"
+                type="email"
+                value={credentials.email}
+                onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="admin@showyo.app"
                 required
               />
             </div>
