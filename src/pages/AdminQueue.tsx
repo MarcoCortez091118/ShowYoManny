@@ -11,6 +11,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { supabaseQueueService } from "@/services/supabaseQueueService";
 import { useAuth } from "@/contexts/SimpleAuthContext";
+import { KioskSimulator } from "@/components/KioskSimulator";
 import type { Database } from "@/lib/supabase";
 
 type QueueItem = Database['public']['Tables']['queue_items']['Row'];
@@ -152,7 +153,7 @@ const AdminQueue = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container py-8 px-4 max-w-6xl mx-auto">
+      <div className="container py-8 px-4 max-w-7xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" onClick={() => navigate('/admin')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -160,29 +161,37 @@ const AdminQueue = () => {
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Content Queue</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Drag items to reorder. Changes save automatically.
-            </p>
-          </CardHeader>
-          <CardContent>
-            {items.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                No items in queue
-              </div>
-            ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                  {items.map((item) => (
-                    <SortableItem key={item.id} item={item} />
-                  ))}
-                </SortableContext>
-              </DndContext>
-            )}
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Queue Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Content Queue</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Drag items to reorder. Changes save automatically.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {items.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  No items in queue
+                </div>
+              ) : (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                    {items.map((item) => (
+                      <SortableItem key={item.id} item={item} />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Kiosk Simulator */}
+          <div className="lg:sticky lg:top-8 lg:self-start">
+            <KioskSimulator queueItems={items} />
+          </div>
+        </div>
       </div>
     </div>
   );
