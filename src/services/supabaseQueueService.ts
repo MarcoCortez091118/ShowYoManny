@@ -32,7 +32,8 @@ class SupabaseQueueService {
       return { status: 'published', isVisible: true, expiresIn };
     }
 
-    return { status: item.status as ContentStatus, isVisible: true };
+    const effectiveStatus = item.status === 'pending' ? 'active' : (item.status as ContentStatus);
+    return { status: effectiveStatus, isVisible: true };
   }
 
   async getQueueItems(userId: string): Promise<EnrichedQueueItem[]> {

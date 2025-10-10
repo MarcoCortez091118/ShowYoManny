@@ -54,7 +54,7 @@ export const KioskSimulator = ({ queueItems }: KioskSimulatorProps) => {
   };
 
   const handleOpenFullscreen = () => {
-    const kioskUrl = `/kiosk/${currentItem?.kiosk_id}`;
+    const kioskUrl = '/kiosk';
     window.open(kioskUrl, '_blank', 'fullscreen=yes');
   };
 

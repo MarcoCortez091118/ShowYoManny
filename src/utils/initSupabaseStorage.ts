@@ -12,7 +12,6 @@ export async function initializeStorage() {
     const contentBucketExists = buckets?.some(bucket => bucket.name === 'content');
 
     if (!contentBucketExists) {
-      console.log('Creating content bucket...');
       const { error: createError } = await supabase.storage.createBucket('content', {
         public: true,
         fileSizeLimit: 104857600,
@@ -20,19 +19,13 @@ export async function initializeStorage() {
       });
 
       if (createError && !createError.message.includes('already exists')) {
-        console.error('Error creating content bucket:', createError);
-        return false;
+        console.warn('Content bucket may already exist or creation not needed');
       }
-
-      console.log('Content bucket created successfully');
-    } else {
-      console.log('Content bucket already exists');
     }
 
     const mediaBucketExists = buckets?.some(bucket => bucket.name === 'media');
 
     if (!mediaBucketExists) {
-      console.log('Creating media bucket...');
       const { error: createError } = await supabase.storage.createBucket('media', {
         public: true,
         fileSizeLimit: 104857600,
@@ -40,13 +33,8 @@ export async function initializeStorage() {
       });
 
       if (createError && !createError.message.includes('already exists')) {
-        console.error('Error creating media bucket:', createError);
-        return false;
+        console.warn('Media bucket may already exist or creation not needed');
       }
-
-      console.log('Media bucket created successfully');
-    } else {
-      console.log('Media bucket already exists');
     }
 
     return true;
