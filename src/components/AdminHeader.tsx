@@ -16,12 +16,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 const AdminHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
       toast({
         title: "Logged Out",
         description: "You have been successfully logged out",
