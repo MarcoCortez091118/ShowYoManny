@@ -41,9 +41,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { borderService } from "@/domain/services/borderService";
-import { firebaseStorageService } from "@/domain/services/firebase/storageService";
-import { firebaseOrderService, OrderRecord } from "@/domain/services/firebase/orderService";
-import { firebaseQueueService, QueueItemRecord } from "@/domain/services/firebase/queueService";
+import { supabaseContentService, QueueItem } from "@/services/supabaseContentService";
 import { useAuth } from "@/contexts/SimpleAuthContext";
 import {
   DropdownMenu,
@@ -88,15 +86,15 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { isAdmin, loading: authLoading, user, signOut } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const [contentQueue, setContentQueue] = useState<QueueItemRecord[]>([]);
-  const [pendingOrders, setPendingOrders] = useState<OrderRecord[]>([]);
+  const [contentQueue, setContentQueue] = useState<QueueItem[]>([]);
+  const [pendingOrders, setPendingOrders] = useState<QueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isQueueLoading, setIsQueueLoading] = useState(true);
   const [isPendingLoading, setIsPendingLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [borderStyle, setBorderStyle] = useState("none");
   const [displayDuration, setDisplayDuration] = useState(10);
-  const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<QueueItem | null>(null);
   const [isSchedulerOpen, setIsSchedulerOpen] = useState(false);
   const [previewOrderId, setPreviewOrderId] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -178,7 +176,7 @@ const AdminDashboard = () => {
 
     try {
       setIsQueueLoading(true);
-      const queue = await firebaseQueueService.fetchQueue();
+      const queue = await supabaseContentService.fetchQueue();
       setContentQueue(queue);
     } catch (error) {
       console.error('Error fetching queue:', error);
@@ -227,16 +225,6 @@ const AdminDashboard = () => {
     setIsLoading(true);
 
     try {
-      const uploadResult = await firebaseStorageService.uploadBillboardAsset({
-        file: selectedFile,
-        folder: 'content',
-        metadata: {
-          source: 'admin-dashboard',
-        },
-      });
-
-      // Create admin order with scheduling and repeat options
-      // Combine date and time for scheduling
       const getScheduledDateTime = (date: Date | undefined, time: string) => {
         if (!date) return null;
         const [hours, minutes] = time.split(':').map(Number);
@@ -248,29 +236,17 @@ const AdminDashboard = () => {
       const scheduled_start = isScheduled ? getScheduledDateTime(scheduledStartDate, scheduledStartTime) : null;
       const scheduled_end = isScheduled ? getScheduledDateTime(scheduledEndDate, scheduledEndTime) : null;
 
-      const order = await firebaseOrderService.createOrder({
-        userEmail: 'admin@showyo.app',
-        pricingOptionId: 'admin-upload',
-        priceCents: 0,
-        fileName: selectedFile.name,
-        fileType: selectedFile.type,
-        filePath: uploadResult.filePath,
-        borderId: borderStyle,
-        durationSeconds: displayDuration,
-        isAdminContent: true,
-        moderationStatus: 'approved',
-        status: 'completed',
-        displayStatus: 'queued',
+      await supabaseContentService.createQueueItem({
+        file: selectedFile,
+        borderStyle: borderStyle,
+        duration: displayDuration,
         scheduledStart: scheduled_start,
         scheduledEnd: scheduled_end,
         timerLoopEnabled,
         timerLoopMinutes: timerLoopEnabled ? timerLoopMinutes : null,
-        autoCompleteAfterPlay: false,
+        metadata: processedMediaMetadata,
       });
 
-      await firebaseQueueService.enqueueOrder({ orderId: order.id });
-
-      // Show upload reaction
       setShowUploadReaction(true);
       setTimeout(() => setShowUploadReaction(false), 3000);
 
@@ -279,7 +255,6 @@ const AdminDashboard = () => {
         description: `${isScheduled ? 'Scheduled' : 'Immediate'} upload complete${timerLoopEnabled ? ' with timer loop enabled' : ''}`,
       });
 
-      // Reset form
       setSelectedFile(null);
       setIsScheduled(false);
       setScheduledStartDate(undefined);
@@ -290,13 +265,14 @@ const AdminDashboard = () => {
       setTimerLoopMinutes(30);
       setBorderStyle("none");
       setDisplayDuration(10);
-      
+      setProcessedMediaMetadata(null);
+
       fetchContentQueue();
     } catch (error) {
       console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
-        description: "Failed to upload content",
+        description: error instanceof Error ? error.message : "Failed to upload content",
         variant: "destructive",
       });
     } finally {
@@ -304,7 +280,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleSchedule = (order: OrderRecord) => {
+  const handleSchedule = (order: QueueItem) => {
     setSelectedOrder(order);
     setIsSchedulerOpen(true);
   };
