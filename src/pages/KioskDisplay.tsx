@@ -36,7 +36,7 @@ const KioskDisplay = () => {
       )
       .subscribe();
 
-    const refreshInterval = setInterval(fetchContent, 10000);
+    const refreshInterval = setInterval(fetchContent, 60000);
 
     return () => {
       channel.unsubscribe();
@@ -96,14 +96,26 @@ const KioskDisplay = () => {
       setItems(prevItems => {
         if (visibleItems.length === 0) return [];
 
-        const prevLength = prevItems.length;
-        const newLength = visibleItems.length;
+        const prevIds = prevItems.map(i => i.id).sort().join(',');
+        const newIds = visibleItems.map(i => i.id).sort().join(',');
+        const prevOrders = prevItems.map(i => `${i.id}:${i.order_index}`).join(',');
+        const newOrders = visibleItems.map(i => `${i.id}:${i.order_index}`).join(',');
 
-        if (prevLength !== newLength && currentIndex >= newLength) {
-          setCurrentIndex(0);
+        if (prevIds !== newIds) {
+          console.log('KioskDisplay: Items changed (different IDs), updating...');
+          if (currentIndex >= visibleItems.length) {
+            setCurrentIndex(0);
+          }
+          return visibleItems;
         }
 
-        return visibleItems;
+        if (prevOrders !== newOrders) {
+          console.log('KioskDisplay: Order changed, updating...');
+          return visibleItems;
+        }
+
+        console.log('KioskDisplay: No significant changes, keeping current items');
+        return prevItems;
       });
 
       setIsLoading(false);

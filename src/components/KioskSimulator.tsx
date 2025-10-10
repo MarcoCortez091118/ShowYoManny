@@ -301,49 +301,60 @@ export const KioskSimulator = ({ queueItems }: KioskSimulatorProps) => {
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrevious}
-            disabled={queueItems.length <= 1}
-          >
-            <SkipBack className="h-4 w-4" />
-          </Button>
+        {/* Controls - Disabled when synced */}
+        {syncWithKiosk ? (
+          <div className="text-center py-4 px-6 bg-green-500/10 rounded-lg border border-green-500/20">
+            <p className="text-sm text-green-600 font-medium">
+              Sincronizado con Reproductor Kiosk
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              El simulador refleja automáticamente lo que reproduce el Kiosk
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrevious}
+              disabled={queueItems.length <= 1}
+            >
+              <SkipBack className="h-4 w-4" />
+            </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsPlaying(!isPlaying)}
-          >
-            {isPlaying ? (
-              <Pause className="h-4 w-4" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPlaying(!isPlaying)}
+            >
+              {isPlaying ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+            </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNext}
-            disabled={queueItems.length <= 1}
-          >
-            <SkipForward className="h-4 w-4" />
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNext}
+              disabled={queueItems.length <= 1}
+            >
+              <SkipForward className="h-4 w-4" />
+            </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setCurrentIndex(0);
-              setTimeLeft(queueItems[0]?.duration || 10);
-            }}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCurrentIndex(0);
+                setTimeLeft(queueItems[0]?.duration || 10);
+              }}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
