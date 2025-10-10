@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -30,12 +31,54 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/admin-login" element={<AdminLogin />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/queue" element={<AdminQueue />} />
-            <Route path="/admin/borders" element={<AdminBorders />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="/admin/logs" element={<AdminLogs />} />
-            <Route path="/admin/billing" element={<AdminBilling />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/queue"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminQueue />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/borders"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminBorders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/logs"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminLogs />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/billing"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminBilling />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/upload" element={<ContentUpload />} />
             <Route path="/thank-you" element={<ThankYou />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />

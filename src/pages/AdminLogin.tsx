@@ -12,12 +12,43 @@ import { useAuth } from "@/contexts/AuthContext";
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { refresh } = useAuth();
+  const { refresh, user, isAdmin } = useAuth();
   const [credentials, setCredentials] = useState({
     email: '',
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
+
+  React.useEffect(() => {
+    if (user && isAdmin) {
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+      sessionStorage.removeItem('redirectAfterLogin');
+      navigate(redirectPath || '/admin', { replace: true });
+    }
+  }, [user, isAdmin, navigate]);
+
+  const handleClearSession = async () => {
+    setIsLoading(true);
+    try {
+      await supabaseAuthService.forceResetSession();
+      toast({
+        title: "Session Cleared",
+        description: "All cached data has been cleared. Please try logging in again.",
+      });
+      setCredentials({ email: '', password: '' });
+      setAttemptCount(0);
+    } catch (error) {
+      console.error('Error clearing session:', error);
+      toast({
+        title: "Clear Failed",
+        description: "Failed to clear session data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +61,12 @@ const AdminLogin = () => {
       );
 
       if (error || !session) {
-        throw new Error(error?.message || 'Login failed');
+        setAttemptCount(prev => prev + 1);
+
+        const errorMessage = error?.message || 'Login failed';
+        const shouldSuggestClear = attemptCount >= 2 || errorMessage.includes('session') || errorMessage.includes('token');
+
+        throw new Error(errorMessage);
       }
 
       await refresh();
@@ -40,11 +76,18 @@ const AdminLogin = () => {
         description: "Welcome to the admin dashboard",
       });
 
-      navigate('/admin');
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+      sessionStorage.removeItem('redirectAfterLogin');
+      navigate(redirectPath || '/admin', { replace: true });
     } catch (error: any) {
+      const errorMessage = error?.message || "Invalid username or password";
+      const shouldSuggestClear = attemptCount >= 2;
+
       toast({
         title: "Login Failed",
-        description: error?.message || "Invalid username or password",
+        description: shouldSuggestClear
+          ? `${errorMessage}. Try clearing your session below.`
+          : errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -90,9 +133,9 @@ const AdminLogin = () => {
               />
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
+            <Button
+              type="submit"
+              className="w-full"
               variant="electric"
               disabled={isLoading}
             >
@@ -106,6 +149,23 @@ const AdminLogin = () => {
               )}
             </Button>
           </form>
+
+          {attemptCount >= 2 && (
+            <div className="mt-4 p-3 bg-muted rounded-lg border border-dashed">
+              <p className="text-sm text-muted-foreground mb-2">
+                Having trouble logging in? Try clearing your session data.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearSession}
+                disabled={isLoading}
+                className="w-full"
+              >
+                Clear Session & Retry
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
