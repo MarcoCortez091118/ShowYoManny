@@ -40,14 +40,25 @@ class SupabaseAuthService {
   async signIn(email: string, password: string): Promise<{ session: AuthSession | null; error: any }> {
     try {
       console.log('[SupabaseAuthService] Starting signIn...');
+      console.log('[SupabaseAuthService] Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+      console.log('[SupabaseAuthService] Has Anon Key:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
 
       const signInPromise = supabase.auth.signInWithPassword({
         email,
         password,
+      }).then(result => {
+        console.log('[SupabaseAuthService] signInWithPassword promise resolved');
+        return result;
+      }).catch(err => {
+        console.error('[SupabaseAuthService] signInWithPassword promise rejected:', err);
+        throw err;
       });
 
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Login timeout after 10 seconds')), 10000);
+        setTimeout(() => {
+          console.error('[SupabaseAuthService] Timeout reached!');
+          reject(new Error('Login timeout after 10 seconds'));
+        }, 10000);
       });
 
       const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
