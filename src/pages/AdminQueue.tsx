@@ -9,12 +9,12 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { supabaseQueueService } from "@/services/supabaseQueueService";
+import { supabaseQueueService, type EnrichedQueueItem } from "@/services/supabaseQueueService";
 import { useAuth } from "@/contexts/SimpleAuthContext";
 import { KioskSimulator } from "@/components/KioskSimulator";
 import type { Database } from "@/lib/supabase";
 
-type QueueItem = Database['public']['Tables']['queue_items']['Row'];
+type QueueItem = EnrichedQueueItem;
 
 const SortableItem = ({ item }: { item: QueueItem }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
@@ -26,11 +26,28 @@ const SortableItem = ({ item }: { item: QueueItem }) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'published': return 'bg-green-500';
+      case 'scheduled': return 'bg-blue-500';
+      case 'expired': return 'bg-red-500';
       case 'active': return 'bg-green-500';
       case 'pending': return 'bg-yellow-500';
       case 'completed': return 'bg-gray-500';
       default: return 'bg-gray-400';
     }
+  };
+
+  const getStatusLabel = (item: QueueItem) => {
+    if (item.computed_status === 'scheduled') {
+      const start = new Date(item.scheduled_start!);
+      return `Scheduled (${start.toLocaleString()})`;
+    }
+    if (item.computed_status === 'published' && item.expires_in_minutes !== undefined) {
+      return `Published (expires in ${item.expires_in_minutes}m)`;
+    }
+    if (item.computed_status === 'expired') {
+      return 'Expired (auto-delete pending)';
+    }
+    return item.computed_status;
   };
 
   return (
@@ -41,8 +58,15 @@ const SortableItem = ({ item }: { item: QueueItem }) => {
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <Badge className={getStatusColor(item.computed_status)}>
+              {getStatusLabel(item)}
+            </Badge>
+            {!item.is_visible && (
+              <Badge variant="outline" className="text-xs">
+                Hidden from Display
+              </Badge>
+            )}
             <span className="font-medium truncate">{item.title || 'Untitled'}</span>
           </div>
 

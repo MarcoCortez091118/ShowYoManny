@@ -5,8 +5,37 @@ type QueueItem = Database['public']['Tables']['queue_items']['Row'];
 type QueueItemInsert = Database['public']['Tables']['queue_items']['Insert'];
 type QueueItemUpdate = Database['public']['Tables']['queue_items']['Update'];
 
+export type ContentStatus = 'scheduled' | 'published' | 'expired' | 'active' | 'pending' | 'completed';
+
+export interface EnrichedQueueItem extends QueueItem {
+  computed_status: ContentStatus;
+  is_visible: boolean;
+  expires_in_minutes?: number;
+}
+
 class SupabaseQueueService {
-  async getQueueItems(userId: string): Promise<QueueItem[]> {
+  private computeItemStatus(item: QueueItem): { status: ContentStatus; isVisible: boolean; expiresIn?: number } {
+    const now = new Date();
+    const scheduledStart = item.scheduled_start ? new Date(item.scheduled_start) : null;
+    const scheduledEnd = item.scheduled_end ? new Date(item.scheduled_end) : null;
+
+    if (scheduledEnd && now > scheduledEnd) {
+      return { status: 'expired', isVisible: false };
+    }
+
+    if (scheduledStart && now < scheduledStart) {
+      return { status: 'scheduled', isVisible: false };
+    }
+
+    if (scheduledStart && now >= scheduledStart) {
+      const expiresIn = scheduledEnd ? Math.floor((scheduledEnd.getTime() - now.getTime()) / (1000 * 60)) : undefined;
+      return { status: 'published', isVisible: true, expiresIn };
+    }
+
+    return { status: item.status as ContentStatus, isVisible: true };
+  }
+
+  async getQueueItems(userId: string): Promise<EnrichedQueueItem[]> {
     const { data, error } = await supabase
       .from('queue_items')
       .select('*')
@@ -18,7 +47,53 @@ class SupabaseQueueService {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(item => {
+      const { status, isVisible, expiresIn } = this.computeItemStatus(item);
+      return {
+        ...item,
+        computed_status: status,
+        is_visible: isVisible,
+        expires_in_minutes: expiresIn,
+      };
+    });
+  }
+
+  async getPublishedQueueItems(kioskId: string): Promise<EnrichedQueueItem[]> {
+    const { data, error } = await supabase
+      .from('queue_items')
+      .select('*')
+      .eq('kiosk_id', kioskId)
+      .order('order_index', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching queue items:', error);
+      return [];
+    }
+
+    const enrichedItems = (data || []).map(item => {
+      const { status, isVisible, expiresIn } = this.computeItemStatus(item);
+      return {
+        ...item,
+        computed_status: status,
+        is_visible: isVisible,
+        expires_in_minutes: expiresIn,
+      };
+    });
+
+    return enrichedItems.filter(item => item.is_visible);
+  }
+
+  async deleteExpiredContent(userId: string): Promise<number> {
+    const items = await this.getQueueItems(userId);
+    const expiredItems = items.filter(item => item.computed_status === 'expired' && item.auto_delete_on_expire);
+
+    let deletedCount = 0;
+    for (const item of expiredItems) {
+      const success = await this.deleteQueueItem(item.id);
+      if (success) deletedCount++;
+    }
+
+    return deletedCount;
   }
 
   async addQueueItem(item: QueueItemInsert): Promise<QueueItem | null> {

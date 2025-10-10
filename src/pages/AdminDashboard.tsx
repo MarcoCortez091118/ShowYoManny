@@ -583,6 +583,41 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/admin/queue')}
+            className="h-auto py-4 flex-col gap-2"
+          >
+            <Play className="h-5 w-5" />
+            <span>Queue Manager</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/admin/borders')}
+            className="h-auto py-4 flex-col gap-2"
+          >
+            <Sparkles className="h-5 w-5" />
+            <span>Border Themes</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/admin/logs')}
+            className="h-auto py-4 flex-col gap-2"
+          >
+            <BarChart3 className="h-5 w-5" />
+            <span>Activity Logs</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/admin/history')}
+            className="h-auto py-4 flex-col gap-2"
+          >
+            <Clock className="h-5 w-5" />
+            <span>Content History</span>
+          </Button>
+        </div>
+
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto">
             <TabsTrigger value="overview" className="text-xs sm:text-sm touch-target">Overview</TabsTrigger>

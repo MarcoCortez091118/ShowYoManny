@@ -15,6 +15,7 @@ import AdminBorders from "./pages/AdminBorders";
 import AdminSettings from "./pages/AdminSettings";
 import AdminLogs from "./pages/AdminLogs";
 import AdminBilling from "./pages/AdminBilling";
+import AdminHistory from "./pages/AdminHistory";
 import ContentUpload from "./pages/ContentUpload";
 import ThankYou from "./pages/ThankYou";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -83,6 +84,14 @@ const App = () => {
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <AdminBilling />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/history"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminHistory />
                 </ProtectedRoute>
               }
             />
