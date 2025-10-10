@@ -13,6 +13,7 @@ import { supabaseQueueService, type EnrichedQueueItem } from "@/services/supabas
 import { useAuth } from "@/contexts/SimpleAuthContext";
 import { KioskSimulator } from "@/components/KioskSimulator";
 import type { Database } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 type QueueItem = EnrichedQueueItem;
 
@@ -107,6 +108,27 @@ const AdminQueue = () => {
   useEffect(() => {
     if (!loading && isAdmin && user?.id) {
       fetchQueue();
+
+      const channel = supabase
+        .channel('queue_items_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'queue_items',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('AdminQueue: Realtime change detected', payload);
+            fetchQueue();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [loading, isAdmin, user]);
 
@@ -213,7 +235,7 @@ const AdminQueue = () => {
 
           {/* Kiosk Simulator */}
           <div className="lg:sticky lg:top-8 lg:self-start">
-            <KioskSimulator queueItems={items} />
+            <KioskSimulator queueItems={items.filter(item => item.is_visible)} />
           </div>
         </div>
       </div>
