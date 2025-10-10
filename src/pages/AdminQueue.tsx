@@ -297,9 +297,21 @@ const AdminQueue = () => {
 
   const handleEditClick = (item: QueueItem) => {
     setItemToEdit(item);
+
+    const formatDatetimeLocal = (dateString: string | null) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
     setEditFormData({
-      scheduled_start: item.scheduled_start || '',
-      scheduled_end: item.scheduled_end || '',
+      scheduled_start: formatDatetimeLocal(item.scheduled_start),
+      scheduled_end: formatDatetimeLocal(item.scheduled_end),
       duration: item.duration || 0,
     });
     setEditDialogOpen(true);
@@ -309,9 +321,14 @@ const AdminQueue = () => {
     if (!itemToEdit) return;
 
     try {
+      const parseLocalDatetime = (localDatetime: string) => {
+        if (!localDatetime) return null;
+        return new Date(localDatetime).toISOString();
+      };
+
       await supabaseQueueService.updateQueueItem(itemToEdit.id, {
-        scheduled_start: editFormData.scheduled_start || null,
-        scheduled_end: editFormData.scheduled_end || null,
+        scheduled_start: parseLocalDatetime(editFormData.scheduled_start),
+        scheduled_end: parseLocalDatetime(editFormData.scheduled_end),
         duration: editFormData.duration,
       });
 
@@ -450,8 +467,8 @@ const AdminQueue = () => {
               <Input
                 id="scheduled_start"
                 type="datetime-local"
-                value={editFormData.scheduled_start ? new Date(editFormData.scheduled_start).toISOString().slice(0, 16) : ''}
-                onChange={(e) => setEditFormData({ ...editFormData, scheduled_start: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                value={editFormData.scheduled_start}
+                onChange={(e) => setEditFormData({ ...editFormData, scheduled_start: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
                 Deja vacío para publicar inmediatamente
@@ -462,8 +479,8 @@ const AdminQueue = () => {
               <Input
                 id="scheduled_end"
                 type="datetime-local"
-                value={editFormData.scheduled_end ? new Date(editFormData.scheduled_end).toISOString().slice(0, 16) : ''}
-                onChange={(e) => setEditFormData({ ...editFormData, scheduled_end: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                value={editFormData.scheduled_end}
+                onChange={(e) => setEditFormData({ ...editFormData, scheduled_end: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
                 Deja vacío para que no expire
