@@ -25,16 +25,29 @@ const AdminLogin = () => {
     setIsLoading(true);
 
     try {
+      console.log('Attempting login with:', credentials.email);
+
       const { session, error } = await supabaseAuthService.signIn(
         credentials.email,
         credentials.password
       );
 
-      if (error || !session) {
+      console.log('Login response:', { session, error });
+
+      if (error) {
+        console.error('Login error:', error);
         throw new Error(error?.message || 'Login failed');
       }
 
+      if (!session) {
+        console.error('No session returned');
+        throw new Error('No session returned from authentication');
+      }
+
+      console.log('Session created, refreshing auth context...');
       await refresh();
+
+      console.log('Auth refreshed, navigating to admin...');
 
       toast({
         title: "Login Successful",
@@ -43,6 +56,7 @@ const AdminLogin = () => {
 
       navigate('/admin');
     } catch (error: any) {
+      console.error('Login failed:', error);
       toast({
         title: "Login Failed",
         description: error?.message || "Invalid username or password",
