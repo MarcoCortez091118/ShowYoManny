@@ -221,6 +221,7 @@ const ContentUpload = () => {
           result.trimEndSeconds,
           {
             maxSizeMB: 45,
+            quality: 'high',
             onProgress: (progress) => {
               setCompressionProgress(progress.progress);
               setCompressionMessage(progress.message);

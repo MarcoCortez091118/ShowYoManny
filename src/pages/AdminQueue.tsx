@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, GripVertical, Play, Trash2, Calendar, Clock } from "lucide-react";
+import { ArrowLeft, GripVertical, Play, Trash2, Calendar, Clock, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -14,10 +14,38 @@ import { useAuth } from "@/contexts/SimpleAuthContext";
 import { KioskSimulator } from "@/components/KioskSimulator";
 import type { Database } from "@/lib/supabase";
 import { supabase } from "@/lib/supabase";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 type QueueItem = EnrichedQueueItem;
 
-const SortableItem = ({ item }: { item: QueueItem }) => {
+const SortableItem = ({
+  item,
+  onDelete,
+  onEdit
+}: {
+  item: QueueItem;
+  onDelete: (item: QueueItem) => void;
+  onEdit: (item: QueueItem) => void;
+}) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
 
   const style = {
@@ -85,9 +113,25 @@ const SortableItem = ({ item }: { item: QueueItem }) => {
           </div>
         </div>
 
-        <Button variant="ghost" size="sm">
-          <Trash2 className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(item)}
+            title="Editar item"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDelete(item)}
+            title="Eliminar item"
+            className="hover:text-destructive"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -99,6 +143,15 @@ const AdminQueue = () => {
   const { loading, isAdmin, user } = useAuth();
   const [items, setItems] = useState<QueueItem[]>([]);
   const [isFetching, setIsFetching] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<QueueItem | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<QueueItem | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    scheduled_start: '',
+    scheduled_end: '',
+    duration: 0,
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -214,6 +267,72 @@ const AdminQueue = () => {
     }
   };
 
+  const handleDeleteClick = (item: QueueItem) => {
+    setItemToDelete(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+
+    try {
+      await supabaseQueueService.deleteQueueItem(itemToDelete.id);
+      toast({
+        title: "Item eliminado",
+        description: `"${itemToDelete.title}" fue eliminado exitosamente.`
+      });
+      fetchQueue();
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Error al eliminar",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+    }
+  };
+
+  const handleEditClick = (item: QueueItem) => {
+    setItemToEdit(item);
+    setEditFormData({
+      scheduled_start: item.scheduled_start || '',
+      scheduled_end: item.scheduled_end || '',
+      duration: item.duration || 0,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!itemToEdit) return;
+
+    try {
+      await supabaseQueueService.updateQueueItem(itemToEdit.id, {
+        scheduled_start: editFormData.scheduled_start || null,
+        scheduled_end: editFormData.scheduled_end || null,
+        duration: editFormData.duration,
+      });
+
+      toast({
+        title: "Item actualizado",
+        description: "Los cambios se guardaron exitosamente."
+      });
+      fetchQueue();
+    } catch (error: any) {
+      console.error('Update error:', error);
+      toast({
+        title: "Error al actualizar",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setEditDialogOpen(false);
+      setItemToEdit(null);
+    }
+  };
+
   if (loading || isFetching) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -264,7 +383,12 @@ const AdminQueue = () => {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
                     {items.map((item) => (
-                      <SortableItem key={item.id} item={item} />
+                      <SortableItem
+                        key={item.id}
+                        item={item}
+                        onDelete={handleDeleteClick}
+                        onEdit={handleEditClick}
+                      />
                     ))}
                   </SortableContext>
                 </DndContext>
@@ -278,6 +402,84 @@ const AdminQueue = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Estás a punto de eliminar "{itemToDelete?.title || 'este item'}".
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Editar Item</DialogTitle>
+            <DialogDescription>
+              Modifica la duración, fecha de inicio o fecha de fin del contenido.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="duration">Duración (segundos)</Label>
+              <Input
+                id="duration"
+                type="number"
+                value={editFormData.duration}
+                onChange={(e) => setEditFormData({ ...editFormData, duration: parseInt(e.target.value) || 0 })}
+                min="1"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="scheduled_start">Fecha y Hora de Inicio (Opcional)</Label>
+              <Input
+                id="scheduled_start"
+                type="datetime-local"
+                value={editFormData.scheduled_start ? new Date(editFormData.scheduled_start).toISOString().slice(0, 16) : ''}
+                onChange={(e) => setEditFormData({ ...editFormData, scheduled_start: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Deja vacío para publicar inmediatamente
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="scheduled_end">Fecha y Hora de Fin (Opcional)</Label>
+              <Input
+                id="scheduled_end"
+                type="datetime-local"
+                value={editFormData.scheduled_end ? new Date(editFormData.scheduled_end).toISOString().slice(0, 16) : ''}
+                onChange={(e) => setEditFormData({ ...editFormData, scheduled_end: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Deja vacío para que no expire
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEditSave}>
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

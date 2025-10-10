@@ -7,11 +7,19 @@ export interface CompressionProgress {
 export interface CompressionOptions {
   maxSizeMB?: number;
   targetBitrate?: number;
+  quality?: 'low' | 'medium' | 'high' | 'ultra';
   onProgress?: (progress: CompressionProgress) => void;
 }
 
 const DEFAULT_MAX_SIZE_MB = 45;
 const DEFAULT_TARGET_BITRATE = 2500000;
+
+const QUALITY_PRESETS = {
+  low: { bitrate: 1500000, maxResolution: 1280 },
+  medium: { bitrate: 2500000, maxResolution: 1920 },
+  high: { bitrate: 4000000, maxResolution: 1920 },
+  ultra: { bitrate: 6000000, maxResolution: 2560 },
+};
 
 export async function compressAndTrimVideo(
   file: File,
@@ -21,9 +29,12 @@ export async function compressAndTrimVideo(
 ): Promise<File> {
   const {
     maxSizeMB = DEFAULT_MAX_SIZE_MB,
-    targetBitrate = DEFAULT_TARGET_BITRATE,
+    quality = 'high',
     onProgress
   } = options;
+
+  const qualityPreset = QUALITY_PRESETS[quality];
+  const targetBitrate = options.targetBitrate || qualityPreset.bitrate;
 
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
