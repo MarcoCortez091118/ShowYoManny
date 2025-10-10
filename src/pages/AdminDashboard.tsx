@@ -508,15 +508,15 @@ const AdminDashboard = () => {
             <div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Welcome {user?.displayName || user?.email?.split('@')[0] || 'Admin'}!
+                  Admin Panel
                 </span>
               </h1>
               <p className="text-lg sm:text-xl text-muted-foreground">
                 Manage content, moderate uploads, and control the digital billboard
               </p>
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="icon"
               onClick={() => navigate('/admin/settings')}
               className="shrink-0"
