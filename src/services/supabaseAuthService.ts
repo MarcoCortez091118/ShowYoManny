@@ -38,22 +38,41 @@ class SupabaseAuthService {
   }
 
   async signIn(email: string, password: string): Promise<{ session: AuthSession | null; error: any }> {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      console.log('[SupabaseAuthService] Starting signIn...');
 
-    if (error) {
+      const signInPromise = supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Login timeout after 10 seconds')), 10000);
+      });
+
+      const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
+
+      console.log('[SupabaseAuthService] SignIn completed:', { hasData: !!data, hasError: !!error, error });
+
+      if (error) {
+        console.error('[SupabaseAuthService] Sign in error:', error);
+        return { session: null, error };
+      }
+
+      if (data.session) {
+        console.log('[SupabaseAuthService] Creating auth session...');
+        const session = await this.createAuthSession(data.session);
+        console.log('[SupabaseAuthService] Auth session created:', session);
+        this.setSession(session);
+        return { session, error: null };
+      }
+
+      console.error('[SupabaseAuthService] No session returned');
+      return { session: null, error: new Error('No session returned') };
+    } catch (error: any) {
+      console.error('[SupabaseAuthService] Exception during signIn:', error);
       return { session: null, error };
     }
-
-    if (data.session) {
-      const session = await this.createAuthSession(data.session);
-      this.setSession(session);
-      return { session, error: null };
-    }
-
-    return { session: null, error: new Error('No session returned') };
   }
 
   async logout(): Promise<void> {
