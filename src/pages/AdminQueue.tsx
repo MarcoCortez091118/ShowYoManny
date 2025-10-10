@@ -9,36 +9,25 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { firebaseQueueService } from "@/domain/services/firebase/queueService";
+import { supabaseQueueService } from "@/services/supabaseQueueService";
 import { useAuth } from "@/contexts/SimpleAuthContext";
+import type { Database } from "@/lib/supabase";
 
-interface QueueItem {
-  id: string;
-  file_name: string;
-  file_type: string;
-  display_status: string;
-  priority: string;
-  scheduled_start: string | null;
-  scheduled_end: string | null;
-  play_count: number;
-  max_plays: number;
-  repeat_frequency_per_day: number;
-  queue_position: number;
-}
+type QueueItem = Database['public']['Tables']['queue_items']['Row'];
 
 const SortableItem = ({ item }: { item: QueueItem }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
-  
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'paid': return 'bg-green-500';
-      case 'admin': return 'bg-blue-500';
-      case 'house': return 'bg-gray-500';
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-500';
+      case 'pending': return 'bg-yellow-500';
+      case 'completed': return 'bg-gray-500';
       default: return 'bg-gray-400';
     }
   };
@@ -49,17 +38,17 @@ const SortableItem = ({ item }: { item: QueueItem }) => {
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
           <GripVertical className="w-5 h-5 text-muted-foreground" />
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <Badge className={getPriorityColor(item.priority || 'house')}>{item.priority || 'house'}</Badge>
-            <span className="font-medium truncate">{item.file_name}</span>
+            <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
+            <span className="font-medium truncate">{item.title || 'Untitled'}</span>
           </div>
-          
+
           <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <Play className="w-3 h-3" />
-              {item.play_count}/{item.max_plays} plays
+              {item.duration}s • {item.media_type}
             </span>
             {item.scheduled_start && (
               <span className="flex items-center gap-1">
@@ -67,16 +56,9 @@ const SortableItem = ({ item }: { item: QueueItem }) => {
                 {new Date(item.scheduled_start).toLocaleString()}
               </span>
             )}
-            {item.scheduled_end && (
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                Ends {new Date(item.scheduled_end).toLocaleString()}
-              </span>
-            )}
-            <span>Repeat: {item.repeat_frequency_per_day}x/day</span>
           </div>
         </div>
-        
+
         <Button variant="ghost" size="sm">
           <Trash2 className="w-4 h-4" />
         </Button>
@@ -88,7 +70,7 @@ const SortableItem = ({ item }: { item: QueueItem }) => {
 const AdminQueue = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { loading, isAdmin } = useAuth();
+  const { loading, isAdmin, user } = useAuth();
   const [items, setItems] = useState<QueueItem[]>([]);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -98,32 +80,18 @@ const AdminQueue = () => {
   );
 
   useEffect(() => {
-    if (!loading && isAdmin) {
+    if (!loading && isAdmin && user?.id) {
       fetchQueue();
     }
-  }, [loading, isAdmin]);
+  }, [loading, isAdmin, user]);
 
   const fetchQueue = async () => {
+    if (!user?.id) return;
+
     try {
       setIsFetching(true);
-      const data = await firebaseQueueService.fetchQueue();
-      const queueItems: QueueItem[] = data.map((item) => ({
-        id: item.id,
-        file_name: item.order?.file_name ?? 'Unknown',
-        file_type: item.order?.file_type ?? 'unknown',
-        display_status: item.order?.display_status ?? 'pending',
-        priority: item.order?.pricing_option_id && !item.order?.is_admin_content ? 'paid'
-          : item.order?.is_admin_content ? 'admin'
-          : 'house',
-        scheduled_start: item.order?.scheduled_start ?? null,
-        scheduled_end: item.order?.scheduled_end ?? null,
-        play_count: item.order?.play_count ?? 0,
-        max_plays: item.order?.max_plays ?? 0,
-        repeat_frequency_per_day: item.order?.repeat_frequency_per_day ?? 0,
-        queue_position: item.queue_position,
-      }));
-
-      setItems(queueItems);
+      const data = await supabaseQueueService.getQueueItems(user.id);
+      setItems(data);
     } catch (error: any) {
       toast({ title: "Error loading queue", description: error.message, variant: "destructive" });
     } finally {
@@ -132,6 +100,8 @@ const AdminQueue = () => {
   };
 
   const handleDragEnd = async (event: any) => {
+    if (!user?.id) return;
+
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -140,20 +110,15 @@ const AdminQueue = () => {
 
     const oldIndex = items.findIndex((item) => item.id === active.id);
     const newIndex = items.findIndex((item) => item.id === over.id);
-    const reordered = arrayMove(items, oldIndex, newIndex).map((item, index) => ({
-      ...item,
-      queue_position: index + 1,
-    }));
+    const reordered = arrayMove(items, oldIndex, newIndex);
 
     setItems(reordered);
 
     try {
-      await firebaseQueueService.updateQueueOrder({
-        queue: reordered.map((item) => ({
-          id: item.id,
-          queue_position: item.queue_position,
-        })),
-      });
+      await supabaseQueueService.reorderQueueItems(
+        user.id,
+        reordered.map((item) => item.id)
+      );
 
       toast({ title: "Queue updated", description: "Order saved successfully" });
     } catch (error: any) {
@@ -189,7 +154,7 @@ const AdminQueue = () => {
     <div className="min-h-screen bg-background">
       <div className="container py-8 px-4 max-w-6xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => navigate('/admin/dashboard')}>
+          <Button variant="ghost" onClick={() => navigate('/admin')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Button>

@@ -3,30 +3,35 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2, Monitor, RefreshCw } from "lucide-react";
-import { firebaseQueueService, QueueItemRecord } from "@/domain/services/firebase/queueService";
-import { firebaseStorageService } from "@/domain/services/firebase/storageService";
+import { supabaseQueueService } from "@/services/supabaseQueueService";
+import { useAuth } from "@/contexts/SimpleAuthContext";
+import type { Database } from "@/lib/supabase";
+
+type QueueItem = Database['public']['Tables']['queue_items']['Row'];
 
 interface PreviewItem {
-  queue: QueueItemRecord;
+  queue: QueueItem;
   mediaUrl: string | null;
 }
 
 const SyncedKioskPreview = () => {
-  const [queueItems, setQueueItems] = useState<QueueItemRecord[]>([]);
+  const { user } = useAuth();
+  const [queueItems, setQueueItems] = useState<QueueItem[]>([]);
   const [previewIndex, setPreviewIndex] = useState(0);
-  const [mediaCache, setMediaCache] = useState<Record<string, string | null>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const activeItem = queueItems[previewIndex];
 
   useEffect(() => {
+    if (!user?.id) return;
+
     let mounted = true;
 
     const loadQueue = async () => {
       try {
         setRefreshing(true);
-        const queue = await firebaseQueueService.fetchQueue();
+        const queue = await supabaseQueueService.getQueueItems(user.id);
         if (!mounted) return;
         setQueueItems(queue);
       } catch (error) {
@@ -46,33 +51,15 @@ const SyncedKioskPreview = () => {
       mounted = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [user]);
 
-  useEffect(() => {
-    const preloadMedia = async () => {
-      const order = activeItem?.order;
-      if (!order?.file_path || mediaCache[order.file_path] !== undefined) {
-        return;
-      }
-
-      try {
-        const url = await firebaseStorageService.getPublicUrl(order.file_path);
-        setMediaCache((cache) => ({ ...cache, [order.file_path]: url }));
-      } catch (error) {
-        console.error("SyncedKioskPreview: Failed to resolve media URL", error);
-        setMediaCache((cache) => ({ ...cache, [order.file_path]: null }));
-      }
-    };
-
-    preloadMedia();
-  }, [activeItem, mediaCache]);
 
   const previewItems: PreviewItem[] = useMemo(() => {
     return queueItems.map((item) => ({
       queue: item,
-      mediaUrl: item.order?.file_path ? mediaCache[item.order.file_path] ?? null : null,
+      mediaUrl: item.media_url,
     }));
-  }, [queueItems, mediaCache]);
+  }, [queueItems]);
 
   const handleNext = () => {
     setPreviewIndex((prev) => (prev + 1) % Math.max(queueItems.length, 1));
@@ -82,8 +69,7 @@ const SyncedKioskPreview = () => {
     setPreviewIndex((prev) => (prev - 1 + Math.max(queueItems.length, 1)) % Math.max(queueItems.length, 1));
   };
 
-  const currentOrder = activeItem?.order;
-  const currentMediaUrl = currentOrder?.file_path ? mediaCache[currentOrder.file_path] ?? null : null;
+  const currentMediaUrl = activeItem?.media_url;
   const hasMedia = Boolean(currentMediaUrl);
 
   return (
@@ -108,12 +94,12 @@ const SyncedKioskPreview = () => {
               <Loader2 className="h-6 w-6 animate-spin" />
               Loading queue...
             </div>
-          ) : currentOrder ? (
+          ) : activeItem ? (
             hasMedia ? (
-              currentOrder.file_type?.startsWith("video/") ? (
+              activeItem.media_type === "video" ? (
                 <video
-                  key={currentOrder.id}
-                  src={currentMediaUrl ?? undefined}
+                  key={activeItem.id}
+                  src={currentMediaUrl}
                   autoPlay
                   muted
                   loop
@@ -122,9 +108,9 @@ const SyncedKioskPreview = () => {
                 />
               ) : (
                 <img
-                  key={currentOrder.id}
-                  src={currentMediaUrl ?? undefined}
-                  alt={currentOrder.file_name ?? "Queued media"}
+                  key={activeItem.id}
+                  src={currentMediaUrl}
+                  alt={activeItem.title ?? "Queued media"}
                   className="h-full w-full object-cover"
                 />
               )
@@ -132,7 +118,7 @@ const SyncedKioskPreview = () => {
               <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
                 <Monitor className="h-10 w-10" />
                 <span>No media preview available</span>
-                <span className="text-xs">Order: {currentOrder.file_name || currentOrder.id}</span>
+                <span className="text-xs">{activeItem.title || activeItem.id}</span>
               </div>
             )
           ) : (
@@ -155,10 +141,11 @@ const SyncedKioskPreview = () => {
             variant="ghost"
             size="sm"
             onClick={() => {
+              if (!user?.id) return;
               setPreviewIndex(0);
               setRefreshing(true);
-              firebaseQueueService
-                .fetchQueue()
+              supabaseQueueService
+                .getQueueItems(user.id)
                 .then((queue) => {
                   setQueueItems(queue);
                 })
@@ -188,13 +175,13 @@ const SyncedKioskPreview = () => {
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={queue.is_active ? "default" : "outline"}>
-                      #{queue.queue_position ?? 0}
+                    <Badge variant={queue.status === "active" ? "default" : "outline"}>
+                      #{queue.order_index}
                     </Badge>
-                    <span className="font-medium">{queue.order?.file_name ?? "Untitled"}</span>
+                    <span className="font-medium">{queue.title ?? "Untitled"}</span>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {queue.order?.user_email ?? "Unknown user"} • {queue.order?.duration_seconds ?? 0}s
+                    {queue.duration}s • {queue.media_type}
                   </div>
                 </div>
                 <div className="text-xs text-muted-foreground">

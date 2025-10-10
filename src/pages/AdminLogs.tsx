@@ -4,49 +4,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { firebaseLogService } from "@/domain/services/firebase/logService";
+import { supabaseLogService } from "@/services/supabaseLogService";
 import { useAuth } from "@/contexts/SimpleAuthContext";
+import type { Database } from "@/lib/supabase";
 
-interface LogEntry {
-  id: string;
-  created_at: string;
-  order_id: string;
-  file_name: string;
-  user_email: string;
-  completed_at: string;
-}
+type ActivityLog = Database['public']['Tables']['activity_logs']['Row'];
 
 const AdminLogs = () => {
   const navigate = useNavigate();
-  const { isAdmin, loading } = useAuth();
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [playlistAge, setPlaylistAge] = useState<string>('');
+  const { isAdmin, loading, user } = useAuth();
+  const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [healthStatus, setHealthStatus] = useState<'healthy' | 'error'>('healthy');
 
   useEffect(() => {
-    if (!loading && isAdmin) {
+    if (!loading && isAdmin && user?.id) {
       fetchLogs();
-      checkPlaylistHealth();
     }
-  }, [loading, isAdmin]);
+  }, [loading, isAdmin, user]);
 
   const fetchLogs = async () => {
-    try {
-      const data = await firebaseLogService.fetchRecentPlays();
-      setLogs(data);
-    } catch (error) {
-      console.error('Failed to fetch play logs', error);
-    }
-  };
+    if (!user?.id) return;
 
-  const checkPlaylistHealth = async () => {
     try {
-      const health = await firebaseLogService.fetchSystemHealth();
-      const age = Math.floor((Date.now() - new Date(health.playlistGeneratedAt).getTime()) / 1000);
-      setPlaylistAge(`${age}s ago`);
+      const data = await supabaseLogService.getAllLogs(100);
+      setLogs(data);
       setHealthStatus('healthy');
     } catch (error) {
-      setPlaylistAge('Error checking');
+      console.error('Failed to fetch activity logs', error);
       setHealthStatus('error');
     }
   };
@@ -81,7 +65,7 @@ const AdminLogs = () => {
     <div className="min-h-screen bg-background">
       <div className="container py-8 px-4 max-w-6xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => navigate('/admin/dashboard')}>
+          <Button variant="ghost" onClick={() => navigate('/admin')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Button>
@@ -93,11 +77,7 @@ const AdminLogs = () => {
               <CardTitle>System Health</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Playlist Age</div>
-                  <div className="text-2xl font-bold">{playlistAge}</div>
-                </div>
+              <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <div className="text-sm text-muted-foreground mb-1">Status</div>
                   <Badge variant={healthStatus === 'error' ? 'destructive' : 'default'}>
@@ -105,9 +85,9 @@ const AdminLogs = () => {
                   </Badge>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground mb-1">Total Plays Today</div>
-                  <div className="text-2xl font-bold">{logs.filter(l => 
-                    new Date(l.completed_at).toDateString() === new Date().toDateString()
+                  <div className="text-sm text-muted-foreground mb-1">Total Activities Today</div>
+                  <div className="text-2xl font-bold">{logs.filter(l =>
+                    new Date(l.created_at).toDateString() === new Date().toDateString()
                   ).length}</div>
                 </div>
               </div>
@@ -116,24 +96,26 @@ const AdminLogs = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Play History (Last 100)</CardTitle>
+              <CardTitle>Activity History (Last 100)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {logs.map((log) => (
                   <div key={log.id} className="flex items-center justify-between p-3 border rounded">
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{log.file_name}</div>
-                      <div className="text-sm text-muted-foreground">{log.user_email}</div>
+                      <div className="font-medium truncate">{log.action}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {log.details ? JSON.stringify(log.details) : 'No details'}
+                      </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {new Date(log.completed_at).toLocaleString()}
+                      {new Date(log.created_at).toLocaleString()}
                     </div>
                   </div>
                 ))}
                 {logs.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
-                    No play history yet
+                    No activity history yet
                   </div>
                 )}
               </div>
