@@ -22,32 +22,66 @@ const AdminLogin = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!credentials.email || !credentials.password) {
+      toast({
+        title: "Missing Credentials",
+        description: "Please enter both email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      console.log('Attempting login with:', credentials.email);
+      console.log('[AdminLogin] Attempting login with:', credentials.email);
 
       const { session, error } = await supabaseAuthService.signIn(
-        credentials.email,
+        credentials.email.trim(),
         credentials.password
       );
 
-      console.log('Login response:', { session, error });
+      console.log('[AdminLogin] Login response:', {
+        hasSession: !!session,
+        hasError: !!error,
+        errorMessage: error?.message
+      });
 
       if (error) {
-        console.error('Login error:', error);
-        throw new Error(error?.message || 'Login failed');
+        console.error('[AdminLogin] Login error:', error);
+
+        let errorMessage = 'Invalid email or password';
+        if (error.message?.includes('timeout') || error.message?.includes('network')) {
+          errorMessage = 'Connection error. Please check your internet and try again.';
+        } else if (error.message?.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        toast({
+          title: "Login Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
       }
 
       if (!session) {
-        console.error('No session returned');
-        throw new Error('No session returned from authentication');
+        console.error('[AdminLogin] No session returned');
+        toast({
+          title: "Login Failed",
+          description: "Authentication failed. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      console.log('Session created, refreshing auth context...');
+      console.log('[AdminLogin] Session created, refreshing auth context...');
       await refresh();
 
-      console.log('Auth refreshed, navigating to admin...');
+      console.log('[AdminLogin] Auth refreshed, navigating to admin...');
 
       toast({
         title: "Login Successful",
@@ -56,10 +90,10 @@ const AdminLogin = () => {
 
       navigate('/admin');
     } catch (error: any) {
-      console.error('Login failed:', error);
+      console.error('[AdminLogin] Unexpected error:', error);
       toast({
         title: "Login Failed",
-        description: error?.message || "Invalid username or password",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
