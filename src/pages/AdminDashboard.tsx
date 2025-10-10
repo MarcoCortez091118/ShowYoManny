@@ -999,15 +999,8 @@ const AdminDashboard = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="relative aspect-[2048/2432] w-full max-w-md mx-auto bg-black rounded-lg overflow-hidden">
-                        {/* Border Overlay */}
-                        {borderStyle !== "none" && (
-                          <BorderPreview
-                            borderTheme={borderStyle}
-                            className="absolute inset-0 z-10 pointer-events-none"
-                          />
-                        )}
                         {/* Media Content */}
-                        <div className="absolute inset-0 flex items-center justify-center p-4">
+                        <div className="absolute inset-0 flex items-center justify-center">
                           {selectedFile.type.startsWith('image/') ? (
                             <img
                               src={URL.createObjectURL(selectedFile)}
@@ -1032,6 +1025,79 @@ const AdminDashboard = () => {
                             />
                           )}
                         </div>
+
+                        {/* Border Overlay */}
+                        {borderStyle !== "none" && (() => {
+                          const selectedBorder = borderThemes.find(b => b.id === borderStyle);
+                          if (!selectedBorder) return null;
+
+                          return (
+                            <div className="absolute inset-0 pointer-events-none z-10">
+                              {/* Top Banner */}
+                              {selectedBorder.message && (
+                                <div className="absolute inset-x-0 top-0 py-3 bg-gradient-to-b from-black/90 via-black/80 to-transparent text-white flex items-center justify-center">
+                                  <div className="text-lg font-bold tracking-wide drop-shadow-lg">
+                                    {selectedBorder.message}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Bottom Banner */}
+                              {selectedBorder.message && (
+                                <div className="absolute inset-x-0 bottom-0 py-3 bg-gradient-to-t from-black/90 via-black/80 to-transparent text-white flex items-center justify-center">
+                                  <div className="text-lg font-bold tracking-wide drop-shadow-lg">
+                                    {selectedBorder.message}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Corner Decorations */}
+                              {selectedBorder.category === 'Holiday' && (
+                                <>
+                                  <div className="absolute top-4 left-4 text-4xl drop-shadow-xl">🎄</div>
+                                  <div className="absolute top-4 right-4 text-4xl drop-shadow-xl">🎄</div>
+                                  <div className="absolute bottom-4 left-4 text-4xl drop-shadow-xl">🎁</div>
+                                  <div className="absolute bottom-4 right-4 text-4xl drop-shadow-xl">⭐</div>
+                                </>
+                              )}
+
+                              {selectedBorder.category === 'Special Occasions' && (
+                                <>
+                                  <div className="absolute top-4 left-4 text-4xl drop-shadow-xl">✨</div>
+                                  <div className="absolute top-4 right-4 text-4xl drop-shadow-xl">✨</div>
+                                  <div className="absolute bottom-4 left-4 text-4xl drop-shadow-xl">🎉</div>
+                                  <div className="absolute bottom-4 right-4 text-4xl drop-shadow-xl">🎊</div>
+                                </>
+                              )}
+
+                              {selectedBorder.category === 'Futuristic' && (
+                                <>
+                                  <div className="absolute top-4 left-4 text-3xl drop-shadow-xl">⚡</div>
+                                  <div className="absolute top-4 right-4 text-3xl drop-shadow-xl">⚡</div>
+                                  <div className="absolute bottom-4 left-4 text-3xl drop-shadow-xl">🔮</div>
+                                  <div className="absolute bottom-4 right-4 text-3xl drop-shadow-xl">🔮</div>
+                                </>
+                              )}
+
+                              {selectedBorder.category === 'Seasonal' && (
+                                <>
+                                  <div className="absolute top-4 left-4 text-4xl drop-shadow-xl">
+                                    {selectedBorder.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
+                                  </div>
+                                  <div className="absolute top-4 right-4 text-4xl drop-shadow-xl">
+                                    {selectedBorder.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
+                                  </div>
+                                  <div className="absolute bottom-4 left-4 text-4xl drop-shadow-xl">
+                                    {selectedBorder.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
+                                  </div>
+                                  <div className="absolute bottom-4 right-4 text-4xl drop-shadow-xl">
+                                    {selectedBorder.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <p className="text-xs text-center text-muted-foreground mt-3">
                         Así se verá tu contenido en el kiosk {borderStyle !== "none" ? `con el borde "${borderStyle}"` : "sin borde"}
