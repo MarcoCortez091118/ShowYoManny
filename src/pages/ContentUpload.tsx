@@ -28,12 +28,16 @@ import { MediaEditor } from "@/components/media/MediaEditor";
 import { useDisplaySettings } from "@/hooks/use-display-settings";
 import { Alert } from "@/components/ui/alert";
 import type { ImageFitMode } from "@/utils/imageProcessing";
+import { compressAndTrimVideo, formatFileSize } from "@/utils/videoCompression";
 
 const ContentUpload = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { settings } = useDisplaySettings();
   const [isUploading, setIsUploading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionProgress, setCompressionProgress] = useState(0);
+  const [compressionMessage, setCompressionMessage] = useState("");
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [processedFile, setProcessedFile] = useState<File | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
@@ -196,33 +200,83 @@ const ContentUpload = () => {
   );
 
   const handleVideoAdjustments = React.useCallback(
-    (result: {
+    async (result: {
       file: File;
       previewUrl: string;
       trimStartSeconds: number;
       trimEndSeconds: number;
       durationSeconds: number;
     }) => {
-      setProcessedFile(result.file);
-      setPreviewUrl((previous) => {
-        if (previous && previous !== result.previewUrl) {
-          URL.revokeObjectURL(previous);
-        }
-        return result.previewUrl;
-      });
-      setVideoTrim({
-        start: result.trimStartSeconds,
-        end: result.trimEndSeconds,
-        duration: result.durationSeconds,
-      });
-      setUploadMetadata((prev) => ({
-        ...prev,
-        trimStartSeconds: Number(result.trimStartSeconds.toFixed(2)),
-        trimEndSeconds: Number(result.trimEndSeconds.toFixed(2)),
-        processedDurationSeconds: Number(result.durationSeconds.toFixed(2)),
-      }));
+      try {
+        setIsCompressing(true);
+        setCompressionProgress(0);
+        setCompressionMessage("Iniciando compresi\u00f3n...");
+
+        const originalSize = result.file.size;
+        console.log(`Original file size: ${formatFileSize(originalSize)}`);
+
+        const compressedFile = await compressAndTrimVideo(
+          result.file,
+          result.trimStartSeconds,
+          result.trimEndSeconds,
+          {
+            maxSizeMB: 45,
+            onProgress: (progress) => {
+              setCompressionProgress(progress.progress);
+              setCompressionMessage(progress.message);
+            }
+          }
+        );
+
+        const compressedSize = compressedFile.size;
+        const savedPercent = Math.round(((originalSize - compressedSize) / originalSize) * 100);
+
+        console.log(`Compressed file size: ${formatFileSize(compressedSize)}`);
+        console.log(`Space saved: ${savedPercent}%`);
+
+        toast({
+          title: "Video optimizado",
+          description: `Tama\u00f1o reducido de ${formatFileSize(originalSize)} a ${formatFileSize(compressedSize)} (${savedPercent}% menor)`,
+        });
+
+        setProcessedFile(compressedFile);
+
+        const compressedUrl = URL.createObjectURL(compressedFile);
+        setPreviewUrl((previous) => {
+          if (previous && previous !== result.previewUrl) {
+            URL.revokeObjectURL(previous);
+          }
+          return compressedUrl;
+        });
+
+        setVideoTrim({
+          start: result.trimStartSeconds,
+          end: result.trimEndSeconds,
+          duration: result.durationSeconds,
+        });
+
+        setUploadMetadata((prev) => ({
+          ...prev,
+          trimStartSeconds: Number(result.trimStartSeconds.toFixed(2)),
+          trimEndSeconds: Number(result.trimEndSeconds.toFixed(2)),
+          processedDurationSeconds: Number(result.durationSeconds.toFixed(2)),
+          originalSize: originalSize,
+          compressedSize: compressedSize,
+        }));
+      } catch (error: any) {
+        console.error('Video compression error:', error);
+        toast({
+          title: "Error al comprimir video",
+          description: error.message || "No se pudo optimizar el video. Intenta con un archivo más pequeño.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsCompressing(false);
+        setCompressionProgress(0);
+        setCompressionMessage("");
+      }
     },
-    []
+    [toast]
   );
 
   const handlePaymentAndUpload = async () => {
@@ -582,7 +636,30 @@ const ContentUpload = () => {
                     />
                   </div>
 
-                  {previewUrl && processedFile && (
+                  {isCompressing && (
+                    <div className="space-y-2">
+                      <Label>Optimizando Video...</Label>
+                      <div className="border-2 border-dashed border-primary/50 rounded-lg p-6 bg-primary/5">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="font-medium">{compressionMessage}</span>
+                            <span className="text-muted-foreground">{Math.round(compressionProgress)}%</span>
+                          </div>
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary transition-all duration-300"
+                              style={{ width: `${compressionProgress}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Comprimiendo y optimizando tu video para asegurar que se suba correctamente...
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {previewUrl && processedFile && !isCompressing && (
                     <div className="space-y-2">
                       <Label>Processed Preview</Label>
                       <div className="relative border-2 border-dashed border-border rounded-lg p-4 bg-background">
@@ -796,12 +873,17 @@ const ContentUpload = () => {
                 
                 <Button
                   onClick={handlePaymentAndUpload}
-                  disabled={!processedFile || !selectedPlan || isUploading}
+                  disabled={!processedFile || !selectedPlan || isUploading || isCompressing}
                   className="w-full"
                   variant="electric"
                   size="lg"
                 >
-                  {isUploading ? (
+                  {isCompressing ? (
+                    <>
+                      <Clock className="h-4 w-4 mr-2 animate-spin" />
+                      Optimizando video...
+                    </>
+                  ) : isUploading ? (
                     <>
                       <Clock className="h-4 w-4 mr-2 animate-spin" />
                       Processing...
