@@ -77,7 +77,7 @@ const KioskDisplay = () => {
         } else if (scheduledStart && now >= scheduledStart) {
           computed_status = 'published';
           is_visible = true;
-        } else if (item.status === 'pending') {
+        } else {
           computed_status = 'active';
           is_visible = true;
         }
@@ -92,11 +92,19 @@ const KioskDisplay = () => {
       const visibleItems = enrichedItems.filter(item => item.is_visible);
 
       console.log('KioskDisplay: Loaded', visibleItems.length, 'visible items');
-      setItems(visibleItems);
 
-      if (currentIndex >= visibleItems.length && visibleItems.length > 0) {
-        setCurrentIndex(0);
-      }
+      setItems(prevItems => {
+        if (visibleItems.length === 0) return [];
+
+        const prevLength = prevItems.length;
+        const newLength = visibleItems.length;
+
+        if (prevLength !== newLength && currentIndex >= newLength) {
+          setCurrentIndex(0);
+        }
+
+        return visibleItems;
+      });
 
       setIsLoading(false);
     } catch (error) {
@@ -131,11 +139,15 @@ const KioskDisplay = () => {
     }, 1000);
 
     autoAdvanceTimer.current = setTimeout(() => {
+      console.log(`KioskDisplay: Duration ${currentItem.duration}s completed for ${currentItem.title}`);
       setIsVisible(false);
 
       setTimeout(() => {
         const nextIndex = (currentIndex + 1) % items.length;
-        console.log(`KioskDisplay: Advancing to item ${nextIndex + 1} of ${items.length}`);
+        const isLooping = nextIndex === 0 && currentIndex === items.length - 1;
+
+        console.log(`KioskDisplay: Advancing from ${currentIndex + 1} to ${nextIndex + 1} of ${items.length}${isLooping ? ' (LOOPING BACK TO START)' : ''}`);
+
         setCurrentIndex(nextIndex);
         setIsVisible(true);
       }, 500);
@@ -261,7 +273,7 @@ const KioskDisplay = () => {
         <div className="relative w-full h-full bg-black">
           {currentItem.media_type === 'video' ? (
             <video
-              key={currentItem.id}
+              key={`${currentItem.id}-${currentIndex}`}
               src={currentItem.media_url || ''}
               autoPlay
               muted
@@ -271,7 +283,7 @@ const KioskDisplay = () => {
             />
           ) : (
             <img
-              key={currentItem.id}
+              key={`${currentItem.id}-${currentIndex}`}
               src={currentItem.media_url || ''}
               alt={currentItem.title || 'Content'}
               className="w-full h-full object-contain"
