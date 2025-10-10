@@ -40,49 +40,65 @@ class SupabaseAuthService {
   async signIn(email: string, password: string): Promise<{ session: AuthSession | null; error: any }> {
     try {
       console.log('[SupabaseAuthService] Starting signIn...');
-      console.log('[SupabaseAuthService] Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-      console.log('[SupabaseAuthService] Has Anon Key:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
+      console.log('[SupabaseAuthService] Email:', email);
 
-      const signInPromise = supabase.auth.signInWithPassword({
-        email,
-        password,
-      }).then(result => {
-        console.log('[SupabaseAuthService] signInWithPassword promise resolved');
-        return result;
-      }).catch(err => {
-        console.error('[SupabaseAuthService] signInWithPassword promise rejected:', err);
-        throw err;
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.error('[SupabaseAuthService] Request timeout, aborting...');
+        controller.abort();
+      }, 30000);
 
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          console.error('[SupabaseAuthService] Timeout reached!');
-          reject(new Error('Login timeout after 10 seconds'));
-        }, 10000);
-      });
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
+        clearTimeout(timeoutId);
 
-      console.log('[SupabaseAuthService] SignIn completed:', { hasData: !!data, hasError: !!error, error });
+        console.log('[SupabaseAuthService] SignIn completed:', {
+          hasData: !!data,
+          hasError: !!error,
+          hasSession: !!data?.session,
+          hasUser: !!data?.user,
+          error: error?.message
+        });
 
-      if (error) {
-        console.error('[SupabaseAuthService] Sign in error:', error);
-        return { session: null, error };
-      }
+        if (error) {
+          console.error('[SupabaseAuthService] Sign in error:', error);
+          return { session: null, error };
+        }
 
-      if (data.session) {
+        if (!data.session) {
+          console.error('[SupabaseAuthService] No session returned');
+          return { session: null, error: new Error('No session returned from Supabase') };
+        }
+
         console.log('[SupabaseAuthService] Creating auth session...');
         const session = await this.createAuthSession(data.session);
-        console.log('[SupabaseAuthService] Auth session created:', session);
+        console.log('[SupabaseAuthService] Auth session created successfully');
         this.setSession(session);
         return { session, error: null };
-      }
 
-      console.error('[SupabaseAuthService] No session returned');
-      return { session: null, error: new Error('No session returned') };
+      } catch (innerError: any) {
+        clearTimeout(timeoutId);
+
+        if (innerError.name === 'AbortError') {
+          console.error('[SupabaseAuthService] Request was aborted due to timeout');
+          return {
+            session: null,
+            error: new Error('Login request timed out. Please check your internet connection and try again.')
+          };
+        }
+
+        throw innerError;
+      }
     } catch (error: any) {
       console.error('[SupabaseAuthService] Exception during signIn:', error);
-      return { session: null, error };
+      return {
+        session: null,
+        error: error?.message ? new Error(error.message) : error
+      };
     }
   }
 
