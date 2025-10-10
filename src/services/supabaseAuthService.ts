@@ -38,46 +38,22 @@ class SupabaseAuthService {
   }
 
   async signIn(email: string, password: string): Promise<{ session: AuthSession | null; error: any }> {
-    try {
-      console.log('[SupabaseAuthService] Starting signIn for:', email);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    if (error) {
+      return { session: null, error };
+    }
 
-      console.log('[SupabaseAuthService] SignIn response:', {
-        hasData: !!data,
-        hasError: !!error,
-        hasSession: !!data?.session,
-        hasUser: !!data?.user,
-        errorMessage: error?.message,
-        errorStatus: error?.status
-      });
-
-      if (error) {
-        console.error('[SupabaseAuthService] Sign in error:', error);
-        return { session: null, error };
-      }
-
-      if (!data.session) {
-        console.error('[SupabaseAuthService] No session returned');
-        return { session: null, error: new Error('No session returned from Supabase') };
-      }
-
-      console.log('[SupabaseAuthService] Creating auth session...');
+    if (data.session) {
       const session = await this.createAuthSession(data.session);
-      console.log('[SupabaseAuthService] Auth session created successfully');
       this.setSession(session);
       return { session, error: null };
-
-    } catch (error: any) {
-      console.error('[SupabaseAuthService] Exception during signIn:', error);
-      return {
-        session: null,
-        error: error?.message ? new Error(error.message) : error
-      };
     }
+
+    return { session: null, error: new Error('No session returned') };
   }
 
   async logout(): Promise<void> {
