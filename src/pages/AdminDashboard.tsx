@@ -16,6 +16,7 @@ import { DraggableQueueItem } from "@/components/DraggableQueueItem";
 import { BorderPreview } from "@/components/BorderPreview";
 import PreviewModal from "@/components/PreviewModal";
 import LiveKioskPreview from "@/components/LiveKioskPreview";
+import { AdminMediaEditor } from "@/components/media/AdminMediaEditor";
 import { 
   Upload, 
   Play, 
@@ -100,6 +101,7 @@ const AdminDashboard = () => {
   const [previewOrderId, setPreviewOrderId] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [showUploadReaction, setShowUploadReaction] = useState(false);
+  const [processedMediaMetadata, setProcessedMediaMetadata] = useState<any>(null);
   
   // Drag and drop sensors
   const sensors = useSensors(
@@ -665,36 +667,44 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="content">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  Admin Content Upload
-                </CardTitle>
-                <CardDescription>
-                  Upload content directly as admin (bypasses payment and moderation)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <Label htmlFor="admin-file">Select File</Label>
-                  <Input
-                    id="admin-file"
-                    type="file"
-                    accept="image/*,video/*"
-                    onChange={(e) => handleFileSelection(e.target.files?.[0] || null)}
-                    className="mt-2"
-                  />
-                  {selectedFile && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {selectedFile.name} • {selectedFile.type.startsWith('video/') ? `${displayDuration}s` : 'Image'}
-                    </p>
-                  )}
-                </div>
+            <AdminMediaEditor
+              onFileProcessed={(file, metadata) => {
+                setSelectedFile(file);
+                setProcessedMediaMetadata(metadata);
+                if (metadata.duration) {
+                  setDisplayDuration(Math.round(metadata.duration));
+                }
+              }}
+            />
 
-                <div>
-                  <Label htmlFor="admin-border">Border Style</Label>
-                  <div className="space-y-4 mt-4 max-h-80 overflow-y-auto">
+            {selectedFile && processedMediaMetadata && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Upload className="h-5 w-5" />
+                    Configuración de Subida
+                  </CardTitle>
+                  <CardDescription>
+                    El archivo está listo. Configura opciones adicionales antes de subirlo.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{selectedFile.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {processedMediaMetadata.width}x{processedMediaMetadata.height}px
+                          {processedMediaMetadata.duration && ` • ${processedMediaMetadata.duration.toFixed(1)}s`}
+                        </p>
+                      </div>
+                      <Badge>{selectedFile.type.startsWith('video/') ? 'Video' : 'Imagen'}</Badge>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="admin-border">Border Style</Label>
+                    <div className="space-y-4 mt-4 max-h-80 overflow-y-auto">
                     {borderCategories.map((category) => {
                       const categoryBorders = borderThemes.filter(border => border.category === category);
                       if (categoryBorders.length === 0) return null;
@@ -717,48 +727,48 @@ const AdminDashboard = () => {
                         </div>
                       );
                     })}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="admin-duration">Display Duration (seconds)</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="admin-duration"
-                      type="number"
-                      min="1"
-                      max="300"
-                      value={displayDuration}
-                      onChange={(e) => setDisplayDuration(parseInt(e.target.value) || 10)}
-                      className="mt-2"
-                    />
-                    <span className="text-sm text-muted-foreground mt-2">
-                      {selectedFile?.type.startsWith('video/') ? '(Auto-detected)' : '(Manual)'}
-                    </span>
+                  <div>
+                    <Label htmlFor="admin-duration">Display Duration (seconds)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="admin-duration"
+                        type="number"
+                        min="1"
+                        max="300"
+                        value={displayDuration}
+                        onChange={(e) => setDisplayDuration(parseInt(e.target.value) || 10)}
+                        className="mt-2"
+                      />
+                      <span className="text-sm text-muted-foreground mt-2">
+                        {selectedFile?.type.startsWith('video/') ? '(Auto-detected)' : '(Manual)'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {selectedFile?.type.startsWith('video/')
+                        ? 'Video duration detected automatically. You can adjust if needed.'
+                        : 'Set how long this content should display.'}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {selectedFile?.type.startsWith('video/') 
-                      ? 'Video duration detected automatically. You can adjust if needed.' 
-                      : 'Set how long this content should display.'}
-                  </p>
-                </div>
 
-                {/* Scheduling Options */}
-                <Separator />
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="schedule-mode"
-                      checked={isScheduled}
-                      onCheckedChange={setIsScheduled}
-                    />
-                    <Label htmlFor="schedule-mode" className="flex items-center gap-2">
-                      <CalendarIcon className="h-4 w-4" />
-                      Schedule Content
-                    </Label>
-                  </div>
-                  
-                  {isScheduled && (
+                  {/* Scheduling Options */}
+                  <Separator />
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="schedule-mode"
+                        checked={isScheduled}
+                        onCheckedChange={setIsScheduled}
+                      />
+                      <Label htmlFor="schedule-mode" className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4" />
+                        Schedule Content
+                      </Label>
+                    </div>
+
+                    {isScheduled && (
                     <div className="space-y-6 p-4 bg-muted/50 rounded-lg">
                       {/* Start Date & Time */}
                       <div>
@@ -834,25 +844,25 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     </div>
-                  )}
-                </div>
-
-                {/* Timer Loop Options */}
-                <Separator />
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="timer-loop"
-                      checked={timerLoopEnabled}
-                      onCheckedChange={setTimerLoopEnabled}
-                    />
-                    <Label htmlFor="timer-loop" className="flex items-center gap-2">
-                      <Repeat className="h-4 w-4" />
-                      Enable Timer Loop
-                    </Label>
+                    )}
                   </div>
-                  
-                  {timerLoopEnabled && (
+
+                  {/* Timer Loop Options */}
+                  <Separator />
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="timer-loop"
+                        checked={timerLoopEnabled}
+                        onCheckedChange={setTimerLoopEnabled}
+                      />
+                      <Label htmlFor="timer-loop" className="flex items-center gap-2">
+                        <Repeat className="h-4 w-4" />
+                        Enable Timer Loop
+                      </Label>
+                    </div>
+
+                    {timerLoopEnabled && (
                     <div className="p-4 bg-muted/50 rounded-lg">
                       <Label htmlFor="timer-interval">Loop Interval (minutes)</Label>
                       <Select value={timerLoopMinutes.toString()} onValueChange={(value) => setTimerLoopMinutes(parseInt(value))}>
@@ -870,41 +880,42 @@ const AdminDashboard = () => {
                       </Select>
                       <p className="text-xs text-muted-foreground mt-2">Content will repeat after this interval</p>
                     </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                <Button 
-                  onClick={handleAdminUpload}
-                  disabled={!selectedFile || isLoading}
-                  variant="electric"
-                  className="w-full relative"
-                >
-                  {isLoading ? (
-                    "Uploading..."
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <Upload className="h-4 w-4" />
-                      Upload Content
-                      {isScheduled && <CalendarIcon className="h-4 w-4" />}
-                      {timerLoopEnabled && <Repeat className="h-4 w-4" />}
-                    </span>
-                  )}
-                </Button>
+                  <Button
+                    onClick={handleAdminUpload}
+                    disabled={!selectedFile || isLoading}
+                    variant="electric"
+                    className="w-full relative"
+                  >
+                    {isLoading ? (
+                      "Uploading..."
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Upload className="h-4 w-4" />
+                        Upload Content
+                        {isScheduled && <CalendarIcon className="h-4 w-4" />}
+                        {timerLoopEnabled && <Repeat className="h-4 w-4" />}
+                      </span>
+                    )}
+                  </Button>
 
-                {/* Upload Success Reaction */}
-                {showUploadReaction && (
-                  <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-                    <div className="bg-green-500 text-white px-8 py-4 rounded-lg shadow-2xl animate-scale-in">
-                      <div className="flex items-center gap-3 text-lg font-bold">
-                        <CheckCircle2 className="h-8 w-8" />
-                        <span>Upload Successful!</span>
-                        <Sparkles className="h-8 w-8 animate-pulse" />
+                  {/* Upload Success Reaction */}
+                  {showUploadReaction && (
+                    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+                      <div className="bg-green-500 text-white px-8 py-4 rounded-lg shadow-2xl animate-scale-in">
+                        <div className="flex items-center gap-3 text-lg font-bold">
+                          <CheckCircle2 className="h-8 w-8" />
+                          <span>Upload Successful!</span>
+                          <Sparkles className="h-8 w-8 animate-pulse" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="queue">
