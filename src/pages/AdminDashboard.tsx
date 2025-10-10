@@ -45,6 +45,26 @@ import { firebaseOrderService, OrderRecord } from "@/domain/services/firebase/or
 import { firebaseQueueService, QueueItemRecord } from "@/domain/services/firebase/queueService";
 import { useAuth } from "@/contexts/SimpleAuthContext";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { LogOut } from "lucide-react";
+import {
   DndContext,
   closestCenter,
   KeyboardSensor,
@@ -65,7 +85,8 @@ import { CSS } from '@dnd-kit/utilities';
 const AdminDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isAdmin, loading: authLoading } = useAuth();
+  const { isAdmin, loading: authLoading, user, signOut } = useAuth();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [contentQueue, setContentQueue] = useState<QueueItemRecord[]>([]);
   const [pendingOrders, setPendingOrders] = useState<OrderRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -110,6 +131,35 @@ const AdminDashboard = () => {
     }),
     []
   );
+
+  const getUserInitials = () => {
+    if (!user?.email) return 'A';
+    return user.email.charAt(0).toUpperCase();
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out",
+      });
+      navigate('/admin-login', { replace: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout Error",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setShowLogoutDialog(false);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && isAdmin) {
@@ -515,14 +565,43 @@ const AdminDashboard = () => {
                 Manage content, moderate uploads, and control the digital billboard
               </p>
             </div>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={() => navigate('/admin/settings')}
-              className="shrink-0"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => navigate('/admin/settings')}
+                className="shrink-0"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="relative h-10 w-10 rounded-full p-0">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">Admin Account</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogoutClick} className="text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Cerrar sesión</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
 
@@ -1024,6 +1103,24 @@ const AdminDashboard = () => {
           onClose={() => setIsPreviewOpen(false)}
           orderId={previewOrderId || ''}
         />
+
+        {/* Logout Confirmation Dialog */}
+        <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Estás seguro que deseas cerrar sesión?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Serás redirigido a la página de inicio de sesión y tendrás que volver a ingresar tus credenciales.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleLogoutConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Cerrar sesión
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
