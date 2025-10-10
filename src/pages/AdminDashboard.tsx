@@ -706,6 +706,32 @@ const AdminDashboard = () => {
                 <div>
                   <Label htmlFor="admin-border">Border Style</Label>
                   <div className="space-y-4 mt-4 max-h-80 overflow-y-auto">
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                        BASE
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <button
+                          onClick={() => setBorderStyle(borderStyle === "none" ? "" : "none")}
+                          className={`p-4 rounded-lg border-2 transition-all text-left ${
+                            borderStyle === "none"
+                              ? "border-primary bg-primary/10 ring-2 ring-primary/20"
+                              : "border-muted hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">Sin Borde</span>
+                            {borderStyle === "none" && (
+                              <CheckCircle2 className="h-5 w-5 text-primary" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Contenido sin marco decorativo
+                          </p>
+                        </button>
+                      </div>
+                    </div>
+
                     {borderCategories.map((category) => {
                       const categoryBorders = borderThemes.filter(border => border.category === category);
                       if (categoryBorders.length === 0) return null;
@@ -721,7 +747,7 @@ const AdminDashboard = () => {
                                 key={border.id}
                                 border={border}
                                 isSelected={borderStyle === border.id}
-                                onClick={() => setBorderStyle(border.id)}
+                                onClick={() => setBorderStyle(borderStyle === border.id ? "none" : border.id)}
                               />
                             ))}
                           </div>
@@ -729,6 +755,9 @@ const AdminDashboard = () => {
                       );
                     })}
                   </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Click nuevamente en un borde seleccionado para deseleccionarlo
+                  </p>
                 </div>
 
                 <div>
@@ -738,9 +767,13 @@ const AdminDashboard = () => {
                       id="admin-duration"
                       type="number"
                       min="1"
-                      max="300"
                       value={displayDuration}
-                      onChange={(e) => setDisplayDuration(parseInt(e.target.value) || 10)}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (value >= 1) {
+                          setDisplayDuration(value);
+                        }
+                      }}
                       className="mt-2"
                     />
                     <span className="text-sm text-muted-foreground mt-2">
@@ -749,24 +782,29 @@ const AdminDashboard = () => {
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     {selectedFile?.type.startsWith('video/')
-                      ? 'Video duration detected automatically. You can adjust if needed.'
-                      : 'Set how long this content should display.'}
+                      ? 'Duración del video detectada. Puedes ajustarla si lo necesitas.'
+                      : 'Establece cuánto tiempo se mostrará este contenido (mínimo 1 segundo).'}
                   </p>
                 </div>
 
                 {/* Scheduling Options */}
                 <Separator />
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="schedule-mode"
-                      checked={isScheduled}
-                      onCheckedChange={setIsScheduled}
-                    />
-                    <Label htmlFor="schedule-mode" className="flex items-center gap-2">
-                      <CalendarIcon className="h-4 w-4" />
-                      Schedule Content
-                    </Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="schedule-mode"
+                        checked={isScheduled}
+                        onCheckedChange={setIsScheduled}
+                      />
+                      <Label htmlFor="schedule-mode" className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4" />
+                        Schedule Content
+                      </Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground pl-10">
+                      Programa este contenido para que se muestre automáticamente en un período específico
+                    </p>
                   </div>
 
                   {isScheduled && (
@@ -851,16 +889,21 @@ const AdminDashboard = () => {
                 {/* Timer Loop Options */}
                 <Separator />
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="timer-loop"
-                      checked={timerLoopEnabled}
-                      onCheckedChange={setTimerLoopEnabled}
-                    />
-                    <Label htmlFor="timer-loop" className="flex items-center gap-2">
-                      <Repeat className="h-4 w-4" />
-                      Enable Timer Loop
-                    </Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="timer-loop"
+                        checked={timerLoopEnabled}
+                        onCheckedChange={setTimerLoopEnabled}
+                      />
+                      <Label htmlFor="timer-loop" className="flex items-center gap-2">
+                        <Repeat className="h-4 w-4" />
+                        Enable Timer Loop
+                      </Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground pl-10">
+                      Repite este contenido automáticamente cada X minutos según su posición en la cola
+                    </p>
                   </div>
 
                   {timerLoopEnabled && (
@@ -884,18 +927,53 @@ const AdminDashboard = () => {
                   )}
                 </div>
 
+                {selectedFile && (
+                  <Card className="bg-primary/5 border-primary/20">
+                    <CardContent className="pt-4">
+                      <div className="space-y-2 text-sm">
+                        <h4 className="font-semibold text-primary mb-3">Resumen de Configuración</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <span className="text-muted-foreground">Archivo:</span>
+                            <p className="font-medium truncate">{selectedFile.name}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Borde:</span>
+                            <p className="font-medium">{borderStyle === "none" ? "Sin borde" : borderStyle}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Duración:</span>
+                            <p className="font-medium">{displayDuration}s</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Programado:</span>
+                            <p className="font-medium">{isScheduled ? "Sí" : "No"}</p>
+                          </div>
+                          {timerLoopEnabled && (
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground">Timer Loop:</span>
+                              <p className="font-medium">Cada {timerLoopMinutes} minutos</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <Button
                   onClick={handleAdminUpload}
                   disabled={!selectedFile || isLoading}
                   variant="electric"
+                  size="lg"
                   className="w-full relative"
                 >
                   {isLoading ? (
-                    "Uploading..."
+                    "Subiendo a la base de datos..."
                   ) : (
                     <span className="flex items-center gap-2">
                       <Upload className="h-4 w-4" />
-                      Upload Content
+                      Upload Content a la DB
                       {isScheduled && <CalendarIcon className="h-4 w-4" />}
                       {timerLoopEnabled && <Repeat className="h-4 w-4" />}
                     </span>
