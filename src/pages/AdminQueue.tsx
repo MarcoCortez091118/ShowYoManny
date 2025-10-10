@@ -105,6 +105,39 @@ const AdminQueue = () => {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  const recalculateStatuses = () => {
+    setItems(currentItems => {
+      return currentItems.map(item => {
+        const now = new Date();
+        const scheduledStart = item.scheduled_start ? new Date(item.scheduled_start) : null;
+        const scheduledEnd = item.scheduled_end ? new Date(item.scheduled_end) : null;
+
+        let computed_status = item.computed_status;
+        let is_visible = item.is_visible;
+        let expires_in_minutes = item.expires_in_minutes;
+
+        if (scheduledEnd && now > scheduledEnd) {
+          computed_status = 'expired';
+          is_visible = false;
+        } else if (scheduledStart && now < scheduledStart) {
+          computed_status = 'scheduled';
+          is_visible = false;
+        } else if (scheduledStart && now >= scheduledStart) {
+          computed_status = 'published';
+          is_visible = true;
+          expires_in_minutes = scheduledEnd ? Math.floor((scheduledEnd.getTime() - now.getTime()) / (1000 * 60)) : undefined;
+        }
+
+        return {
+          ...item,
+          computed_status,
+          is_visible,
+          expires_in_minutes,
+        };
+      });
+    });
+  };
+
   useEffect(() => {
     if (!loading && isAdmin && user?.id) {
       fetchQueue();
@@ -126,8 +159,14 @@ const AdminQueue = () => {
         )
         .subscribe();
 
+      const statusUpdateInterval = setInterval(() => {
+        console.log('AdminQueue: Recalculating status badges...');
+        recalculateStatuses();
+      }, 10000);
+
       return () => {
         supabase.removeChannel(channel);
+        clearInterval(statusUpdateInterval);
       };
     }
   }, [loading, isAdmin, user]);
