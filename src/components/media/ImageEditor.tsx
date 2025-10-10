@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   ImageFitMode,
   transformImageToResolution,
 } from "@/utils/imageProcessing";
 import { DisplaySettings } from "@/domain/services/displaySettingsService";
+import { ZoomIn, ZoomOut, Maximize2, Move, RotateCcw } from "lucide-react";
 
 interface ImageEditorProps {
   file: File;
@@ -28,12 +30,11 @@ export const ImageEditor = ({ file, settings, onChange }: ImageEditorProps) => {
   const [horizontal, setHorizontal] = useState(0);
   const [vertical, setVertical] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [hasInitialized, setHasInitialized] = useState(false);
   const [fitMode, setFitMode] = useState<ImageFitMode>("cover");
   const [isDragging, setIsDragging] = useState(false);
   const dragOrigin = useRef<{ x: number; y: number; horizontal: number; vertical: number } | null>(null);
   const canvasPreviewRef = useRef<HTMLDivElement | null>(null);
+  const [hasAutoProcessed, setHasAutoProcessed] = useState(false);
 
   const { screenWidth, screenHeight } = settings;
   const aspectRatioStyle = useMemo(
@@ -50,11 +51,8 @@ export const ImageEditor = ({ file, settings, onChange }: ImageEditorProps) => {
   useEffect(() => {
     return () => {
       URL.revokeObjectURL(objectUrl);
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
     };
-  }, [objectUrl, previewUrl]);
+  }, [objectUrl]);
 
   const applyChanges = useCallback(async () => {
     setIsProcessing(true);
@@ -69,11 +67,6 @@ export const ImageEditor = ({ file, settings, onChange }: ImageEditorProps) => {
         backgroundColor: "#000000",
       });
 
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-
-      setPreviewUrl(result.previewUrl);
       onChange({
         ...result,
         zoom,
@@ -81,39 +74,19 @@ export const ImageEditor = ({ file, settings, onChange }: ImageEditorProps) => {
         offsetYPercent: vertical,
         fitMode,
       });
+    } catch (error) {
+      console.error("Image processing error:", error);
     } finally {
       setIsProcessing(false);
     }
-  }, [
-    file,
-    screenWidth,
-    screenHeight,
-    zoom,
-    horizontal,
-    vertical,
-    fitMode,
-    onChange,
-    previewUrl,
-  ]);
+  }, [file, screenWidth, screenHeight, zoom, horizontal, vertical, fitMode, onChange]);
 
   useEffect(() => {
-    if (!hasInitialized) {
-      setHasInitialized(true);
+    if (!hasAutoProcessed) {
+      setHasAutoProcessed(true);
       void applyChanges();
     }
-  }, [applyChanges, hasInitialized]);
-
-  useEffect(() => {
-    if (!hasInitialized) {
-      return;
-    }
-
-    const handle = window.setTimeout(() => {
-      void applyChanges();
-    }, 150);
-
-    return () => window.clearTimeout(handle);
-  }, [zoom, horizontal, vertical, fitMode, hasInitialized, applyChanges]);
+  }, [hasAutoProcessed, applyChanges]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -154,110 +127,168 @@ export const ImageEditor = ({ file, settings, onChange }: ImageEditorProps) => {
     setFitMode("cover");
   };
 
+  const handleZoomIn = () => {
+    setZoom((prev) => Math.min(prev + 0.25, 3));
+  };
+
+  const handleZoomOut = () => {
+    setZoom((prev) => Math.max(prev - 0.25, 1));
+  };
+
+  const toggleFitMode = () => {
+    setFitMode((prev) => (prev === "cover" ? "contain" : "cover"));
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Drag the image to reposition it within the screen frame. Use zoom for tighter crops or switch to
-            "Fit to screen" to avoid cropping.
-          </p>
+      <Card className="p-4 bg-muted/40">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Move className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Image Editor</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={fitMode === "cover" ? "default" : "outline"}>
+              {fitMode === "cover" ? "Fill Frame" : "Fit to Screen"}
+            </Badge>
+            <Badge variant="secondary">
+              {zoom.toFixed(2)}x
+            </Badge>
+          </div>
         </div>
-        <ToggleGroup
-          type="single"
-          value={fitMode}
-          onValueChange={(value) => {
-            if (!value) return;
-            setFitMode(value as ImageFitMode);
-          }}
-          className="bg-muted/40 rounded-md p-1"
+
+        <div
+          ref={canvasPreviewRef}
+          className="w-full bg-black border-2 border-border rounded-lg overflow-hidden relative cursor-grab active:cursor-grabbing touch-none"
+          style={aspectRatioStyle}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={stopDragging}
+          onPointerLeave={stopDragging}
+          onPointerCancel={stopDragging}
         >
-          <ToggleGroupItem value="cover" className="px-3 py-1 text-sm">
-            Fill Frame
-          </ToggleGroupItem>
-          <ToggleGroupItem value="contain" className="px-3 py-1 text-sm">
-            Fit to Screen
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div>
-
-      <div
-        ref={canvasPreviewRef}
-        className="w-full bg-muted/40 border border-dashed rounded-lg overflow-hidden relative cursor-grab active:cursor-grabbing"
-        style={aspectRatioStyle}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={stopDragging}
-        onPointerLeave={stopDragging}
-        onPointerCancel={stopDragging}
-      >
-        <img
-          src={objectUrl}
-          alt="Editable preview"
-          className="absolute inset-0 h-full w-full"
-          style={{
-            transform: `translate(${horizontal * 50}%, ${vertical * 50}%) scale(${fitMode === "cover" ? zoom : Math.max(zoom, 1)})`,
-            transformOrigin: "center",
-            objectFit: fitMode === "cover" ? "cover" : "contain",
-            transition: isDragging ? "none" : "transform 120ms ease",
-          }}
-        />
-        <div className="pointer-events-none absolute inset-0 border border-white/40 shadow-[inset_0_0_60px_rgba(0,0,0,0.35)]" />
-      </div>
-
-      {fitMode === "cover" && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Zoom</label>
-          <Slider
-            value={[zoom]}
-            min={1}
-            max={3}
-            step={0.05}
-            onValueChange={([value]) => setZoom(value)}
+          <img
+            src={objectUrl}
+            alt="Editable preview"
+            className="absolute inset-0 h-full w-full pointer-events-none"
+            style={{
+              transform: `translate(${horizontal * 50}%, ${vertical * 50}%) scale(${fitMode === "cover" ? zoom : Math.max(zoom, 1)})`,
+              transformOrigin: "center",
+              objectFit: fitMode === "cover" ? "cover" : "contain",
+              transition: isDragging ? "none" : "transform 150ms cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+            draggable={false}
           />
+          <div className="pointer-events-none absolute inset-0 border-2 border-primary/20 shadow-[inset_0_0_60px_rgba(0,0,0,0.5)]">
+            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div key={i} className="border border-primary/10" />
+              ))}
+            </div>
+          </div>
+          {isDragging && (
+            <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
+          )}
         </div>
-      )}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Horizontal Offset</label>
-          <Slider
-            value={[horizontal]}
-            min={-1}
-            max={1}
-            step={0.05}
-            onValueChange={([value]) => setHorizontal(value)}
-          />
+        <div className="mt-4 text-xs text-muted-foreground text-center">
+          <Move className="h-3 w-3 inline mr-1" />
+          Drag to reposition • Use controls below to adjust zoom and position
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Vertical Offset</label>
-          <Slider
-            value={[vertical]}
-            min={-1}
-            max={1}
-            step={0.05}
-            onValueChange={([value]) => setVertical(value)}
-          />
+      </Card>
+
+      <div className="grid gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleZoomOut}
+            disabled={zoom <= 1 || fitMode === "contain"}
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-foreground">Zoom</label>
+              <span className="text-xs text-muted-foreground">{zoom.toFixed(2)}x</span>
+            </div>
+            <Slider
+              value={[zoom]}
+              min={1}
+              max={3}
+              step={0.01}
+              onValueChange={([value]) => setZoom(value)}
+              disabled={fitMode === "contain"}
+            />
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleZoomIn}
+            disabled={zoom >= 3 || fitMode === "contain"}
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-foreground">Horizontal Position</label>
+              <span className="text-xs text-muted-foreground">{(horizontal * 100).toFixed(0)}%</span>
+            </div>
+            <Slider
+              value={[horizontal]}
+              min={-1}
+              max={1}
+              step={0.01}
+              onValueChange={([value]) => setHorizontal(value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-foreground">Vertical Position</label>
+              <span className="text-xs text-muted-foreground">{(vertical * 100).toFixed(0)}%</span>
+            </div>
+            <Slider
+              value={[vertical]}
+              min={-1}
+              max={1}
+              step={0.01}
+              onValueChange={([value]) => setVertical(value)}
+            />
+          </div>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button onClick={() => void applyChanges()} disabled={isProcessing}>
-          {isProcessing ? "Processing..." : "Update Preview"}
+        <Button
+          onClick={() => void applyChanges()}
+          disabled={isProcessing}
+          size="lg"
+          className="flex-1"
+        >
+          {isProcessing ? "Processing..." : "Apply Changes"}
         </Button>
-        <Button variant="outline" onClick={resetAdjustments} disabled={isProcessing}>
-          Reset
+
+        <Button
+          variant="outline"
+          onClick={toggleFitMode}
+          disabled={isProcessing}
+        >
+          <Maximize2 className="h-4 w-4 mr-2" />
+          {fitMode === "cover" ? "Fit Mode" : "Fill Mode"}
         </Button>
-        {previewUrl && (
-          <a
-            href={previewUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm text-primary underline"
-          >
-            Open processed preview
-          </a>
-        )}
+
+        <Button
+          variant="outline"
+          onClick={resetAdjustments}
+          disabled={isProcessing}
+        >
+          <RotateCcw className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
