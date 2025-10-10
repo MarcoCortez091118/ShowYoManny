@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Shield, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabaseAuthService } from "@/services/supabaseAuthService";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SimpleAuthContext";
 
 const AdminLogin = () => {
   const navigate = useNavigate();

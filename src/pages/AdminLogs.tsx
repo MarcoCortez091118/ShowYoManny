@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { firebaseLogService } from "@/domain/services/firebase/logService";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SimpleAuthContext";
 
 interface LogEntry {
   id: string;

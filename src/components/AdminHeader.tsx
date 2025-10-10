@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Monitor, Zap, LogOut, Settings, Home } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SimpleAuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,

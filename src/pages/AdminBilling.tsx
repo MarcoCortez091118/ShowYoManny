@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { firebaseOrderService, OrderRecord } from "@/domain/services/firebase/orderService";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SimpleAuthContext";
 
 const AdminBilling = () => {
   const navigate = useNavigate();

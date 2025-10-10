@@ -43,7 +43,7 @@ import { borderService } from "@/domain/services/borderService";
 import { firebaseStorageService } from "@/domain/services/firebase/storageService";
 import { firebaseOrderService, OrderRecord } from "@/domain/services/firebase/orderService";
 import { firebaseQueueService, QueueItemRecord } from "@/domain/services/firebase/queueService";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SimpleAuthContext";
 import {
   DndContext,
   closestCenter,
