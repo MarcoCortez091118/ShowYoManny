@@ -25,8 +25,8 @@ import { firebaseStorageService } from "@/domain/services/firebase/storageServic
 import { firebaseOrderService } from "@/domain/services/firebase/orderService";
 import { firebasePaymentService } from "@/domain/services/firebase/paymentService";
 import { MediaEditor } from "@/components/media/MediaEditor";
-import { MediaGuidelines } from "@/components/media/MediaGuidelines";
 import { useDisplaySettings } from "@/hooks/use-display-settings";
+import { Alert } from "@/components/ui/alert";
 import type { ImageFitMode } from "@/utils/imageProcessing";
 
 const ContentUpload = () => {
@@ -471,23 +471,55 @@ const ContentUpload = () => {
           </p>
         </div>
 
-        <div className="mb-8">
-          <MediaGuidelines settings={settings} />
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Upload Section */}
-          <Card>
+          {/* Upload Section with Guidelines */}
+          <Card className="bg-muted/40 border-dashed">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="h-5 w-5" />
-                Upload Content
+                Upload Requirements & Editor
               </CardTitle>
               <CardDescription>
-                Drag &amp; drop or browse. We’ll help you match the billboard resolution.
+                Follow the guidelines below and upload your content to get started.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Guidelines Section */}
+              <div className="space-y-4 text-sm text-muted-foreground">
+                <Alert variant="default" className="bg-background/80 border-muted">
+                  <AlertCircle className="h-4 w-4" />
+                  <div>
+                    <div className="font-semibold text-foreground mb-1">Billboard Canvas</div>
+                    <div className="text-xs">
+                      Target resolution <span className="font-medium text-foreground">{settings.screenWidth} × {settings.screenHeight}</span> with a {(settings.screenWidth / settings.screenHeight).toFixed(2)}:1 aspect ratio.
+                      Use the editor's Fill or Fit modes to control cropping.
+                    </div>
+                  </div>
+                </Alert>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-foreground">Images</h4>
+                    <ul className="space-y-1 text-xs">
+                      <li>• Max: {settings.maxImageFileSizeMB} MB</li>
+                      <li>• Format: {settings.recommendedImageFormat}</li>
+                      <li>• Min resolution: {settings.screenWidth}×{settings.screenHeight}</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-foreground">Videos</h4>
+                    <ul className="space-y-1 text-xs">
+                      <li>• Max: {settings.maxVideoFileSizeMB} MB</li>
+                      <li>• Format: {settings.recommendedVideoFormat}</li>
+                      <li>• Duration: {settings.minVideoDurationSeconds}-{settings.maxVideoDurationSeconds}s</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Upload Area */}
               <div>
                 <div className="border-2 border-dashed border-border rounded-xl p-6 text-center bg-muted/30 hover:bg-muted/40 transition">
                   <input
@@ -537,6 +569,7 @@ const ContentUpload = () => {
                 )}
               </div>
 
+              {/* Media Editor */}
               {sourceFile && (
                 <div className="space-y-6">
                   <div className="space-y-2">
@@ -572,6 +605,7 @@ const ContentUpload = () => {
                 </div>
               )}
 
+              {/* Display Duration */}
               <div>
                 <Label htmlFor="duration">Display Duration</Label>
                 <div className="mt-2 p-4 bg-muted/50 rounded-lg border-2 border-dashed border-border text-center space-y-1">
