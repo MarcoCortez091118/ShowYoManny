@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, LogIn, AlertCircle, Loader2 } from 'lucide-react';
+import { Shield, LogIn, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createLogger } from '@/services/logger';
 
@@ -139,7 +139,16 @@ const SimpleAdminLogin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <div className="w-full max-w-md">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/')}
+          className="mb-4 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Home
+        </Button>
+        <Card className="w-full">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
             <Shield className="h-6 w-6 text-primary" />
@@ -228,13 +237,9 @@ const SimpleAdminLogin = () => {
             </div>
           )}
 
-          <div className="mt-4 text-center">
-            <p className="text-xs text-muted-foreground">
-              Open browser console (F12) to view detailed logs
-            </p>
-          </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };
