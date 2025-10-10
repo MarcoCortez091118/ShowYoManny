@@ -1,149 +1,135 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import { Monitor } from "lucide-react";
+import { supabaseQueueService, type EnrichedQueueItem } from "@/services/supabaseQueueService";
+import { supabase } from '@/lib/supabase';
+import { BORDER_THEMES } from '../../shared/border-themes';
 import showYoLogo from "@/assets/showyo-logo-overlay.png";
-import { firebaseKioskService } from "@/domain/services/firebase/kioskService";
-import { firebaseStorageService } from "@/domain/services/firebase/storageService";
 
-interface PlaylistItem {
-  id: string;
-  type: "photo" | "video";
-  src: string;
-  duration_sec: number;
-  fit_mode: "fit" | "fill";
-  overlay: {
-    border_id: string;
-    z: number;
-  } | null;
-  priority: "paid" | "admin" | "house";
-  window: {
-    start_at: string | null;
-    end_at: string | null;
-  };
-  repeat: {
-    mode: "once" | "interval" | "unlimited";
-    n: number | null;
-    interval_minutes: number | null;
-  };
-  caps: {
-    max_plays_per_day: number;
-    current_plays: number;
-  };
-  delete_after_play: boolean;
-  pricing_option_id?: string;
-  file_name: string;
-  user_email: string;
-}
-
-interface Playlist {
-  version: number;
-  generated_at: string;
-  timezone: string;
-  canvas: { width: number; height: number };
-  items: PlaylistItem[];
-}
+const SCREEN_WIDTH = 2048;
+const SCREEN_HEIGHT = 2432;
 
 const KioskDisplay = () => {
-  const [searchParams] = useSearchParams();
-  const previewId = searchParams.get('preview');
-  const [playlist, setPlaylist] = useState<Playlist | null>(null);
+  const [items, setItems] = useState<EnrichedQueueItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const autoAdvanceTimer = useRef<NodeJS.Timeout | null>(null);
   const countdownTimer = useRef<NodeJS.Timeout | null>(null);
-  const playStartTime = useRef<Date | null>(null);
 
-  // Fetch playlist on mount and set up real-time subscriptions
   useEffect(() => {
-    fetchPlaylist();
+    fetchContent();
 
-    const interval = setInterval(fetchPlaylist, 30000);
+    const channel = supabase
+      .channel('queue-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'queue_items',
+        },
+        () => {
+          console.log('KioskDisplay: Queue changed, refetching...');
+          fetchContent();
+        }
+      )
+      .subscribe();
+
+    const refreshInterval = setInterval(fetchContent, 10000);
 
     return () => {
-      clearInterval(interval);
+      channel.unsubscribe();
+      clearInterval(refreshInterval);
+      if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+      if (countdownTimer.current) clearInterval(countdownTimer.current);
     };
   }, []);
 
-  const fetchPlaylist = async () => {
+  const fetchContent = async () => {
     try {
-      console.log('KioskDisplay: Fetching playlist...');
-      const data = await firebaseKioskService.fetchPlaylist(previewId);
+      const result = await supabase
+        .from('queue_items')
+        .select('*')
+        .order('order_index', { ascending: true });
 
-      console.log('KioskDisplay: Playlist loaded with', data.items.length, 'items');
-      
-      // Reset index if current index is out of bounds
-      setCurrentIndex(prevIndex => {
-        if (!data.items || data.items.length === 0) return 0;
-        if (prevIndex >= data.items.length) {
-          console.log('KioskDisplay: Resetting index from', prevIndex, 'to 0 (playlist changed)');
-          return 0;
+      if (result.error) {
+        console.error('Error fetching content:', result.error);
+        setIsLoading(false);
+        return;
+      }
+
+      const allItems = result.data || [];
+      const enrichedItems = allItems.map(item => {
+        const now = new Date();
+        const scheduledStart = item.scheduled_start ? new Date(item.scheduled_start) : null;
+        const scheduledEnd = item.scheduled_end ? new Date(item.scheduled_end) : null;
+
+        let computed_status: 'scheduled' | 'published' | 'expired' | 'active' | 'pending' = 'active';
+        let is_visible = true;
+
+        if (scheduledEnd && now > scheduledEnd) {
+          computed_status = 'expired';
+          is_visible = false;
+        } else if (scheduledStart && now < scheduledStart) {
+          computed_status = 'scheduled';
+          is_visible = false;
+        } else if (scheduledStart && now >= scheduledStart) {
+          computed_status = 'published';
+          is_visible = true;
+        } else if (item.status === 'pending') {
+          computed_status = 'active';
+          is_visible = true;
         }
-        return prevIndex;
+
+        return {
+          ...item,
+          computed_status,
+          is_visible,
+        };
       });
-      
-      setPlaylist(data);
+
+      const visibleItems = enrichedItems.filter(item => item.is_visible);
+
+      console.log('KioskDisplay: Loaded', visibleItems.length, 'visible items');
+      setItems(visibleItems);
+
+      if (currentIndex >= visibleItems.length && visibleItems.length > 0) {
+        setCurrentIndex(0);
+      }
+
       setIsLoading(false);
     } catch (error) {
-      console.error('Error fetching playlist:', error);
+      console.error('Error fetching content:', error);
       setIsLoading(false);
     }
   };
 
-  // Auto-advance to next item
   useEffect(() => {
-    if (!playlist || playlist.items.length === 0 || previewId) return;
+    if (items.length === 0) return;
 
-    const currentItem = playlist.items[currentIndex];
+    const currentItem = items[currentIndex];
     if (!currentItem) return;
 
-    // Clear existing timers
     if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
     if (countdownTimer.current) clearInterval(countdownTimer.current);
 
-    const duration = currentItem.duration_sec * 1000;
-    console.log(`KioskDisplay: Playing ${currentItem.file_name} for ${currentItem.duration_sec}s`);
-    
-    // Record play start time
-    playStartTime.current = new Date();
-    
-    // Set countdown
-    setTimeRemaining(currentItem.duration_sec);
+    const duration = (currentItem.duration || 10) * 1000;
+    console.log(`KioskDisplay: Playing ${currentItem.title} for ${currentItem.duration}s`);
+
+    setTimeRemaining(currentItem.duration || 10);
     countdownTimer.current = setInterval(() => {
       setTimeRemaining(prev => Math.max(0, prev - 1));
     }, 1000);
 
-    // Auto-advance after duration
-    autoAdvanceTimer.current = setTimeout(async () => {
-      try {
-        // Report play completion
-        await firebaseKioskService.reportPlay({
-          itemId: currentItem.id,
-          startedAt: playStartTime.current?.toISOString() ?? new Date().toISOString(),
-          completedAt: new Date().toISOString(),
-          success: true,
-        });
-        
-        console.log('KioskDisplay: Play reported for', currentItem.file_name);
-      } catch (e) {
-        console.error('Error reporting play:', e);
-      }
-
-      // Fade out
+    autoAdvanceTimer.current = setTimeout(() => {
       setIsVisible(false);
-      
-      // Advance to next item
+
       setTimeout(() => {
-        const nextIndex = (currentIndex + 1) % playlist.items.length;
-        console.log(`KioskDisplay: Advancing to item ${nextIndex + 1} of ${playlist.items.length}`);
+        const nextIndex = (currentIndex + 1) % items.length;
+        console.log(`KioskDisplay: Advancing to item ${nextIndex + 1} of ${items.length}`);
         setCurrentIndex(nextIndex);
         setIsVisible(true);
-        
-        // If we've looped, refresh playlist to get updated caps
-        if (nextIndex === 0) {
-          fetchPlaylist();
-        }
       }, 500);
     }, duration);
 
@@ -151,7 +137,7 @@ const KioskDisplay = () => {
       if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
       if (countdownTimer.current) clearInterval(countdownTimer.current);
     };
-  }, [currentIndex, playlist, previewId]);
+  }, [currentIndex, items]);
 
   if (isLoading) {
     return (
@@ -161,7 +147,7 @@ const KioskDisplay = () => {
     );
   }
 
-  if (!playlist || playlist.items.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
         <div className="text-center text-white/40">
@@ -172,280 +158,140 @@ const KioskDisplay = () => {
     );
   }
 
-  const currentItem = playlist.items[currentIndex];
-  const getImageUrl = (filePath: string) => {
-    if (!filePath) return null;
-    return firebaseStorageService.getPublicUrl(filePath);
+  const currentItem = items[currentIndex];
+  if (!currentItem) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <div className="text-center text-white/40">
+          <Monitor className="h-32 w-32 mx-auto mb-6 opacity-30" />
+          <p className="text-xl">Waiting for content...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const border = currentItem.border_style && currentItem.border_style !== 'none'
+    ? BORDER_THEMES.find(b => b.id === currentItem.border_style)
+    : null;
+
+  const renderBorderOverlay = () => {
+    if (!border) return null;
+
+    return (
+      <div className="absolute inset-0 pointer-events-none z-10">
+        {border.message && (
+          <>
+            <div className="absolute inset-x-0 top-0 py-12 bg-gradient-to-b from-black/90 via-black/80 to-transparent text-white flex items-center justify-center">
+              <div className="text-6xl font-bold tracking-wide drop-shadow-lg">
+                {border.message}
+              </div>
+            </div>
+            <div className="absolute inset-x-0 bottom-0 py-12 bg-gradient-to-t from-black/90 via-black/80 to-transparent text-white flex items-center justify-center">
+              <div className="text-6xl font-bold tracking-wide drop-shadow-lg">
+                {border.message}
+              </div>
+            </div>
+          </>
+        )}
+
+        {border.category === 'Holiday' && (
+          <>
+            <div className="absolute top-12 left-12 text-8xl drop-shadow-xl">🎄</div>
+            <div className="absolute top-12 right-12 text-8xl drop-shadow-xl">🎄</div>
+            <div className="absolute bottom-12 left-12 text-8xl drop-shadow-xl">🎁</div>
+            <div className="absolute bottom-12 right-12 text-8xl drop-shadow-xl">⭐</div>
+          </>
+        )}
+
+        {border.category === 'Special Occasions' && (
+          <>
+            <div className="absolute top-12 left-12 text-8xl drop-shadow-xl">✨</div>
+            <div className="absolute top-12 right-12 text-8xl drop-shadow-xl">✨</div>
+            <div className="absolute bottom-12 left-12 text-8xl drop-shadow-xl">🎉</div>
+            <div className="absolute bottom-12 right-12 text-8xl drop-shadow-xl">🎊</div>
+          </>
+        )}
+
+        {border.category === 'Futuristic' && (
+          <>
+            <div className="absolute top-12 left-12 text-7xl drop-shadow-xl">⚡</div>
+            <div className="absolute top-12 right-12 text-7xl drop-shadow-xl">⚡</div>
+            <div className="absolute bottom-12 left-12 text-7xl drop-shadow-xl">🔮</div>
+            <div className="absolute bottom-12 right-12 text-7xl drop-shadow-xl">🔮</div>
+          </>
+        )}
+
+        {border.category === 'Seasonal' && (
+          <>
+            <div className="absolute top-12 left-12 text-8xl drop-shadow-xl">
+              {border.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
+            </div>
+            <div className="absolute top-12 right-12 text-8xl drop-shadow-xl">
+              {border.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
+            </div>
+            <div className="absolute bottom-12 left-12 text-8xl drop-shadow-xl">
+              {border.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
+            </div>
+            <div className="absolute bottom-12 right-12 text-8xl drop-shadow-xl">
+              {border.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
+            </div>
+          </>
+        )}
+      </div>
+    );
   };
-
-  const getBorderClass = (borderId: string) => {
-    const borderStyles: Record<string, string> = {
-      'none': '',
-      // Holiday Borders
-      'merry-christmas': 'border-8 border-red-600 bg-gradient-to-br from-red-100 via-green-100 to-red-100',
-      'happy-new-year': 'border-8 border-yellow-500 bg-gradient-to-br from-yellow-100 via-purple-100 to-blue-100',
-      'happy-valentines': 'border-8 border-pink-500 bg-gradient-to-br from-pink-100 via-red-100 to-pink-100',
-      'happy-halloween': 'border-8 border-orange-600 bg-gradient-to-br from-orange-100 via-black/20 to-orange-100',
-      'happy-easter': 'border-8 border-green-500 bg-gradient-to-br from-green-100 via-yellow-100 to-pink-100',
-      'happy-thanksgiving': 'border-8 border-amber-600 bg-gradient-to-br from-amber-100 via-orange-100 to-red-100',
-      // Special Occasions
-      'happy-birthday': 'border-8 border-purple-500 bg-gradient-to-br from-purple-100 via-pink-100 to-yellow-100',
-      'congrats-graduate': 'border-8 border-blue-600 bg-gradient-to-br from-blue-100 via-white to-yellow-100',
-      'happy-anniversary': 'border-8 border-rose-500 bg-gradient-to-br from-rose-100 via-pink-100 to-red-100',
-      'wedding-day': 'border-8 border-white bg-gradient-to-br from-white via-pink-50 to-white',
-      // Futuristic Borders
-      'neon-glow': 'border-8 border-cyan-400 bg-gradient-to-br from-cyan-100 via-purple-100 to-cyan-100',
-      'tech-circuit': 'border-8 border-blue-600 bg-gradient-to-br from-blue-100 via-cyan-100 to-blue-100',
-      'galaxy': 'border-8 border-indigo-600 bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100',
-      'cyberpunk': 'border-8 border-fuchsia-500 bg-gradient-to-br from-fuchsia-100 via-cyan-100 to-fuchsia-100',
-      // Seasonal Borders
-      'summer': 'border-8 border-yellow-400 bg-gradient-to-br from-yellow-100 via-orange-100 to-yellow-100',
-      'winter': 'border-8 border-blue-300 bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-50',
-      'autumn': 'border-8 border-orange-500 bg-gradient-to-br from-orange-100 via-red-100 to-orange-100',
-      // Funny Quote Borders
-      'calories-dont-count': 'border-8 border-pink-400 bg-gradient-to-br from-pink-100 via-yellow-100 to-pink-100',
-      'work-hard-party': 'border-8 border-blue-500 bg-gradient-to-br from-blue-100 via-indigo-100 to-blue-100',
-      'reboot-friday': 'border-8 border-green-500 bg-gradient-to-br from-green-100 via-yellow-100 to-green-100',
-      'dance-watching': 'border-8 border-purple-600 bg-gradient-to-br from-purple-100 via-pink-100 to-yellow-100',
-    };
-    return borderStyles[borderId] || '';
-  };
-
-  const getBorderText = (borderId: string) => {
-    const texts: Record<string, string> = {
-      'merry-christmas': 'Merry Christmas',
-      'happy-new-year': 'Happy New Year',
-      "happy-valentines": "Happy Valentine's Day",
-      'happy-halloween': 'Happy Halloween',
-      'happy-easter': 'Happy Easter',
-      'happy-thanksgiving': 'Happy Thanksgiving',
-      'happy-birthday': 'Happy Birthday',
-      'congrats-graduate': 'Congrats Graduate',
-      'happy-anniversary': 'Happy Anniversary',
-      'wedding-day': 'Wedding Day',
-      'neon-glow': 'Neon Glow',
-      'tech-circuit': 'Tech Circuit',
-      'galaxy': 'Galaxy',
-      'cyberpunk': 'Cyberpunk',
-      'summer': 'Summer',
-      'winter': 'Winter',
-      'autumn': 'Autumn',
-      // Funny Quotes
-      'calories-dont-count': "Calories Don't Count Tonight",
-      'work-hard-party': 'Work Hard, Party Harder',
-      'reboot-friday': "Reboot Yourself, It's Friday",
-      'dance-watching': "Dance Like Nobody's Watching",
-    };
-    return texts[borderId] || '';
-  };
-
-  // Resolve border info
-  const borderId = currentItem.overlay?.border_id || 'none';
-  const borderClass = borderId !== 'none' ? getBorderClass(borderId) : '';
-  const borderText = getBorderText(borderId);
-  const hasBorder = borderId !== 'none';
-  
-  // Determine fit mode (default to 'fit' per spec - no cropping)
-  const fitClass = currentItem.fit_mode === 'fill' ? 'object-cover' : 'object-contain';
-
-  // Check if logo should be displayed based on pricing option
-  const shouldShowLogo = currentItem.pricing_option_id?.includes('logo');
 
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
-      <div 
-        className={`w-full h-full transition-opacity duration-500 ${
-          isVisible ? 'opacity-100' : 'opacity-0'
-        }`}
+    <div
+      className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden"
+      style={{ width: '100vw', height: '100vh' }}
+    >
+      <div
+        className={`transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+        style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}
       >
-        {hasBorder ? (
-          // With Border: Outer frame with gradient + inner content area
-          <div className={`relative w-full h-full ${borderClass} flex items-center justify-center p-6`}>
-            {/* Inner content area - black background to show content clearly */}
-            <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
-              {currentItem.type === 'photo' && (
-                <img
-                  key={currentItem.id}
-                  src={getImageUrl(currentItem.src)}
-                  alt={currentItem.file_name}
-                  className={`absolute inset-0 w-full h-full ${fitClass}`}
-                />
-              )}
-              
-              {currentItem.type === 'video' && (
-                <video
-                  key={currentItem.id}
-                  src={getImageUrl(currentItem.src)}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className={`absolute inset-0 w-full h-full ${fitClass}`}
-                />
-              )}
+        <div className="relative w-full h-full bg-black">
+          {currentItem.media_type === 'video' ? (
+            <video
+              key={currentItem.id}
+              src={currentItem.media_url || ''}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <img
+              key={currentItem.id}
+              src={currentItem.media_url || ''}
+              alt={currentItem.title || 'Content'}
+              className="w-full h-full object-contain"
+            />
+          )}
 
-              {/* Bottom banner for border text - 100% bigger */}
-              {borderText && (
-                <div className="absolute inset-x-0 bottom-0 py-8 bg-gradient-to-t from-black/95 via-black/80 to-transparent">
-                  <div className="text-white text-6xl font-extrabold tracking-widest text-center drop-shadow-2xl animate-pulse">
-                    {borderText}
-                  </div>
-                </div>
-              )}
+          {renderBorderOverlay()}
 
-              {/* Thematic corner decorations */}
-              {hasBorder && (
-                <>
-                  {/* Top Left Corner */}
-                  <div className="absolute top-4 left-4 text-6xl opacity-80 animate-bounce">
-                    {borderId.includes('christmas') && '🎄'}
-                    {borderId.includes('new-year') && '🎉'}
-                    {borderId.includes('valentine') && '💕'}
-                    {borderId.includes('halloween') && '🎃'}
-                    {borderId.includes('easter') && '🐰'}
-                    {borderId.includes('thanksgiving') && '🦃'}
-                    {borderId.includes('birthday') && '🎂'}
-                    {borderId.includes('graduate') && '🎓'}
-                    {borderId.includes('anniversary') && '💐'}
-                    {borderId.includes('wedding') && '💍'}
-                    {borderId.includes('neon') && '✨'}
-                    {borderId.includes('tech') && '⚡'}
-                    {borderId.includes('galaxy') && '🌟'}
-                    {borderId.includes('cyberpunk') && '🔮'}
-                    {borderId.includes('summer') && '☀️'}
-                    {borderId.includes('winter') && '❄️'}
-                    {borderId.includes('autumn') && '🍂'}
-                    {borderId.includes('calories') && '🍰'}
-                    {borderId.includes('party') && '🎊'}
-                    {borderId.includes('friday') && '🌈'}
-                    {borderId.includes('dance') && '💃'}
-                  </div>
-
-                  {/* Top Right Corner */}
-                  <div className="absolute top-4 right-4 text-6xl opacity-80 animate-bounce" style={{ animationDelay: '0.2s' }}>
-                    {borderId.includes('christmas') && '⛄'}
-                    {borderId.includes('new-year') && '🎆'}
-                    {borderId.includes('valentine') && '💝'}
-                    {borderId.includes('halloween') && '👻'}
-                    {borderId.includes('easter') && '🥚'}
-                    {borderId.includes('thanksgiving') && '🍁'}
-                    {borderId.includes('birthday') && '🎈'}
-                    {borderId.includes('graduate') && '📚'}
-                    {borderId.includes('anniversary') && '❤️'}
-                    {borderId.includes('wedding') && '👰'}
-                    {borderId.includes('neon') && '💫'}
-                    {borderId.includes('tech') && '🔌'}
-                    {borderId.includes('galaxy') && '🌌'}
-                    {borderId.includes('cyberpunk') && '🎮'}
-                    {borderId.includes('summer') && '🏖️'}
-                    {borderId.includes('winter') && '⛸️'}
-                    {borderId.includes('autumn') && '🍄'}
-                    {borderId.includes('calories') && '🍕'}
-                    {borderId.includes('party') && '🎵'}
-                    {borderId.includes('friday') && '🎪'}
-                    {borderId.includes('dance') && '🕺'}
-                  </div>
-
-                  {/* Bottom Left Corner */}
-                  <div className="absolute bottom-24 left-4 text-6xl opacity-80 animate-bounce" style={{ animationDelay: '0.4s' }}>
-                    {borderId.includes('christmas') && '🎁'}
-                    {borderId.includes('new-year') && '🥂'}
-                    {borderId.includes('valentine') && '🌹'}
-                    {borderId.includes('halloween') && '🕷️'}
-                    {borderId.includes('easter') && '🌷'}
-                    {borderId.includes('thanksgiving') && '🌽'}
-                    {borderId.includes('birthday') && '🎁'}
-                    {borderId.includes('graduate') && '🏆'}
-                    {borderId.includes('anniversary') && '💝'}
-                    {borderId.includes('wedding') && '🥂'}
-                    {borderId.includes('neon') && '⚡'}
-                    {borderId.includes('tech') && '💻'}
-                    {borderId.includes('galaxy') && '🪐'}
-                    {borderId.includes('cyberpunk') && '🤖'}
-                    {borderId.includes('summer') && '🍉'}
-                    {borderId.includes('winter') && '⛷️'}
-                    {borderId.includes('autumn') && '🎃'}
-                    {borderId.includes('calories') && '🍔'}
-                    {borderId.includes('party') && '🎸'}
-                    {borderId.includes('friday') && '🎭'}
-                    {borderId.includes('dance') && '🎶'}
-                  </div>
-
-                  {/* Bottom Right Corner */}
-                  <div className="absolute bottom-24 right-4 text-6xl opacity-80 animate-bounce" style={{ animationDelay: '0.6s' }}>
-                    {borderId.includes('christmas') && '🔔'}
-                    {borderId.includes('new-year') && '🎇'}
-                    {borderId.includes('valentine') && '💖'}
-                    {borderId.includes('halloween') && '🦇'}
-                    {borderId.includes('easter') && '🐣'}
-                    {borderId.includes('thanksgiving') && '🥧'}
-                    {borderId.includes('birthday') && '🎉'}
-                    {borderId.includes('graduate') && '🎊'}
-                    {borderId.includes('anniversary') && '💗'}
-                    {borderId.includes('wedding') && '💐'}
-                    {borderId.includes('neon') && '🌠'}
-                    {borderId.includes('tech') && '🖥️'}
-                    {borderId.includes('galaxy') && '🚀'}
-                    {borderId.includes('cyberpunk') && '👾'}
-                    {borderId.includes('summer') && '🌴'}
-                    {borderId.includes('winter') && '☃️'}
-                    {borderId.includes('autumn') && '🍎'}
-                    {borderId.includes('calories') && '🍩'}
-                    {borderId.includes('party') && '🎤'}
-                    {borderId.includes('friday') && '🎨'}
-                    {borderId.includes('dance') && '🎼'}
-                  </div>
-                </>
-              )}
-
-              {/* ShowYo Logo Overlay - bottom right corner */}
-              {shouldShowLogo && (
-                <div className="absolute bottom-8 right-8 z-50">
-                  <img 
-                    src={showYoLogo} 
-                    alt="ShowYo" 
-                    className="h-16 w-auto opacity-90 drop-shadow-lg"
-                  />
-                </div>
-              )}
+          <div className="absolute top-8 left-8 z-20 bg-black/50 rounded-lg px-4 py-2">
+            <div className="text-white text-2xl font-bold">
+              {currentIndex + 1} / {items.length}
             </div>
           </div>
-        ) : (
-          // Without Border: Full screen content
-          <div className="relative w-full h-full">
-            {currentItem.type === 'photo' && (
-              <img
-                key={currentItem.id}
-                src={getImageUrl(currentItem.src)}
-                alt={currentItem.file_name}
-                className={`w-full h-full ${fitClass}`}
-              />
-            )}
-            
-            {currentItem.type === 'video' && (
-              <video
-                key={currentItem.id}
-                src={getImageUrl(currentItem.src)}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className={`w-full h-full ${fitClass}`}
-              />
-            )}
 
-            {/* ShowYo Logo Overlay - bottom right corner */}
-            {shouldShowLogo && (
-              <div className="absolute bottom-8 right-8 z-50">
-                <img 
-                  src={showYoLogo} 
-                  alt="ShowYo" 
-                  className="h-16 w-auto opacity-90 drop-shadow-lg"
-                />
-              </div>
-            )}
+          <div className="absolute top-8 right-8 z-20 bg-black/50 rounded-lg px-4 py-2">
+            <div className="text-white text-2xl font-bold">
+              {timeRemaining}s
+            </div>
           </div>
-        )}
+
+          <div className="absolute bottom-8 right-8 z-50">
+            <img
+              src={showYoLogo}
+              alt="ShowYo"
+              className="h-20 w-auto opacity-80 drop-shadow-lg"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
