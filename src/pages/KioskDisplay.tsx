@@ -117,9 +117,17 @@ const KioskDisplay = () => {
     const duration = (currentItem.duration || 10) * 1000;
     console.log(`KioskDisplay: Playing ${currentItem.title} for ${currentItem.duration}s`);
 
+    localStorage.setItem('kiosk-current-index', currentIndex.toString());
+    localStorage.setItem('kiosk-current-item-id', currentItem.id);
+    localStorage.setItem('kiosk-total-items', items.length.toString());
+
     setTimeRemaining(currentItem.duration || 10);
     countdownTimer.current = setInterval(() => {
-      setTimeRemaining(prev => Math.max(0, prev - 1));
+      setTimeRemaining(prev => {
+        const newValue = Math.max(0, prev - 1);
+        localStorage.setItem('kiosk-time-remaining', newValue.toString());
+        return newValue;
+      });
     }, 1000);
 
     autoAdvanceTimer.current = setTimeout(() => {

@@ -18,22 +18,49 @@ export const KioskSimulator = ({ queueItems }: KioskSimulatorProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [syncWithKiosk, setSyncWithKiosk] = useState(false);
 
   const currentItem = queueItems[currentIndex];
 
   useEffect(() => {
-    if (currentItem) {
-      setTimeLeft(currentItem.duration || 10);
-    }
-  }, [currentItem]);
+    const handleStorageChange = () => {
+      const kioskIndex = localStorage.getItem('kiosk-current-index');
+      const kioskTimeRemaining = localStorage.getItem('kiosk-time-remaining');
+
+      if (kioskIndex !== null) {
+        const index = parseInt(kioskIndex, 10);
+        if (!isNaN(index) && index !== currentIndex) {
+          setCurrentIndex(index);
+          setSyncWithKiosk(true);
+        }
+      }
+
+      if (kioskTimeRemaining !== null) {
+        const time = parseInt(kioskTimeRemaining, 10);
+        if (!isNaN(time)) {
+          setTimeLeft(time);
+        }
+      }
+    };
+
+    const interval = setInterval(handleStorageChange, 500);
+    handleStorageChange();
+
+    return () => clearInterval(interval);
+  }, [currentIndex]);
 
   useEffect(() => {
-    if (!isPlaying || !currentItem) return;
+    if (currentItem && !syncWithKiosk) {
+      setTimeLeft(currentItem.duration || 10);
+    }
+  }, [currentItem, syncWithKiosk]);
+
+  useEffect(() => {
+    if (!isPlaying || !currentItem || syncWithKiosk) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          handleNext();
           return currentItem.duration || 10;
         }
         return prev - 1;
@@ -41,7 +68,7 @@ export const KioskSimulator = ({ queueItems }: KioskSimulatorProps) => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isPlaying, currentItem, currentIndex]);
+  }, [isPlaying, currentItem, currentIndex, syncWithKiosk]);
 
   const handleNext = () => {
     setCurrentIndex((prev) => (prev + 1) % Math.max(queueItems.length, 1));
@@ -212,10 +239,15 @@ export const KioskSimulator = ({ queueItems }: KioskSimulatorProps) => {
           {renderBorderOverlay()}
 
           {/* Status Badge */}
-          <div className="absolute top-4 left-4 z-20">
+          <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
             <Badge variant="secondary" className="text-xs">
               {currentIndex + 1} / {queueItems.length}
             </Badge>
+            {syncWithKiosk && (
+              <Badge variant="default" className="text-xs bg-green-500">
+                Synced with Kiosk
+              </Badge>
+            )}
           </div>
 
           {/* Timer Badge */}
