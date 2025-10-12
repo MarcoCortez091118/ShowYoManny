@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, GripVertical, Play, Trash2, Calendar, Clock, Edit } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ArrowLeft, GripVertical, Play, Trash2, Calendar, Clock, Edit, CheckCircle2, ClockIcon, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -392,24 +394,143 @@ const AdminQueue = () => {
               </p>
             </CardHeader>
             <CardContent>
-              {items.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  No items in queue
-                </div>
-              ) : (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                    {items.map((item) => (
-                      <SortableItem
-                        key={item.id}
-                        item={item}
-                        onDelete={handleDeleteClick}
-                        onEdit={handleEditClick}
-                      />
-                    ))}
-                  </SortableContext>
-                </DndContext>
-              )}
+              <Tabs defaultValue="all" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 mb-4">
+                  <TabsTrigger value="all" className="text-xs sm:text-sm">
+                    <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    Todos ({items.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="published" className="text-xs sm:text-sm">
+                    <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    Publicados ({items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').length})
+                  </TabsTrigger>
+                  <TabsTrigger value="scheduled" className="text-xs sm:text-sm">
+                    <ClockIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    Programados ({items.filter(i => i.computed_status === 'scheduled' || i.computed_status === 'pending').length})
+                  </TabsTrigger>
+                  <TabsTrigger value="expired" className="text-xs sm:text-sm">
+                    <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    Expirados ({items.filter(i => i.computed_status === 'expired' || i.computed_status === 'completed').length})
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="all">
+                  {items.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No items in queue
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[600px] pr-4">
+                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                          {items.map((item) => (
+                            <SortableItem
+                              key={item.id}
+                              item={item}
+                              onDelete={handleDeleteClick}
+                              onEdit={handleEditClick}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+                    </ScrollArea>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="published">
+                  {items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No hay contenido publicado
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[600px] pr-4">
+                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').map(i => i.id)} strategy={verticalListSortingStrategy}>
+                          {items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').map((item) => (
+                            <SortableItem
+                              key={item.id}
+                              item={item}
+                              onDelete={handleDeleteClick}
+                              onEdit={handleEditClick}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+                    </ScrollArea>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="scheduled">
+                  {items.filter(i => i.computed_status === 'scheduled' || i.computed_status === 'pending').length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No hay contenido programado
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[600px] pr-4">
+                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={items.filter(i => i.computed_status === 'scheduled' || i.computed_status === 'pending').map(i => i.id)} strategy={verticalListSortingStrategy}>
+                          {items.filter(i => i.computed_status === 'scheduled' || i.computed_status === 'pending').map((item) => (
+                            <SortableItem
+                              key={item.id}
+                              item={item}
+                              onDelete={handleDeleteClick}
+                              onEdit={handleEditClick}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+                    </ScrollArea>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="expired">
+                  {items.filter(i => i.computed_status === 'expired' || i.computed_status === 'completed').length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No hay contenido expirado
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[600px] pr-4">
+                      {items.filter(i => i.computed_status === 'expired' || i.computed_status === 'completed').map((item) => (
+                        <div key={item.id} className="bg-card border rounded-lg p-4 mb-2 opacity-60">
+                          <div className="flex items-center gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <Badge className="bg-red-500">
+                                  {item.computed_status === 'expired' ? 'Expirado' : 'Completado'}
+                                </Badge>
+                                <span className="font-medium truncate">{item.title || 'Untitled'}</span>
+                              </div>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {item.file_name}
+                              </p>
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {item.duration}s
+                                </span>
+                                {item.scheduled_end && (
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" />
+                                    Finalizó: {new Date(item.scheduled_end).toLocaleDateString()}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteClick(item)}
+                              className="shrink-0"
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </ScrollArea>
+                  )}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
