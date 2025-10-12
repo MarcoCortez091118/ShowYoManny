@@ -1226,22 +1226,20 @@ const AdminDashboard = () => {
                             <img
                               src={URL.createObjectURL(selectedFile)}
                               alt="Preview"
-                              className="max-w-full max-h-full object-contain"
+                              className="w-full h-full object-contain"
                               style={{
-                                transform: `scale(${(processedMediaMetadata.zoom || 100) / 100}) rotate(${processedMediaMetadata.rotation || 0}deg)`,
-                                objectPosition: `${processedMediaMetadata.positionX || 50}% ${processedMediaMetadata.positionY || 50}%`,
+                                transform: `translate(${(processedMediaMetadata.positionX || 50) - 50}%, ${(processedMediaMetadata.positionY || 50) - 50}%) scale(${(processedMediaMetadata.zoom || 100) / 100}) rotate(${processedMediaMetadata.rotation || 0}deg)`,
                               }}
                             />
                           ) : (
                             <video
                               src={URL.createObjectURL(selectedFile)}
-                              className="max-w-full max-h-full object-contain"
+                              className="w-full h-full object-contain"
                               autoPlay
                               muted
                               loop
                               style={{
-                                transform: `scale(${(processedMediaMetadata.zoom || 100) / 100}) rotate(${processedMediaMetadata.rotation || 0}deg)`,
-                                objectPosition: `${processedMediaMetadata.positionX || 50}% ${processedMediaMetadata.positionY || 50}%`,
+                                transform: `translate(${(processedMediaMetadata.positionX || 50) - 50}%, ${(processedMediaMetadata.positionY || 50) - 50}%) scale(${(processedMediaMetadata.zoom || 100) / 100}) rotate(${processedMediaMetadata.rotation || 0}deg)`,
                               }}
                             />
                           )}

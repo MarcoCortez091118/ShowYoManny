@@ -152,10 +152,13 @@ export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => 
       objectFit = 'none';
     }
 
+    // Convertir posición de 0-100% a -50% a +50% para translate
+    const translateX = (positionX - 50);
+    const translateY = (positionY - 50);
+
     return {
       objectFit: objectFit as any,
-      transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-      objectPosition: `${positionX}% ${positionY}%`,
+      transform: `translate(${translateX}%, ${translateY}%) scale(${zoom / 100}) rotate(${rotation}deg)`,
       transition: 'all 0.3s ease',
     };
   };

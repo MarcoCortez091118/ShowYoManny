@@ -294,6 +294,12 @@ const KioskDisplay = () => {
               loop
               playsInline
               className="w-full h-full object-contain"
+              style={{
+                transform: currentItem.metadata
+                  ? `translate(${(currentItem.metadata.positionX || 50) - 50}%, ${(currentItem.metadata.positionY || 50) - 50}%) scale(${(currentItem.metadata.zoom || 100) / 100}) rotate(${currentItem.metadata.rotation || 0}deg)`
+                  : 'none',
+                objectFit: currentItem.metadata?.fitMode || 'contain',
+              }}
             />
           ) : (
             <img
@@ -301,6 +307,12 @@ const KioskDisplay = () => {
               src={currentItem.media_url || ''}
               alt={currentItem.title || 'Content'}
               className="w-full h-full object-contain"
+              style={{
+                transform: currentItem.metadata
+                  ? `translate(${(currentItem.metadata.positionX || 50) - 50}%, ${(currentItem.metadata.positionY || 50) - 50}%) scale(${(currentItem.metadata.zoom || 100) / 100}) rotate(${currentItem.metadata.rotation || 0}deg)`
+                  : 'none',
+                objectFit: currentItem.metadata?.fitMode || 'contain',
+              }}
             />
           )}
 
