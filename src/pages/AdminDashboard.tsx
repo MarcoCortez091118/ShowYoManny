@@ -618,12 +618,10 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 h-auto">
             <TabsTrigger value="overview" className="text-xs sm:text-sm touch-target">Overview</TabsTrigger>
             <TabsTrigger value="content" className="text-xs sm:text-sm touch-target">Content</TabsTrigger>
-            <TabsTrigger value="queue" className="text-xs sm:text-sm touch-target">Queue</TabsTrigger>
             <TabsTrigger value="moderate" className="text-xs sm:text-sm touch-target">Moderate</TabsTrigger>
-            <TabsTrigger value="controls" className="text-xs sm:text-sm touch-target">Controls</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -1172,81 +1170,6 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="queue">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Content Queue
-                </CardTitle>
-                <CardDescription>
-                  View and manage the content display queue
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-dashed">
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <GripVertical className="h-4 w-4" />
-                    Drag and drop items to reorder the playlist
-                  </p>
-                </div>
-
-                {isQueueLoading ? (
-                  <div className="py-8 text-center text-muted-foreground">Loading queue...</div>
-                ) : (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={contentQueue.map(item => item.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div className="space-y-4">
-                        {contentQueue.map((item, index) => (
-                          <DraggableQueueItem
-                            key={item.id}
-                            item={item}
-                            order={item.order}
-                            index={index}
-                            onEdit={(order) => {
-                              setSelectedOrder(order);
-                              setBorderStyle(order.border_id || 'none');
-                              setDisplayDuration(order.duration_seconds || 10);
-                              setIsScheduled(!!order.scheduled_start);
-                              if (order.scheduled_start) {
-                                const startDate = new Date(order.scheduled_start);
-                                setScheduledStartDate(startDate);
-                                setScheduledStartTime(format(startDate, 'HH:mm'));
-                              }
-                              if (order.scheduled_end) {
-                                const endDate = new Date(order.scheduled_end);
-                                setScheduledEndDate(endDate);
-                                setScheduledEndTime(format(endDate, 'HH:mm'));
-                              }
-                              setTimerLoopEnabled(order.timer_loop_enabled || false);
-                              setTimerLoopMinutes(order.timer_loop_minutes || 30);
-                              setIsSchedulerOpen(true);
-                            }}
-                            onPreview={handlePreview}
-                            onDelete={handleDeleteContent}
-                          />
-                        ))}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                )}
-
-                {!isQueueLoading && contentQueue.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No content in queue
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="moderate">
             <Card>
               <CardHeader>
@@ -1305,48 +1228,6 @@ const AdminDashboard = () => {
                       No content pending moderation
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="controls">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Play className="h-5 w-5" />
-                  Player Controls
-                </CardTitle>
-                <CardDescription>
-                  Control the digital billboard display
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4 justify-center py-8">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => controlPlayback('play')}
-                  >
-                    <Play className="h-5 w-5 mr-2" />
-                    Play
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => controlPlayback('pause')}
-                  >
-                    <Pause className="h-5 w-5 mr-2" />
-                    Pause
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => controlPlayback('next')}
-                  >
-                    <SkipForward className="h-5 w-5 mr-2" />
-                    Next
-                  </Button>
                 </div>
               </CardContent>
             </Card>
