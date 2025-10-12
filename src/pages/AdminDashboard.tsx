@@ -15,7 +15,6 @@ import { ContentScheduler } from "@/components/ContentScheduler";
 import { DraggableQueueItem } from "@/components/DraggableQueueItem";
 import { BorderPreview } from "@/components/BorderPreview";
 import PreviewModal from "@/components/PreviewModal";
-import LiveKioskPreview from "@/components/LiveKioskPreview";
 import { AdminMediaEditor } from "@/components/media/AdminMediaEditor";
 import { 
   Upload, 
@@ -671,9 +670,6 @@ const AdminDashboard = () => {
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Live Kiosk Preview */}
-              <LiveKioskPreview />
             </div>
           </TabsContent>
 
