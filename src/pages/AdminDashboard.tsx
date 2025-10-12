@@ -660,7 +660,9 @@ const AdminDashboard = () => {
                     <BarChart3 className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{contentHistory.length}</div>
+                    <div className="text-2xl font-bold">
+                      {contentQueue.length + contentHistory.length}
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Elementos totales
                     </p>
@@ -674,7 +676,12 @@ const AdminDashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-green-600">
-                      {contentQueue.filter(item => item.status === 'active' || item.is_active).length}
+                      {contentQueue.filter(item => {
+                        const now = new Date();
+                        const hasStarted = !item.scheduled_start || new Date(item.scheduled_start) <= now;
+                        const notEnded = !item.scheduled_end || new Date(item.scheduled_end) > now;
+                        return item.status !== 'completed' && hasStarted && notEnded;
+                      }).length}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Reproduciéndose ahora
@@ -689,7 +696,10 @@ const AdminDashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-blue-600">
-                      {contentQueue.filter(item => item.scheduled_start && new Date(item.scheduled_start) > new Date()).length}
+                      {contentQueue.filter(item => {
+                        const now = new Date();
+                        return item.scheduled_start && new Date(item.scheduled_start) > now;
+                      }).length}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Pendientes de publicar
@@ -724,11 +734,11 @@ const AdminDashboard = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {isHistoryLoading ? (
+                  {(isHistoryLoading || isQueueLoading) ? (
                     <div className="text-center py-8 text-muted-foreground">
                       Cargando historial...
                     </div>
-                  ) : contentHistory.length === 0 ? (
+                  ) : (contentHistory.length === 0 && contentQueue.length === 0) ? (
                     <div className="text-center py-8 text-muted-foreground">
                       No hay elementos en el historial
                     </div>
@@ -747,8 +757,62 @@ const AdminDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
+                          {contentQueue.map((item) => {
+                            const now = new Date();
+                            const hasStarted = !item.scheduled_start || new Date(item.scheduled_start) <= now;
+                            const notEnded = !item.scheduled_end || new Date(item.scheduled_end) > now;
+                            const isScheduled = item.scheduled_start && new Date(item.scheduled_start) > now;
+                            const isExpired = item.scheduled_end && new Date(item.scheduled_end) <= now;
+
+                            let statusBadge;
+                            if (isScheduled) {
+                              statusBadge = <Badge className="bg-blue-500">Programado</Badge>;
+                            } else if (isExpired || item.status === 'completed') {
+                              statusBadge = <Badge variant="secondary">Expirado</Badge>;
+                            } else if (hasStarted && notEnded) {
+                              statusBadge = <Badge className="bg-green-500">Activo</Badge>;
+                            } else {
+                              statusBadge = <Badge variant="outline">Pendiente</Badge>;
+                            }
+
+                            return (
+                              <tr key={`queue-${item.id}`} className="border-b hover:bg-muted/50">
+                                <td className="py-3 px-4 text-sm">
+                                  {item.title || item.file_name || 'Sin título'}
+                                </td>
+                                <td className="py-3 px-4 text-sm">
+                                  <Badge variant="outline">
+                                    {item.media_type === 'video' ? '🎥 Video' : '🖼️ Imagen'}
+                                  </Badge>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-muted-foreground">
+                                  {item.scheduled_start
+                                    ? new Date(item.scheduled_start).toLocaleDateString('es-ES')
+                                    : new Date(item.created_at).toLocaleDateString('es-ES')}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-muted-foreground">
+                                  {item.scheduled_start
+                                    ? new Date(item.scheduled_start).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                                    : new Date(item.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-muted-foreground">
+                                  {item.scheduled_end
+                                    ? new Date(item.scheduled_end).toLocaleDateString('es-ES')
+                                    : '-'}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-muted-foreground">
+                                  {item.scheduled_end
+                                    ? new Date(item.scheduled_end).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                                    : '-'}
+                                </td>
+                                <td className="py-3 px-4 text-sm">
+                                  {statusBadge}
+                                </td>
+                              </tr>
+                            );
+                          })}
                           {contentHistory.map((item) => (
-                            <tr key={item.id} className="border-b hover:bg-muted/50">
+                            <tr key={`history-${item.id}`} className="border-b hover:bg-muted/50 opacity-60">
                               <td className="py-3 px-4 text-sm">
                                 {item.title || 'Sin título'}
                               </td>
@@ -786,13 +850,7 @@ const AdminDashboard = () => {
                                   : '-'}
                               </td>
                               <td className="py-3 px-4 text-sm">
-                                {item.deleted_at ? (
-                                  <Badge variant="destructive">Eliminado</Badge>
-                                ) : item.status_at_deletion === 'completed' ? (
-                                  <Badge variant="secondary">Completado</Badge>
-                                ) : (
-                                  <Badge className="bg-green-500">Publicado</Badge>
-                                )}
+                                <Badge variant="destructive">Eliminado</Badge>
                               </td>
                             </tr>
                           ))}
