@@ -87,9 +87,11 @@ const AdminDashboard = () => {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [contentQueue, setContentQueue] = useState<QueueItem[]>([]);
   const [pendingOrders, setPendingOrders] = useState<QueueItem[]>([]);
+  const [contentHistory, setContentHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isQueueLoading, setIsQueueLoading] = useState(true);
   const [isPendingLoading, setIsPendingLoading] = useState(true);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [borderStyle, setBorderStyle] = useState("none");
   const [displayDuration, setDisplayDuration] = useState(10);
@@ -165,6 +167,7 @@ const AdminDashboard = () => {
     if (!authLoading && isAdmin) {
       fetchContentQueue();
       fetchPendingOrders();
+      fetchContentHistory();
     }
   }, [authLoading, isAdmin]);
 
@@ -187,6 +190,30 @@ const AdminDashboard = () => {
       });
     } finally {
       setIsQueueLoading(false);
+    }
+  };
+
+  const fetchContentHistory = async () => {
+    if (!isAdmin || !user?.id) {
+      setIsHistoryLoading(false);
+      return;
+    }
+
+    try {
+      setIsHistoryLoading(true);
+      const { data, error } = await supabase
+        .from('content_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setContentHistory(data || []);
+    } catch (error) {
+      console.error('Error fetching history:', error);
+    } finally {
+      setIsHistoryLoading(false);
     }
   };
 
@@ -626,48 +653,155 @@ const AdminDashboard = () => {
 
           <TabsContent value="overview">
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Queue Items</CardTitle>
-                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Total Reproducidos</CardTitle>
+                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{contentQueue.length}</div>
+                    <div className="text-2xl font-bold">{contentHistory.length}</div>
                     <p className="text-xs text-muted-foreground">
-                      +{contentQueue.filter(item => !item.is_active).length} waiting in queue
+                      Elementos totales
                     </p>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Active Content</CardTitle>
-                    <Play className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Activos</CardTitle>
+                    <Play className="h-4 w-4 text-green-500" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
-                      {contentQueue.filter(item => item.is_active).length}
+                    <div className="text-2xl font-bold text-green-600">
+                      {contentQueue.filter(item => item.status === 'active' || item.is_active).length}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Currently displaying
+                      Reproduciéndose ahora
                     </p>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Programados</CardTitle>
+                    <Clock className="h-4 w-4 text-blue-500" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">$0</div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      {contentQueue.filter(item => item.scheduled_start && new Date(item.scheduled_start) > new Date()).length}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      Total earnings
+                      Pendientes de publicar
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Borrados</CardTitle>
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-red-600">
+                      {contentHistory.filter(item => item.deleted_at).length}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Eliminados del sistema
                     </p>
                   </CardContent>
                 </Card>
               </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Historial de Contenido
+                  </CardTitle>
+                  <CardDescription>
+                    Registro en tiempo real de todos los elementos subidos al sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isHistoryLoading ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Cargando historial...
+                    </div>
+                  ) : contentHistory.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No hay elementos en el historial
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-3 px-4 font-medium text-sm">Nombre</th>
+                            <th className="text-left py-3 px-4 font-medium text-sm">Tipo</th>
+                            <th className="text-left py-3 px-4 font-medium text-sm">Fecha Inicio</th>
+                            <th className="text-left py-3 px-4 font-medium text-sm">Hora Inicio</th>
+                            <th className="text-left py-3 px-4 font-medium text-sm">Fecha Fin</th>
+                            <th className="text-left py-3 px-4 font-medium text-sm">Hora Fin</th>
+                            <th className="text-left py-3 px-4 font-medium text-sm">Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {contentHistory.map((item) => (
+                            <tr key={item.id} className="border-b hover:bg-muted/50">
+                              <td className="py-3 px-4 text-sm">
+                                {item.title || 'Sin título'}
+                              </td>
+                              <td className="py-3 px-4 text-sm">
+                                <Badge variant="outline">
+                                  {item.media_type === 'video' ? '🎥 Video' : '🖼️ Imagen'}
+                                </Badge>
+                              </td>
+                              <td className="py-3 px-4 text-sm text-muted-foreground">
+                                {item.scheduled_start
+                                  ? new Date(item.scheduled_start).toLocaleDateString('es-ES')
+                                  : item.created_at
+                                  ? new Date(item.created_at).toLocaleDateString('es-ES')
+                                  : '-'}
+                              </td>
+                              <td className="py-3 px-4 text-sm text-muted-foreground">
+                                {item.scheduled_start
+                                  ? new Date(item.scheduled_start).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                                  : item.created_at
+                                  ? new Date(item.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                                  : '-'}
+                              </td>
+                              <td className="py-3 px-4 text-sm text-muted-foreground">
+                                {item.scheduled_end
+                                  ? new Date(item.scheduled_end).toLocaleDateString('es-ES')
+                                  : item.deleted_at
+                                  ? new Date(item.deleted_at).toLocaleDateString('es-ES')
+                                  : '-'}
+                              </td>
+                              <td className="py-3 px-4 text-sm text-muted-foreground">
+                                {item.scheduled_end
+                                  ? new Date(item.scheduled_end).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                                  : item.deleted_at
+                                  ? new Date(item.deleted_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                                  : '-'}
+                              </td>
+                              <td className="py-3 px-4 text-sm">
+                                {item.deleted_at ? (
+                                  <Badge variant="destructive">Eliminado</Badge>
+                                ) : item.status_at_deletion === 'completed' ? (
+                                  <Badge variant="secondary">Completado</Badge>
+                                ) : (
+                                  <Badge className="bg-green-500">Publicado</Badge>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
