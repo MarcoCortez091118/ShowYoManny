@@ -394,48 +394,30 @@ const AdminQueue = () => {
               </p>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="all" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 mb-4">
-                  <TabsTrigger value="all" className="text-xs sm:text-sm">
-                    <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                    Todos ({items.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="published" className="text-xs sm:text-sm">
+              <Tabs defaultValue="published" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsTrigger
+                    value="published"
+                    className="text-xs sm:text-sm data-[state=active]:bg-green-500 data-[state=active]:text-white"
+                  >
                     <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                     Publicados ({items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').length})
                   </TabsTrigger>
-                  <TabsTrigger value="scheduled" className="text-xs sm:text-sm">
+                  <TabsTrigger
+                    value="scheduled"
+                    className="text-xs sm:text-sm data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+                  >
                     <ClockIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                     Programados ({items.filter(i => i.computed_status === 'scheduled' || i.computed_status === 'pending').length})
                   </TabsTrigger>
-                  <TabsTrigger value="expired" className="text-xs sm:text-sm">
+                  <TabsTrigger
+                    value="expired"
+                    className="text-xs sm:text-sm data-[state=active]:bg-red-500 data-[state=active]:text-white"
+                  >
                     <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                     Expirados ({items.filter(i => i.computed_status === 'expired' || i.computed_status === 'completed').length})
                   </TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="all">
-                  {items.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      No items in queue
-                    </div>
-                  ) : (
-                    <ScrollArea className="h-[600px] pr-4">
-                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                        <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                          {items.map((item) => (
-                            <SortableItem
-                              key={item.id}
-                              item={item}
-                              onDelete={handleDeleteClick}
-                              onEdit={handleEditClick}
-                            />
-                          ))}
-                        </SortableContext>
-                      </DndContext>
-                    </ScrollArea>
-                  )}
-                </TabsContent>
 
                 <TabsContent value="published">
                   {items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').length === 0 ? (
