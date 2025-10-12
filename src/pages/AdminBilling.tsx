@@ -60,7 +60,7 @@ const AdminBilling = () => {
     <div className="min-h-screen bg-background">
       <div className="container py-8 px-4 max-w-6xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => navigate('/admin/dashboard')}>
+          <Button variant="ghost" onClick={() => navigate('/admin')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Button>
