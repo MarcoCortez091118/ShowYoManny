@@ -233,25 +233,8 @@ export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => 
           </div>
 
           {selectedFile && (
-            <Tabs defaultValue="preview" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="preview">
-                  <Eye className="h-4 w-4 mr-2" />
-                  Vista Previa
-                </TabsTrigger>
-                <TabsTrigger value="adjust">
-                  <Move className="h-4 w-4 mr-2" />
-                  Ajustar
-                </TabsTrigger>
-                {fileType === 'video' && (
-                  <TabsTrigger value="trim">
-                    <Video className="h-4 w-4 mr-2" />
-                    Trim
-                  </TabsTrigger>
-                )}
-              </TabsList>
-
-              <TabsContent value="preview" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
                 <Card className="bg-muted/30">
                   <CardHeader>
                     <CardTitle className="text-sm">Vista Previa de Pantalla</CardTitle>
@@ -293,9 +276,9 @@ export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => 
                     </div>
                   </CardContent>
                 </Card>
-              </TabsContent>
+              </div>
 
-              <TabsContent value="adjust" className="space-y-4">
+              <div className="space-y-4">
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-sm">Modo de Ajuste</CardTitle>
@@ -430,10 +413,8 @@ export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => 
                     </div>
                   </CardContent>
                 </Card>
-              </TabsContent>
 
-              {fileType === 'video' && (
-                <TabsContent value="trim" className="space-y-4">
+                {fileType === 'video' && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-sm">Recortar Video</CardTitle>
@@ -469,9 +450,9 @@ export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => 
                       </div>
                     </CardContent>
                   </Card>
-                </TabsContent>
-              )}
-            </Tabs>
+                )}
+              </div>
+            </div>
           )}
 
           {selectedFile && (
@@ -484,7 +465,7 @@ export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => 
               <div className="flex gap-3">
                 <Button
                   onClick={handleProcess}
-                  className="flex-1 animate-pulse"
+                  className="flex-1"
                   size="lg"
                   variant="default"
                 >
