@@ -7,8 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { updateAdminPassword } from "@/utils/updateAdminPassword";
 import { useToast } from "@/hooks/use-toast";
-import { useDisplaySettings } from "@/hooks/use-display-settings";
-import { DisplaySettings } from "@/domain/services/displaySettingsService";
+import { useDisplaySettings, DisplaySettings } from "@/hooks/use-display-settings";
 
 const AdminSettings = () => {
   const navigate = useNavigate();

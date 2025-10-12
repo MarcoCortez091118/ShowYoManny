@@ -31,6 +31,15 @@ class SupabaseDisplaySettingsService {
       transition_style: 'fade',
       logo_enabled: false,
       background_color: '#000000',
+      screen_width: 2048,
+      screen_height: 2432,
+      photo_display_duration_seconds: 10,
+      min_video_duration_seconds: 5,
+      max_video_duration_seconds: 60,
+      max_image_file_size_mb: 25,
+      max_video_file_size_mb: 600,
+      recommended_image_format: 'PNG or high-quality JPEG',
+      recommended_video_format: 'MP4 (H.264) or MOV',
     };
 
     const { data, error } = await supabase

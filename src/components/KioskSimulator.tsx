@@ -5,16 +5,19 @@ import { Badge } from '@/components/ui/badge';
 import { Monitor, Maximize2, Play, Pause, SkipForward, SkipBack, RefreshCw } from 'lucide-react';
 import { BORDER_THEMES } from '../../shared/border-themes';
 import type { EnrichedQueueItem } from '@/services/supabaseQueueService';
+import { useDisplaySettings } from '@/hooks/use-display-settings';
 
 interface KioskSimulatorProps {
   queueItems: EnrichedQueueItem[];
 }
 
-const SCREEN_WIDTH = 2048;
-const SCREEN_HEIGHT = 2432;
-const PREVIEW_SCALE = 0.25; // Escala para que quepa en la UI
+const PREVIEW_SCALE = 0.25;
 
 export const KioskSimulator = ({ queueItems }: KioskSimulatorProps) => {
+  const { settings } = useDisplaySettings();
+  const SCREEN_WIDTH = settings.screenWidth;
+  const SCREEN_HEIGHT = settings.screenHeight;
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [timeLeft, setTimeLeft] = useState(0);

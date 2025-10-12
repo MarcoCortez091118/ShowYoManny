@@ -4,11 +4,13 @@ import { supabaseQueueService, type EnrichedQueueItem } from "@/services/supabas
 import { supabase } from '@/lib/supabase';
 import { BORDER_THEMES } from '../../shared/border-themes';
 import showYoLogo from "@/assets/showyo-logo-overlay.png";
-
-const SCREEN_WIDTH = 2048;
-const SCREEN_HEIGHT = 2432;
+import { useDisplaySettings } from "@/hooks/use-display-settings";
 
 const KioskDisplay = () => {
+  const { settings } = useDisplaySettings();
+  const SCREEN_WIDTH = settings.screenWidth;
+  const SCREEN_HEIGHT = settings.screenHeight;
+
   const [items, setItems] = useState<EnrichedQueueItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);

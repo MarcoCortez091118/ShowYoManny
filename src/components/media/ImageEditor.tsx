@@ -7,7 +7,7 @@ import {
   ImageFitMode,
   transformImageToResolution,
 } from "@/utils/imageProcessing";
-import { DisplaySettings } from "@/domain/services/displaySettingsService";
+import { DisplaySettings } from "@/hooks/use-display-settings";
 import { ZoomIn, ZoomOut, Maximize2, Move, RotateCcw } from "lucide-react";
 
 interface ImageEditorProps {

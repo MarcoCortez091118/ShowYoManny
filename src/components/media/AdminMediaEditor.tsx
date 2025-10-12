@@ -21,9 +21,8 @@ import {
   Minimize2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useDisplaySettings } from '@/hooks/use-display-settings';
 
-const SCREEN_WIDTH = 2048;
-const SCREEN_HEIGHT = 2432;
 const PREVIEW_SCALE = 0.2;
 
 type FitMode = 'contain' | 'cover' | 'fill' | 'none';
@@ -47,6 +46,9 @@ interface MediaMetadata {
 
 export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => {
   const { toast } = useToast();
+  const { settings } = useDisplaySettings();
+  const SCREEN_WIDTH = settings.screenWidth;
+  const SCREEN_HEIGHT = settings.screenHeight;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState<'image' | 'video' | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
