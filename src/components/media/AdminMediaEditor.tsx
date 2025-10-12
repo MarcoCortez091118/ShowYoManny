@@ -247,33 +247,66 @@ export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => 
                   <CardContent>
                     <div
                       ref={previewRef}
-                      className="relative bg-black mx-auto border-4 border-primary/20 rounded-lg overflow-hidden"
+                      className="relative bg-black mx-auto border-4 border-primary/20 rounded-lg overflow-hidden shadow-2xl"
                       style={{
                         width: SCREEN_WIDTH * PREVIEW_SCALE,
                         height: SCREEN_HEIGHT * PREVIEW_SCALE,
                       }}
                     >
+                      {/* Cuadrícula de referencia */}
+                      <div className="absolute inset-0 pointer-events-none opacity-20">
+                        <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
+                          {Array.from({ length: 9 }).map((_, i) => (
+                            <div key={i} className="border border-white/20" />
+                          ))}
+                        </div>
+                      </div>
                       {fileType === 'image' && previewUrl && (
                         <img
                           src={previewUrl}
                           alt="Preview"
                           className="w-full h-full"
                           style={getPreviewStyle()}
+                          draggable={false}
                         />
                       )}
                       {fileType === 'video' && previewUrl && (
                         <video
                           src={previewUrl}
                           controls
+                          loop
+                          muted
+                          autoPlay
                           className="w-full h-full"
                           style={getPreviewStyle()}
                         />
                       )}
 
-                      <div className="absolute top-2 left-2 right-2 flex justify-between text-xs text-white bg-black/50 rounded p-2">
-                        <span>Modo: {fitMode}</span>
-                        <span>Zoom: {zoom}%</span>
-                        <span>Rotación: {rotation}°</span>
+                      <div className="absolute top-2 left-2 right-2 flex flex-col gap-1 text-xs text-white bg-black/70 rounded p-2">
+                        <div className="flex justify-between">
+                          <span>Modo: {fitMode}</span>
+                          <span>Zoom: {zoom}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Rotación: {rotation}°</span>
+                          <span>Pos: X{positionX}% Y{positionY}%</span>
+                        </div>
+                      </div>
+
+                      {/* Crosshair para mostrar la posición */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div
+                          className="absolute w-px h-full bg-cyan-500/50"
+                          style={{ left: `${positionX}%` }}
+                        />
+                        <div
+                          className="absolute w-full h-px bg-cyan-500/50"
+                          style={{ top: `${positionY}%` }}
+                        />
+                        <div
+                          className="absolute w-2 h-2 bg-cyan-500 rounded-full -translate-x-1/2 -translate-y-1/2"
+                          style={{ left: `${positionX}%`, top: `${positionY}%` }}
+                        />
                       </div>
                     </div>
                   </CardContent>
