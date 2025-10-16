@@ -332,16 +332,18 @@ const ContentUpload = () => {
       }
     }
 
-    if (planService.planRequiresBorder(selectedPlan) && borderStyle === "none") {
-      toast({
-        title: "Border Required",
-        description: "Please select a border style for your border plan",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Border requirement validation - Temporarily disabled
+    // if (planService.planRequiresBorder(selectedPlan) && borderStyle === "none") {
+    //   toast({
+    //     title: "Border Required",
+    //     description: "Please select a border style for your border plan",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
-    const finalBorderStyle = planService.planSupportsBorderSelection(selectedPlan) ? borderStyle : "none";
+    // Always use "none" for borders (temporarily disabled feature)
+    const finalBorderStyle = "none";
 
     setIsUploading(true);
 
@@ -760,8 +762,8 @@ const ContentUpload = () => {
           </Card>
         </div>
 
-        {/* Border Selection */}
-        {selectedPlanData && planService.planSupportsBorderSelection(selectedPlanData.id) && (
+        {/* Border Selection - Temporarily Hidden */}
+        {/* {selectedPlanData && planService.planSupportsBorderSelection(selectedPlanData.id) && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle>Choose Your Border Style</CardTitle>
@@ -800,7 +802,7 @@ const ContentUpload = () => {
               </div>
             </CardContent>
           </Card>
-        )}
+        )} */}
 
         {/* Logo Preview */}
         {selectedPlanData && selectedPlanData.includesLogo && !selectedPlanData.includesBorder && (

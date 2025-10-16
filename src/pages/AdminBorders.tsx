@@ -164,43 +164,16 @@ const AdminBorders = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>ShowYo Border Library</CardTitle>
+            <CardTitle>Border Themes</CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Complete collection of borders and overlays available for content
+              Border themes are temporarily disabled
             </p>
           </CardHeader>
           <CardContent className="space-y-8">
-            {categories.map((category) => {
-              const categoryBorders = borderLibrary.filter(border => border.category === category);
-              if (categoryBorders.length === 0) return null;
-
-              return (
-                <div key={category} className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold text-primary">{category}</h3>
-                    <span className="text-sm text-muted-foreground font-semibold">({categoryBorders.length} borders)</span>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {categoryBorders.map((border) => (
-                      <BorderPreview
-                        key={border.id}
-                        border={border}
-                        isSelected={false}
-                        onClick={() => {}}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-            
-            <div className="mt-8 p-6 bg-muted/50 rounded-lg border-2 border-dashed">
-              <h4 className="font-semibold mb-2">Logo Overlay Options</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• <strong>With Logo:</strong> ShowYo logo appears at bottom-right corner</li>
-                <li>• <strong>With Border + Logo:</strong> Both border frame and logo overlay applied</li>
-                <li>• <strong>Without Logo:</strong> Clean content display (plain or border only)</li>
-              </ul>
+            <div className="p-12 text-center bg-muted/30 rounded-lg border-2 border-dashed">
+              <p className="text-muted-foreground">
+                Border theme customization is coming soon. For now, content will display without border overlays.
+              </p>
             </div>
           </CardContent>
         </Card>
