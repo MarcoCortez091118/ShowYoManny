@@ -900,7 +900,8 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
-                <div>
+                {/* Border Style - Temporarily Hidden */}
+                {/* <div>
                   <Label htmlFor="admin-border">Border Style</Label>
                   <div className="space-y-4 mt-4 max-h-80 overflow-y-auto">
                     <div className="space-y-3">
@@ -955,7 +956,7 @@ const AdminDashboard = () => {
                   <p className="text-xs text-muted-foreground mt-2">
                     Click nuevamente en un borde seleccionado para deseleccionarlo
                   </p>
-                </div>
+                </div> */}
 
                 <div>
                   <Label htmlFor="admin-duration">Display Duration (seconds)</Label>
