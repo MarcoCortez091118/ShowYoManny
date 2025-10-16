@@ -22,12 +22,22 @@ const AdminHistory = () => {
   const [history, setHistory] = useState<ContentHistory[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [selectedItem, setSelectedItem] = useState<ContentHistory | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     if (!loading && isAdmin && user?.id) {
       fetchHistory();
     }
   }, [loading, isAdmin, user]);
+
+  // Update timer every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchHistory = async () => {
     if (!user?.id) return;
@@ -67,6 +77,24 @@ const AdminHistory = () => {
     return new Date(date).toLocaleString();
   };
 
+  const getTimeUntilDeletion = (autoDeleteAt: string | null) => {
+    if (!autoDeleteAt) return null;
+
+    const now = new Date();
+    const deleteDate = new Date(autoDeleteAt);
+    const diffMs = deleteDate.getTime() - now.getTime();
+
+    if (diffMs <= 0) return 'Deleting soon...';
+
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m remaining`;
+    }
+    return `${minutes}m remaining`;
+  };
+
   if (loading || isFetching) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -103,7 +131,7 @@ const AdminHistory = () => {
           <CardHeader>
             <CardTitle>Content Upload History</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Complete record of all uploaded content, including deleted items
+              Complete record of all uploaded content. Deleted items are kept for 24 hours before permanent removal.
             </p>
           </CardHeader>
           <CardContent>
@@ -176,6 +204,11 @@ const AdminHistory = () => {
                               {item.deleted_at && (
                                 <Badge variant="destructive" className="text-xs">
                                   Deleted
+                                </Badge>
+                              )}
+                              {item.auto_delete_at && (
+                                <Badge variant="outline" className="text-xs border-orange-500 text-orange-600">
+                                  ⏰ {getTimeUntilDeletion(item.auto_delete_at)}
                                 </Badge>
                               )}
                             </div>
