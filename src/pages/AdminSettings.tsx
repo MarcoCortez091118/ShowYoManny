@@ -82,16 +82,19 @@ const AdminSettings = () => {
 
     setIsSavingSettings(true);
     try {
+      console.log('[AdminSettings] Saving settings:', draft);
       await updateSettings(draft);
+      console.log('[AdminSettings] Settings saved successfully');
       toast({
         title: "Display settings saved",
         description: "New constraints will apply to future uploads immediately.",
       });
     } catch (error) {
-      console.error('Error saving display settings:', error);
+      console.error('[AdminSettings] Error saving display settings:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast({
         title: "Error saving settings",
-        description: "Failed to save display settings. Please try again.",
+        description: `Failed to save display settings: ${errorMessage}. Check console for details.`,
         variant: "destructive",
       });
     } finally {

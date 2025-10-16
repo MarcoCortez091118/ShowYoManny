@@ -60,13 +60,19 @@ class SupabaseDisplaySettingsService {
     userId: string,
     updates: DisplaySettingsUpdate
   ): Promise<DisplaySettings | null> {
+    console.log('[updateDisplaySettings] Starting update for userId:', userId);
+    console.log('[updateDisplaySettings] Updates to apply:', updates);
+
     // Primero verificar si existe el registro
+    console.log('[updateDisplaySettings] Checking if settings exist...');
     const existing = await this.getDisplaySettings(userId);
     if (!existing) {
-      console.error('No display settings found for user');
+      console.error('[updateDisplaySettings] No display settings found for user:', userId);
       return null;
     }
+    console.log('[updateDisplaySettings] Found existing settings:', existing);
 
+    console.log('[updateDisplaySettings] Attempting to update in Supabase...');
     const { data, error } = await supabase
       .from('display_settings')
       .update(updates)
@@ -75,10 +81,17 @@ class SupabaseDisplaySettingsService {
       .single();
 
     if (error) {
-      console.error('Error updating display settings:', error);
+      console.error('[updateDisplaySettings] Supabase error:', error);
+      console.error('[updateDisplaySettings] Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
       return null;
     }
 
+    console.log('[updateDisplaySettings] Update successful:', data);
     return data;
   }
 
