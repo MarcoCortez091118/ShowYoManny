@@ -196,34 +196,6 @@ class SupabaseQueueService {
       supabase.removeChannel(channel);
     };
   }
-
-  async deleteQueueItem(itemId: string): Promise<boolean> {
-    const { error } = await supabase
-      .from('queue_items')
-      .delete()
-      .eq('id', itemId);
-
-    if (error) {
-      console.error('Error deleting queue item:', error);
-      throw new Error(error.message);
-    }
-
-    return true;
-  }
-
-  async updateQueueItem(itemId: string, updates: QueueItemUpdate): Promise<boolean> {
-    const { error } = await supabase
-      .from('queue_items')
-      .update(updates)
-      .eq('id', itemId);
-
-    if (error) {
-      console.error('Error updating queue item:', error);
-      throw new Error(error.message);
-    }
-
-    return true;
-  }
 }
 
 export const supabaseQueueService = new SupabaseQueueService();

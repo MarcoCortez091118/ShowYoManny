@@ -75,7 +75,10 @@ export function useDisplaySettings(): UseDisplaySettingsResult {
 
   const updateSettings = useCallback(async (partial: Partial<DisplaySettings>) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      console.error('No user found when updating display settings');
+      throw new Error('User not authenticated');
+    }
 
     const updates: any = {};
     if (partial.screenWidth !== undefined) updates.screen_width = partial.screenWidth;
@@ -88,9 +91,15 @@ export function useDisplaySettings(): UseDisplaySettingsResult {
     if (partial.recommendedImageFormat !== undefined) updates.recommended_image_format = partial.recommendedImageFormat;
     if (partial.recommendedVideoFormat !== undefined) updates.recommended_video_format = partial.recommendedVideoFormat;
 
+    console.log('Updating display settings with:', updates);
+
     const result = await supabaseDisplaySettingsService.updateDisplaySettings(user.id, updates);
     if (result) {
+      console.log('Display settings updated successfully:', result);
       setSettings(prev => ({ ...prev, ...partial }));
+    } else {
+      console.error('Failed to update display settings');
+      throw new Error('Failed to update display settings');
     }
   }, []);
 

@@ -82,10 +82,17 @@ const AdminSettings = () => {
 
     setIsSavingSettings(true);
     try {
-      updateSettings(draft);
+      await updateSettings(draft);
       toast({
         title: "Display settings saved",
         description: "New constraints will apply to future uploads immediately.",
+      });
+    } catch (error) {
+      console.error('Error saving display settings:', error);
+      toast({
+        title: "Error saving settings",
+        description: "Failed to save display settings. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSavingSettings(false);

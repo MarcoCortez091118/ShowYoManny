@@ -60,6 +60,13 @@ class SupabaseDisplaySettingsService {
     userId: string,
     updates: DisplaySettingsUpdate
   ): Promise<DisplaySettings | null> {
+    // Primero verificar si existe el registro
+    const existing = await this.getDisplaySettings(userId);
+    if (!existing) {
+      console.error('No display settings found for user');
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('display_settings')
       .update(updates)
