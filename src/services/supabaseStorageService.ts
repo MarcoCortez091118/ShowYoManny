@@ -127,16 +127,6 @@ class SupabaseStorageService {
     return 'none';
   }
 
-  async createBucket(): Promise<void> {
-    const { error } = await supabase.storage.createBucket(STORAGE_BUCKET, {
-      public: true,
-      fileSizeLimit: MAX_FILE_SIZE,
-    });
-
-    if (error && !error.message.includes('already exists')) {
-      console.error('Error creating bucket:', error);
-    }
-  }
 }
 
 export const supabaseStorageService = new SupabaseStorageService();
