@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -31,6 +31,10 @@ interface AdminMediaEditorProps {
   onFileProcessed: (file: File, metadata: MediaMetadata) => void;
 }
 
+export interface AdminMediaEditorRef {
+  reset: () => void;
+}
+
 interface MediaMetadata {
   width: number;
   height: number;
@@ -44,7 +48,7 @@ interface MediaMetadata {
   positionY?: number;
 }
 
-export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => {
+export const AdminMediaEditor = forwardRef<AdminMediaEditorRef, AdminMediaEditorProps>(({ onFileProcessed }, ref) => {
   const { toast } = useToast();
   const { settings } = useDisplaySettings();
   const SCREEN_WIDTH = settings.screenWidth;
@@ -67,6 +71,28 @@ export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => 
   const [trimEnd, setTrimEnd] = useState(0);
 
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Expose reset method to parent
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setSelectedFile(null);
+      setFileType(null);
+      setPreviewUrl(null);
+      setFitMode('contain');
+      setZoom(100);
+      setRotation(0);
+      setPositionX(50);
+      setPositionY(50);
+      setVideoDuration(0);
+      setTrimStart(0);
+      setTrimEnd(0);
+      setOriginalWidth(0);
+      setOriginalHeight(0);
+    }
+  }));
 
   useEffect(() => {
     return () => {
@@ -527,4 +553,6 @@ export const AdminMediaEditor = ({ onFileProcessed }: AdminMediaEditorProps) => 
       </Card>
     </div>
   );
-};
+});
+
+AdminMediaEditor.displayName = 'AdminMediaEditor';

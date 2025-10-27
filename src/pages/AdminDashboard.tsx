@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import { ContentScheduler } from "@/components/ContentScheduler";
 import { DraggableQueueItem } from "@/components/DraggableQueueItem";
 import { BorderPreview } from "@/components/BorderPreview";
 import PreviewModal from "@/components/PreviewModal";
-import { AdminMediaEditor } from "@/components/media/AdminMediaEditor";
+import { AdminMediaEditor, AdminMediaEditorRef } from "@/components/media/AdminMediaEditor";
 import { 
   Upload, 
   Play, 
@@ -101,7 +101,10 @@ const AdminDashboard = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [showUploadReaction, setShowUploadReaction] = useState(false);
   const [processedMediaMetadata, setProcessedMediaMetadata] = useState<any>(null);
-  
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const mediaEditorRef = useRef<AdminMediaEditorRef>(null);
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -246,6 +249,16 @@ const AdminDashboard = () => {
 
     console.log('📁 File:', selectedFile.name, '|', selectedFile.type, '|', selectedFile.size, 'bytes');
     setIsLoading(true);
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    // Simulate progress for large files
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 90) return prev;
+        return prev + 10;
+      });
+    }, 500);
 
     try {
       const getScheduledDateTime = (date: Date | undefined, time: string) => {
@@ -272,6 +285,9 @@ const AdminDashboard = () => {
         metadata: processedMediaMetadata,
       });
 
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
       setShowUploadReaction(true);
       setTimeout(() => setShowUploadReaction(false), 3000);
 
@@ -280,6 +296,7 @@ const AdminDashboard = () => {
         description: `${isScheduled ? 'Scheduled' : 'Immediate'} upload complete${timerLoopEnabled ? ' with timer loop enabled' : ''}`,
       });
 
+      // Reset all form fields
       setSelectedFile(null);
       setIsScheduled(false);
       setScheduledStartDate(undefined);
@@ -293,14 +310,26 @@ const AdminDashboard = () => {
       setDisplayDuration(10);
       setProcessedMediaMetadata(null);
 
+      // Reset media editor
+      mediaEditorRef.current?.reset();
+
       fetchContentQueue();
+
+      // Reset upload progress after a short delay
+      setTimeout(() => {
+        setUploadProgress(0);
+        setIsUploading(false);
+      }, 1000);
     } catch (error) {
+      clearInterval(progressInterval);
       console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
         description: error instanceof Error ? error.message : "Failed to upload content",
         variant: "destructive",
       });
+      setUploadProgress(0);
+      setIsUploading(false);
     } finally {
       setIsLoading(false);
     }
@@ -906,6 +935,7 @@ const AdminDashboard = () => {
 
           <TabsContent value="content">
             <AdminMediaEditor
+              ref={mediaEditorRef}
               onFileProcessed={(file, metadata) => {
                 setSelectedFile(file);
                 setProcessedMediaMetadata(metadata);
@@ -1385,6 +1415,29 @@ const AdminDashboard = () => {
                   </Card>
                 )}
 
+                {/* Upload Progress Bar */}
+                {isUploading && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subiendo archivo...</span>
+                      <span className="font-medium">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-500 to-primary transition-all duration-300 ease-out"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">
+                      {uploadProgress < 30 && "Preparando archivo..."}
+                      {uploadProgress >= 30 && uploadProgress < 60 && "Subiendo a servidor..."}
+                      {uploadProgress >= 60 && uploadProgress < 90 && "Procesando..."}
+                      {uploadProgress >= 90 && uploadProgress < 100 && "Finalizando..."}
+                      {uploadProgress === 100 && "¡Completado!"}
+                    </p>
+                  </div>
+                )}
+
                 <Button
                   onClick={handleAdminUpload}
                   disabled={!selectedFile || isLoading}
@@ -1393,7 +1446,10 @@ const AdminDashboard = () => {
                   className="w-full relative"
                 >
                   {isLoading ? (
-                    "Subiendo a la base de datos..."
+                    <span className="flex items-center gap-2">
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                      Subiendo a la base de datos...
+                    </span>
                   ) : (
                     <span className="flex items-center gap-2">
                       <Upload className="h-4 w-4" />
