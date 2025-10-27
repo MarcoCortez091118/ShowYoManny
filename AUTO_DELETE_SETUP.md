@@ -1,29 +1,43 @@
-# Auto-Delete History Setup
+# Auto-Delete Setup
 
 ## Resumen
 
-Los elementos eliminados o expirados se mantienen en la tabla `content_history` por **24 horas** antes de ser eliminados permanentemente de la base de datos.
+Este sistema maneja dos tipos de limpieza automática:
+
+1. **Content History**: Los elementos eliminados se mantienen en `content_history` por **24 horas** antes de ser eliminados permanentemente
+2. **Expired Queue Items**: Los elementos expirados en `queue_items` se eliminan automáticamente **24 horas después** de su fecha de expiración
 
 ## Cambios Implementados
 
 ### 1. Base de Datos (Supabase)
 
-- **Nuevo campo**: `auto_delete_at` en tabla `content_history`
+**Content History**:
+- **Campo**: `auto_delete_at` en tabla `content_history`
   - Se establece automáticamente a `deleted_at + 24 hours`
   - Indica cuándo el registro debe eliminarse permanentemente
 
-- **Función automática**: `auto_delete_old_history()`
+- **Función**: `auto_delete_old_history()`
   - Elimina registros de `content_history` donde `auto_delete_at < now()`
   - Ejecutable mediante SQL: `SELECT auto_delete_old_history();`
 
-- **Trigger actualizado**: `archive_queue_item_before_delete()`
-  - Ahora establece `auto_delete_at` automáticamente al archivar
+- **Trigger**: `archive_queue_item_before_delete()`
+  - Establece `auto_delete_at` automáticamente al archivar
+
+**Expired Queue Items**:
+- **Función**: `auto_delete_expired_content()`
+  - Elimina elementos de `queue_items` donde `scheduled_end < (now() - 24 hours)`
+  - Ejecutable mediante SQL: `SELECT auto_delete_expired_content();`
+  - Solo elimina elementos que han expirado hace más de 24 horas
 
 ### 2. Edge Function
 
 - **Función**: `cleanup-old-history`
-- **Propósito**: Ejecutar limpieza automática de registros antiguos
+- **Propósito**: Ejecutar limpieza automática de:
+  - Registros antiguos en `content_history`
+  - Elementos expirados en `queue_items` (24h después de expirar)
 - **URL**: `https://[PROYECTO].supabase.co/functions/v1/cleanup-old-history`
+- **Métodos**: GET, POST
+- **Autenticación**: No requerida para cron jobs (función pública)
 
 ### 3. Interfaz de Usuario
 

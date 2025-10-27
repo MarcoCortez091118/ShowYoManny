@@ -82,14 +82,32 @@ const SortableItem = ({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="bg-card border rounded-lg p-4 mb-2 overflow-x-auto">
-      <div className="flex items-center gap-4 min-w-max">
+    <div ref={setNodeRef} style={style} className="bg-card border rounded-lg p-4 mb-2">
+      <div className="flex items-center gap-4">
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing flex-shrink-0">
           <GripVertical className="w-5 h-5 text-muted-foreground" />
         </div>
 
-        <div className="flex-shrink-0">
-          <div className="flex items-center gap-2 mb-1">
+        <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+          {item.media_type === 'image' ? (
+            <img
+              src={item.media_url}
+              alt={item.title || 'Preview'}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <video
+              src={item.media_url}
+              className="w-full h-full object-cover"
+              muted
+              preload="metadata"
+            />
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <Badge className={`${getStatusColor(item.computed_status)} flex-shrink-0`}>
               {getStatusLabel(item)}
             </Badge>
@@ -98,12 +116,12 @@ const SortableItem = ({
                 Hidden from Display
               </Badge>
             )}
-            <span className="font-medium whitespace-nowrap">
+            <span className="font-medium truncate">
               {item.title || 'Untitled'}
             </span>
           </div>
 
-          <div className="flex gap-3 text-sm text-muted-foreground">
+          <div className="flex gap-3 text-sm text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1 whitespace-nowrap">
               <Play className="w-3 h-3" />
               {item.duration}s • {item.media_type}
@@ -117,21 +135,22 @@ const SortableItem = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => onEdit(item)}
             title="Editar item"
+            className="h-9 w-9"
           >
             <Edit className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => onDelete(item)}
             title="Eliminar item"
-            className="hover:text-destructive"
+            className="h-9 w-9 hover:text-destructive"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -477,6 +496,23 @@ const AdminQueue = () => {
                       {items.filter(i => i.computed_status === 'expired' || i.computed_status === 'completed').map((item) => (
                         <div key={item.id} className="bg-card border rounded-lg p-4 mb-2 opacity-60">
                           <div className="flex items-center gap-4">
+                            <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+                              {item.media_type === 'image' ? (
+                                <img
+                                  src={item.media_url}
+                                  alt={item.title || 'Preview'}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <video
+                                  src={item.media_url}
+                                  className="w-full h-full object-cover"
+                                  muted
+                                  preload="metadata"
+                                />
+                              )}
+                            </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <Badge className="bg-red-500">
@@ -502,11 +538,11 @@ const AdminQueue = () => {
                             </div>
                             <Button
                               variant="ghost"
-                              size="sm"
+                              size="icon"
                               onClick={() => handleDeleteClick(item)}
-                              className="shrink-0"
+                              className="h-9 w-9 flex-shrink-0 hover:text-destructive"
                             >
-                              <Trash2 className="w-4 h-4 text-destructive" />
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
