@@ -11,7 +11,7 @@ export interface CompressionOptions {
   onProgress?: (progress: CompressionProgress) => void;
 }
 
-const DEFAULT_MAX_SIZE_MB = 45;
+const DEFAULT_MAX_SIZE_MB = 95; // Compress to under 100MB for optimal performance
 const DEFAULT_TARGET_BITRATE = 2500000;
 
 const QUALITY_PRESETS = {

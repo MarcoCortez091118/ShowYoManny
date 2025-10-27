@@ -384,6 +384,28 @@ const AdminDashboard = () => {
       return;
     }
 
+    // Check file size limits
+    const maxSize = 500 * 1024 * 1024; // 500 MB
+    const recommendedSize = 100 * 1024 * 1024; // 100 MB
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+
+    if (file.size > maxSize) {
+      toast({
+        title: "File Too Large",
+        description: `File size (${fileSizeMB} MB) exceeds maximum allowed (500 MB). Please compress or use a smaller file.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > recommendedSize) {
+      toast({
+        title: "Large File Warning",
+        description: `File size is ${fileSizeMB} MB. Upload may be slow. Consider using video compression for better performance.`,
+        variant: "default",
+      });
+    }
+
     setSelectedFile(file);
 
     // Extract video duration automatically
@@ -881,7 +903,7 @@ const AdminDashboard = () => {
                   Configuración de Contenido
                 </CardTitle>
                 <CardDescription>
-                  Configura el estilo de borde, duración y opciones de programación
+                  Configura el estilo de borde, duración y opciones de programación. Tamaño máximo: 500 MB (recomendado: &lt;100 MB)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -893,7 +915,13 @@ const AdminDashboard = () => {
                         <p className="text-sm text-muted-foreground">
                           {processedMediaMetadata.width}x{processedMediaMetadata.height}px
                           {processedMediaMetadata.duration && ` • ${processedMediaMetadata.duration.toFixed(1)}s`}
+                          {' • '}{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                         </p>
+                        {selectedFile.size > 100 * 1024 * 1024 && (
+                          <p className="text-xs text-orange-600 mt-1">
+                            ⚠️ Large file - upload may take longer
+                          </p>
+                        )}
                       </div>
                       <Badge variant="secondary">{selectedFile.type.startsWith('video/') ? 'Video' : 'Imagen'}</Badge>
                     </div>
