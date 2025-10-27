@@ -252,13 +252,7 @@ const AdminDashboard = () => {
     setIsUploading(true);
     setUploadProgress(0);
 
-    // Simulate progress for large files
-    const progressInterval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 90) return prev;
-        return prev + 10;
-      });
-    }, 500);
+    // Real progress tracking from Supabase
 
     try {
       const getScheduledDateTime = (date: Date | undefined, time: string) => {
@@ -283,10 +277,11 @@ const AdminDashboard = () => {
         timerLoopMinutes: timerLoopEnabled && !timerLoopAutomatic ? timerLoopMinutes : null,
         timerLoopAutomatic,
         metadata: processedMediaMetadata,
+        onProgress: (progress) => {
+          console.log(`📊 Upload progress: ${progress}%`);
+          setUploadProgress(progress);
+        },
       });
-
-      clearInterval(progressInterval);
-      setUploadProgress(100);
 
       setShowUploadReaction(true);
       setTimeout(() => setShowUploadReaction(false), 3000);
@@ -321,7 +316,6 @@ const AdminDashboard = () => {
         setIsUploading(false);
       }, 1000);
     } catch (error) {
-      clearInterval(progressInterval);
       console.error('Upload error:', error);
       toast({
         title: "Upload Failed",

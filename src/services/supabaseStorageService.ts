@@ -9,7 +9,8 @@ const WARNING_SIZE_3 = 1024 * 1024 * 1024; // 1 GB
 class SupabaseStorageService {
   async uploadFile(
     file: File,
-    path: string
+    path: string,
+    onProgress?: (progress: number) => void
   ): Promise<{ url: string | null; error: any }> {
     try {
       // Validate file size
@@ -34,6 +35,10 @@ class SupabaseStorageService {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
         console.warn(`ℹ️ File size: ${sizeMB} MB. Upload may take some time.`);
       }
+
+      console.log('🚀 Starting upload to Supabase Storage...');
+      onProgress?.(10); // Initial progress
+
       const { data, error } = await supabase.storage
         .from(STORAGE_BUCKET)
         .upload(path, file, {
@@ -42,15 +47,23 @@ class SupabaseStorageService {
         });
 
       if (error) {
+        console.error('❌ Upload error:', error);
         return { url: null, error };
       }
+
+      console.log('✅ Upload successful, generating public URL...');
+      onProgress?.(95); // Almost done
 
       const { data: urlData } = supabase.storage
         .from(STORAGE_BUCKET)
         .getPublicUrl(data.path);
 
+      console.log('✅ Public URL generated:', urlData.publicUrl);
+      onProgress?.(100); // Complete
+
       return { url: urlData.publicUrl, error: null };
     } catch (error) {
+      console.error('❌ Upload exception:', error);
       return { url: null, error };
     }
   }

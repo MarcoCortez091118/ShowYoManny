@@ -17,6 +17,7 @@ export interface QueueItemInput {
     positionX?: number;
     positionY?: number;
   };
+  onProgress?: (progress: number) => void;
 }
 
 export interface QueueItem {
@@ -44,10 +45,12 @@ export interface QueueItem {
 
 class SupabaseContentService {
   async createQueueItem(input: QueueItemInput): Promise<QueueItem> {
-    const { file, borderStyle, duration, scheduledStart, scheduledEnd, timerLoopEnabled, timerLoopMinutes, timerLoopAutomatic, metadata } = input;
+    const { file, borderStyle, duration, scheduledStart, scheduledEnd, timerLoopEnabled, timerLoopMinutes, timerLoopAutomatic, metadata, onProgress } = input;
 
     console.log('✅ Using Supabase Content Service - NOT Firebase');
     console.log('📁 File to upload:', file.name, file.type, file.size);
+
+    onProgress?.(5); // Starting
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
@@ -55,6 +58,7 @@ class SupabaseContentService {
     }
 
     console.log('👤 User authenticated:', user.id);
+    onProgress?.(10); // Authenticated
 
     const fileExt = file.name.split('.').pop();
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -62,7 +66,12 @@ class SupabaseContentService {
 
     console.log('📤 Uploading to Supabase Storage bucket "media" at path:', filePath);
 
-    const { url, error: uploadError } = await supabaseStorageService.uploadFile(file, filePath);
+    // Pass progress callback to storage service
+    const { url, error: uploadError } = await supabaseStorageService.uploadFile(file, filePath, (storageProgress) => {
+      // Map storage progress (10-95) to overall progress (15-85)
+      const mappedProgress = 15 + (storageProgress - 10) * 0.7;
+      onProgress?.(Math.round(mappedProgress));
+    });
 
     if (uploadError || !url) {
       console.error('❌ Supabase upload error:', uploadError);
@@ -70,6 +79,7 @@ class SupabaseContentService {
     }
 
     console.log('✅ File uploaded successfully. URL:', url);
+    onProgress?.(90); // Upload complete, now creating DB record
 
     const mediaType = file.type.startsWith('image/') ? 'image' : 'video';
 
@@ -81,6 +91,8 @@ class SupabaseContentService {
       .maybeSingle();
 
     const nextOrderIndex = (maxOrderResult.data?.order_index ?? -1) + 1;
+
+    onProgress?.(95); // Creating database record
 
     const { data, error } = await supabase
       .from('queue_items')
@@ -108,6 +120,9 @@ class SupabaseContentService {
       console.error('Error creating queue item:', error);
       throw new Error(`Failed to create queue item: ${error.message}`);
     }
+
+    console.log('✅ Queue item created successfully');
+    onProgress?.(100); // Complete!
 
     return data as QueueItem;
   }
