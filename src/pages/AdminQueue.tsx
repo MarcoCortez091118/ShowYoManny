@@ -84,21 +84,23 @@ const SortableItem = ({
   return (
     <div ref={setNodeRef} style={style} className="bg-card border rounded-lg p-4 mb-2">
       <div className="flex items-center gap-4">
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing flex-shrink-0">
           <GripVertical className="w-5 h-5 text-muted-foreground" />
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <Badge className={getStatusColor(item.computed_status)}>
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge className={`${getStatusColor(item.computed_status)} flex-shrink-0`}>
               {getStatusLabel(item)}
             </Badge>
             {!item.is_visible && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs flex-shrink-0">
                 Hidden from Display
               </Badge>
             )}
-            <span className="font-medium truncate">{item.title || 'Untitled'}</span>
+            <span className="font-medium truncate block" title={item.title || 'Untitled'}>
+              {item.title || 'Untitled'}
+            </span>
           </div>
 
           <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
@@ -115,7 +117,7 @@ const SortableItem = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Button
             variant="ghost"
             size="sm"
