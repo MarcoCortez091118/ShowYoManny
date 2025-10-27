@@ -385,23 +385,42 @@ const AdminDashboard = () => {
     }
 
     // Check file size limits
-    const maxSize = 500 * 1024 * 1024; // 500 MB
-    const recommendedSize = 100 * 1024 * 1024; // 100 MB
-    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    const maxSize = 5 * 1024 * 1024 * 1024; // 5 GB
+    const size1GB = 1024 * 1024 * 1024; // 1 GB
+    const size500MB = 500 * 1024 * 1024; // 500 MB
+    const size100MB = 100 * 1024 * 1024; // 100 MB
 
     if (file.size > maxSize) {
+      const sizeGB = (file.size / (1024 * 1024 * 1024)).toFixed(2);
       toast({
         title: "File Too Large",
-        description: `File size (${fileSizeMB} MB) exceeds maximum allowed (500 MB). Please compress or use a smaller file.`,
+        description: `File size (${sizeGB} GB) exceeds maximum allowed (5 GB). Please use a smaller file.`,
         variant: "destructive",
       });
       return;
     }
 
-    if (file.size > recommendedSize) {
+    // Progressive warnings based on file size
+    if (file.size > size1GB) {
+      const sizeGB = (file.size / (1024 * 1024 * 1024)).toFixed(2);
+      toast({
+        title: "Very Large File",
+        description: `File size is ${sizeGB} GB. Upload will take significant time. Ensure stable connection.`,
+        variant: "default",
+        duration: 6000,
+      });
+    } else if (file.size > size500MB) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(0);
       toast({
         title: "Large File Warning",
-        description: `File size is ${fileSizeMB} MB. Upload may be slow. Consider using video compression for better performance.`,
+        description: `File size is ${sizeMB} MB. Upload may take several minutes.`,
+        variant: "default",
+      });
+    } else if (file.size > size100MB) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(0);
+      toast({
+        title: "File Upload Info",
+        description: `File size is ${sizeMB} MB. Upload may take some time.`,
         variant: "default",
       });
     }
@@ -903,7 +922,7 @@ const AdminDashboard = () => {
                   Configuración de Contenido
                 </CardTitle>
                 <CardDescription>
-                  Configura el estilo de borde, duración y opciones de programación. Tamaño máximo: 500 MB (recomendado: &lt;100 MB)
+                  Configura el estilo de borde, duración y opciones de programación. Tamaño máximo: 5 GB (recomendado: &lt;100 MB para mejor rendimiento)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -915,11 +934,23 @@ const AdminDashboard = () => {
                         <p className="text-sm text-muted-foreground">
                           {processedMediaMetadata.width}x{processedMediaMetadata.height}px
                           {processedMediaMetadata.duration && ` • ${processedMediaMetadata.duration.toFixed(1)}s`}
-                          {' • '}{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                          {' • '}{selectedFile.size >= 1024 * 1024 * 1024
+                            ? `${(selectedFile.size / (1024 * 1024 * 1024)).toFixed(2)} GB`
+                            : `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`}
                         </p>
-                        {selectedFile.size > 100 * 1024 * 1024 && (
+                        {selectedFile.size > 1024 * 1024 * 1024 && (
+                          <p className="text-xs text-red-600 mt-1 font-medium">
+                            ⚠️ Very large file - upload will take significant time
+                          </p>
+                        )}
+                        {selectedFile.size > 500 * 1024 * 1024 && selectedFile.size <= 1024 * 1024 * 1024 && (
                           <p className="text-xs text-orange-600 mt-1">
-                            ⚠️ Large file - upload may take longer
+                            ⚠️ Large file - upload may take several minutes
+                          </p>
+                        )}
+                        {selectedFile.size > 100 * 1024 * 1024 && selectedFile.size <= 500 * 1024 * 1024 && (
+                          <p className="text-xs text-yellow-600 mt-1">
+                            ℹ️ Upload may take some time
                           </p>
                         )}
                       </div>

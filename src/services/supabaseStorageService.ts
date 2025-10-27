@@ -1,8 +1,10 @@
 import { supabase } from '@/lib/supabase';
 
 const STORAGE_BUCKET = 'media';
-const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500 MB
-const RECOMMENDED_MAX_SIZE = 100 * 1024 * 1024; // 100 MB (recommended for best performance)
+const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB
+const WARNING_SIZE_1 = 100 * 1024 * 1024; // 100 MB
+const WARNING_SIZE_2 = 500 * 1024 * 1024; // 500 MB
+const WARNING_SIZE_3 = 1024 * 1024 * 1024; // 1 GB
 
 class SupabaseStorageService {
   async uploadFile(
@@ -12,20 +14,25 @@ class SupabaseStorageService {
     try {
       // Validate file size
       if (file.size > MAX_FILE_SIZE) {
-        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        const maxSizeMB = (MAX_FILE_SIZE / (1024 * 1024)).toFixed(0);
+        const sizeGB = (file.size / (1024 * 1024 * 1024)).toFixed(2);
         return {
           url: null,
           error: {
-            message: `File size (${sizeMB} MB) exceeds maximum allowed size (${maxSizeMB} MB). Please compress the file or use a smaller file.`
+            message: `File size (${sizeGB} GB) exceeds maximum allowed size (5 GB). Please use a smaller file.`
           }
         };
       }
 
-      // Warn about large files
-      if (file.size > RECOMMENDED_MAX_SIZE) {
+      // Warn about large files with different severity levels
+      if (file.size > WARNING_SIZE_3) {
+        const sizeGB = (file.size / (1024 * 1024 * 1024)).toFixed(2);
+        console.warn(`⚠️ Very large file detected (${sizeGB} GB). Upload will take significant time.`);
+      } else if (file.size > WARNING_SIZE_2) {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        console.warn(`⚠️ Large file detected (${sizeMB} MB). Upload may be slow. Consider compressing.`);
+        console.warn(`⚠️ Large file detected (${sizeMB} MB). Upload may take several minutes.`);
+      } else if (file.size > WARNING_SIZE_1) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        console.warn(`ℹ️ File size: ${sizeMB} MB. Upload may take some time.`);
       }
       const { data, error } = await supabase.storage
         .from(STORAGE_BUCKET)
@@ -76,8 +83,16 @@ class SupabaseStorageService {
     return MAX_FILE_SIZE;
   }
 
-  getRecommendedMaxSize(): number {
-    return RECOMMENDED_MAX_SIZE;
+  getWarningSize1(): number {
+    return WARNING_SIZE_1;
+  }
+
+  getWarningSize2(): number {
+    return WARNING_SIZE_2;
+  }
+
+  getWarningSize3(): number {
+    return WARNING_SIZE_3;
   }
 
   formatFileSize(bytes: number): string {
@@ -92,8 +107,11 @@ class SupabaseStorageService {
     return file.size > MAX_FILE_SIZE;
   }
 
-  shouldWarnAboutSize(file: File): boolean {
-    return file.size > RECOMMENDED_MAX_SIZE && file.size <= MAX_FILE_SIZE;
+  getFileSizeWarningLevel(file: File): 'none' | 'info' | 'warning' | 'danger' {
+    if (file.size > WARNING_SIZE_3) return 'danger';
+    if (file.size > WARNING_SIZE_2) return 'warning';
+    if (file.size > WARNING_SIZE_1) return 'info';
+    return 'none';
   }
 
   async createBucket(): Promise<void> {
