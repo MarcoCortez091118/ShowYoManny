@@ -6,50 +6,55 @@
 
 @layer base {
   :root {
-    /* Electric Billboard Theme - Pure Black Base */
-    --background: 0 0% 0%;
+    /* ShowYo Brand Colors - Dark Theme Base */
+    /* Base: #2a2c2d (Dark Gray) */
+    --background: 210 3% 17%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 5%;
+    --card: 210 3% 20%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 5%;
+    --popover: 210 3% 20%;
     --popover-foreground: 0 0% 98%;
 
-    /* Electric Primary - Cyan/Turquoise Neon */
-    --primary: 180 100% 50%;
-    --primary-foreground: 0 0% 0%;
+    /* Primary: #ff2e63 (Hot Pink/Red) */
+    --primary: 345 100% 59%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Electric Secondary - Bright Cyan */
-    --secondary: 190 100% 60%;
+    /* Secondary: #05c7cc (Cyan) */
+    --secondary: 182 96% 41%;
     --secondary-foreground: 0 0% 0%;
 
-    /* Electric Accent - Neon Turquoise */
-    --accent: 175 100% 55%;
-    --accent-foreground: 0 0% 0%;
+    /* Accent: #ffd23f (Yellow) */
+    --accent: 44 100% 62%;
+    --accent-foreground: 210 10% 23%;
 
-    --muted: 0 0% 10%;
+    /* Navy: #06335b */
+    --navy: 206 89% 19%;
+    --navy-foreground: 0 0% 98%;
+
+    --muted: 210 3% 25%;
     --muted-foreground: 0 0% 60%;
 
-    --destructive: 0 85% 60%;
+    --destructive: 345 100% 59%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 180 100% 15%;
-    --input: 0 0% 10%;
-    --ring: 210 100% 60%;
+    --border: 210 3% 30%;
+    --input: 210 3% 25%;
+    --ring: 345 100% 59%;
 
     --radius: 0.75rem;
 
-    /* Electric Billboard Gradients */
-    --gradient-electric: linear-gradient(135deg, hsl(180 100% 50%), hsl(190 100% 60%));
-    --gradient-neon: linear-gradient(90deg, hsl(175 100% 55%), hsl(180 100% 50%));
-    --gradient-billboard: linear-gradient(180deg, hsl(0 0% 0%), hsl(220 26% 7%));
-    
+    /* ShowYo Brand Gradients */
+    --gradient-electric: linear-gradient(135deg, hsl(345 100% 59%), hsl(182 96% 41%));
+    --gradient-neon: linear-gradient(90deg, hsl(182 96% 41%), hsl(44 100% 62%));
+    --gradient-billboard: linear-gradient(180deg, hsl(206 89% 19%), hsl(210 3% 17%));
+
     /* Glow Effects */
-    --glow-electric: 0 0 30px hsl(180 100% 50% / 0.6);
-    --glow-neon: 0 0 20px hsl(175 100% 55% / 0.5);
-    --glow-cyan: 0 0 25px hsl(190 100% 60% / 0.5);
-    
+    --glow-primary: 0 0 30px hsl(345 100% 59% / 0.6);
+    --glow-secondary: 0 0 25px hsl(182 96% 41% / 0.5);
+    --glow-accent: 0 0 20px hsl(44 100% 62% / 0.4);
+
     /* Animation Variables */
     --transition-electric: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --pulse-duration: 2s;
@@ -74,41 +79,41 @@
 }
 
 @layer components {
-  /* Electric Billboard Components */
+  /* ShowYo Brand Components */
   .electric-glow {
-    box-shadow: var(--glow-electric);
+    box-shadow: var(--glow-primary);
   }
-  
+
   .neon-glow {
-    box-shadow: var(--glow-neon);
+    box-shadow: var(--glow-secondary);
   }
-  
-  .purple-glow {
-    box-shadow: var(--glow-purple);
+
+  .accent-glow {
+    box-shadow: var(--glow-accent);
   }
-  
+
   .gradient-electric {
     background: var(--gradient-electric);
   }
-  
+
   .gradient-neon {
     background: var(--gradient-neon);
   }
-  
+
   .gradient-billboard {
     background: var(--gradient-billboard);
   }
-  
+
   .animate-pulse-glow {
     animation: pulse-glow var(--pulse-duration) ease-in-out infinite;
   }
-  
+
   @keyframes pulse-glow {
     0%, 100% {
-      box-shadow: var(--glow-electric);
+      box-shadow: var(--glow-primary);
     }
     50% {
-      box-shadow: 0 0 40px hsl(210 100% 60% / 0.8), 0 0 60px hsl(270 100% 65% / 0.4);
+      box-shadow: 0 0 40px hsl(345 100% 59% / 0.8), 0 0 60px hsl(182 96% 41% / 0.4);
     }
   }
 }
