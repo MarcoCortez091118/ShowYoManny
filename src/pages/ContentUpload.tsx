@@ -21,7 +21,7 @@ import { BorderPreview } from "@/components/BorderPreview";
 import showYoLogo from "@/assets/showyo-logo-color.png";
 import { planService } from "@/domain/services/planService";
 import { borderService } from "@/domain/services/borderService";
-import { firebaseStorageService } from "@/domain/services/firebase/storageService";
+import { supabaseStorageService } from "@/services/supabaseStorageService";
 import { firebaseOrderService } from "@/domain/services/firebase/orderService";
 import { firebasePaymentService } from "@/domain/services/firebase/paymentService";
 import { MediaEditor } from "@/components/media/MediaEditor";
@@ -374,11 +374,20 @@ const ContentUpload = () => {
         metadata.processedHeight = settings.screenHeight;
       }
 
-      const uploadResult = await firebaseStorageService.uploadBillboardAsset({
-        file: processedFile,
-        folder: "content",
-        metadata,
-      });
+      // Generate unique filename
+      const timestamp = Date.now();
+      const fileName = `content/${timestamp}_${processedFile.name}`;
+
+      // Upload to Supabase Storage
+      const uploadResult = await supabaseStorageService.uploadFile(
+        processedFile,
+        fileName,
+        (progress) => console.log(`Upload progress: ${progress}%`)
+      );
+
+      if (uploadResult.error || !uploadResult.url) {
+        throw new Error(uploadResult.error?.message || 'Failed to upload file');
+      }
 
       const order = await firebaseOrderService.createOrder({
         userEmail: "guest@showyo.app",
@@ -386,7 +395,7 @@ const ContentUpload = () => {
         priceCents: selectedPlanData!.price * 100,
         fileName: processedFile.name,
         fileType: processedFile.type,
-        filePath: uploadResult.filePath,
+        filePath: uploadResult.url,
         borderId: finalBorderStyle,
         durationSeconds,
         isAdminContent: false,
