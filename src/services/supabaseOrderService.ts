@@ -57,6 +57,11 @@ class SupabaseOrderService {
     // Use authenticated user ID or create a guest user entry
     const userId = session?.user?.id || '00000000-0000-0000-0000-000000000000';
 
+    // Normalize media_type to "image" or "video" (remove MIME type)
+    const normalizedMediaType = input.fileType.startsWith('image/') ? 'image' :
+                                 input.fileType.startsWith('video/') ? 'video' :
+                                 input.fileType;
+
     // Prepare metadata with order details
     const metadata = {
       user_email: input.userEmail,
@@ -69,6 +74,7 @@ class SupabaseOrderService {
       play_count: 0,
       repeat_frequency_per_day: input.repeatFrequencyPerDay,
       auto_complete_after_play: input.autoCompleteAfterPlay !== undefined ? input.autoCompleteAfterPlay : true,
+      original_mime_type: input.fileType, // Store full MIME type in metadata
     };
 
     const { data, error } = await supabase
@@ -76,7 +82,7 @@ class SupabaseOrderService {
       .insert({
         user_id: userId,
         media_url: input.filePath,
-        media_type: input.fileType,
+        media_type: normalizedMediaType,
         title: input.fileName,
         duration: input.durationSeconds,
         status: input.status || 'pending',
