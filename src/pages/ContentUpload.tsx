@@ -22,8 +22,8 @@ import showYoLogo from "@/assets/showyo-logo-color.png";
 import { planService } from "@/domain/services/planService";
 import { borderService } from "@/domain/services/borderService";
 import { supabaseStorageService } from "@/services/supabaseStorageService";
-import { firebaseOrderService } from "@/domain/services/firebase/orderService";
-import { firebasePaymentService } from "@/domain/services/firebase/paymentService";
+import { supabaseOrderService } from "@/services/supabaseOrderService";
+import { supabasePaymentService } from "@/services/supabasePaymentService";
 import { MediaEditor } from "@/components/media/MediaEditor";
 import { useDisplaySettings } from "@/hooks/use-display-settings";
 import { Alert } from "@/components/ui/alert";
@@ -389,7 +389,7 @@ const ContentUpload = () => {
         throw new Error(uploadResult.error?.message || 'Failed to upload file');
       }
 
-      const order = await firebaseOrderService.createOrder({
+      const order = await supabaseOrderService.createOrder({
         userEmail: "guest@showyo.app",
         pricingOptionId: selectedPlan,
         priceCents: selectedPlanData!.price * 100,
@@ -406,10 +406,12 @@ const ContentUpload = () => {
         autoCompleteAfterPlay: true,
       });
 
-      const checkoutData = await firebasePaymentService.createCheckoutSession({
+      const checkoutData = await supabasePaymentService.createCheckoutSession({
         orderId: order.id,
         planId: selectedPlan,
         userEmail: "guest@showyo.app",
+        mediaUrl: uploadResult.url,
+        title: processedFile.name,
       });
 
       if (!checkoutData?.url) {
