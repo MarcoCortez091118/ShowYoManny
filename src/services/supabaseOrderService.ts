@@ -1,34 +1,30 @@
 import { supabase } from '@/lib/supabase';
 
 export type OrderStatus = "pending" | "completed" | "refunded" | "cancelled";
-export type ModerationStatus = "pending" | "approved" | "rejected";
-export type DisplayStatus = "pending" | "queued" | "active" | "completed" | "rejected";
 
 export interface QueueItem {
   id: string;
-  user_email: string;
-  pricing_option_id: string;
-  price_cents: number;
-  file_name: string;
-  file_type: string;
-  file_path: string;
-  border_id: string;
-  duration_seconds: number;
+  user_id: string;
+  kiosk_id?: string | null;
+  media_url: string;
+  media_type: string;
+  thumbnail_url?: string | null;
+  title?: string | null;
+  duration: number;
+  order_index: number;
   status: OrderStatus;
-  moderation_status: ModerationStatus;
-  display_status: DisplayStatus;
-  is_admin_content: boolean;
-  created_at: string;
   scheduled_start?: string | null;
   scheduled_end?: string | null;
-  timer_loop_enabled?: boolean;
+  created_at: string;
+  updated_at: string;
+  border_id?: string | null;
+  timer_loop_enabled: boolean;
   timer_loop_minutes?: number | null;
-  max_plays?: number | null;
-  play_count?: number | null;
-  repeat_frequency_per_day?: number | null;
-  auto_complete_after_play?: boolean;
-  queue_position?: number | null;
-  last_played_at?: string | null;
+  file_name?: string | null;
+  metadata?: Record<string, any> | null;
+  timer_loop_automatic: boolean;
+  auto_delete_on_expire: boolean;
+  published_at?: string | null;
 }
 
 export interface CreateOrderInput {
@@ -41,9 +37,9 @@ export interface CreateOrderInput {
   borderId: string;
   durationSeconds: number;
   isAdminContent: boolean;
-  moderationStatus?: ModerationStatus;
+  moderationStatus?: string;
   status?: OrderStatus;
-  displayStatus?: DisplayStatus;
+  displayStatus?: string;
   scheduledStart?: string | null;
   scheduledEnd?: string | null;
   timerLoopEnabled?: boolean;
@@ -55,29 +51,45 @@ export interface CreateOrderInput {
 
 class SupabaseOrderService {
   async createOrder(input: CreateOrderInput): Promise<QueueItem> {
+    // Get current user session
+    const { data: { session } } = await supabase.auth.getSession();
+
+    // Use authenticated user ID or create a guest user entry
+    const userId = session?.user?.id || '00000000-0000-0000-0000-000000000000';
+
+    // Prepare metadata with order details
+    const metadata = {
+      user_email: input.userEmail,
+      pricing_option_id: input.pricingOptionId,
+      price_cents: input.priceCents,
+      is_admin_content: input.isAdminContent,
+      moderation_status: input.moderationStatus || 'pending',
+      display_status: input.displayStatus || 'pending',
+      max_plays: input.maxPlays || 1,
+      play_count: 0,
+      repeat_frequency_per_day: input.repeatFrequencyPerDay,
+      auto_complete_after_play: input.autoCompleteAfterPlay !== undefined ? input.autoCompleteAfterPlay : true,
+    };
+
     const { data, error } = await supabase
       .from('queue_items')
       .insert({
-        user_email: input.userEmail,
-        pricing_option_id: input.pricingOptionId,
-        price_cents: input.priceCents,
-        file_name: input.fileName,
-        file_type: input.fileType,
-        file_path: input.filePath,
-        border_id: input.borderId,
-        duration_seconds: input.durationSeconds,
-        is_admin_content: input.isAdminContent,
-        moderation_status: input.moderationStatus || 'pending',
+        user_id: userId,
+        media_url: input.filePath,
+        media_type: input.fileType,
+        title: input.fileName,
+        duration: input.durationSeconds,
         status: input.status || 'pending',
-        display_status: input.displayStatus || 'pending',
+        border_id: input.borderId || null,
         scheduled_start: input.scheduledStart,
         scheduled_end: input.scheduledEnd,
         timer_loop_enabled: input.timerLoopEnabled || false,
         timer_loop_minutes: input.timerLoopMinutes,
-        max_plays: input.maxPlays || 1,
-        play_count: 0,
-        repeat_frequency_per_day: input.repeatFrequencyPerDay,
-        auto_complete_after_play: input.autoCompleteAfterPlay !== undefined ? input.autoCompleteAfterPlay : true,
+        file_name: input.fileName,
+        metadata: metadata,
+        order_index: 0,
+        timer_loop_automatic: false,
+        auto_delete_on_expire: true,
       })
       .select()
       .single();
@@ -108,7 +120,10 @@ class SupabaseOrderService {
   async updateOrder(id: string, updates: Partial<QueueItem>): Promise<QueueItem> {
     const { data, error } = await supabase
       .from('queue_items')
-      .update(updates)
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', id)
       .select()
       .single();
@@ -137,8 +152,7 @@ class SupabaseOrderService {
     const { data, error } = await supabase
       .from('queue_items')
       .select('*')
-      .eq('moderation_status', 'pending')
-      .eq('is_admin_content', false)
+      .eq('status', 'pending')
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -168,7 +182,6 @@ class SupabaseOrderService {
     const { data, error } = await supabase
       .from('queue_items')
       .select('*')
-      .eq('moderation_status', 'approved')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -182,7 +195,7 @@ class SupabaseOrderService {
   async reportPlayCompletion(orderId: string, payload: { startedAt: string; completedAt: string }): Promise<void> {
     const { data: order } = await supabase
       .from('queue_items')
-      .select('play_count, max_plays, auto_complete_after_play')
+      .select('metadata')
       .eq('id', orderId)
       .single();
 
@@ -190,15 +203,24 @@ class SupabaseOrderService {
       throw new Error('Order not found');
     }
 
-    const newPlayCount = (order.play_count || 0) + 1;
+    const metadata = order.metadata || {};
+    const playCount = (metadata.play_count || 0) + 1;
+    const maxPlays = metadata.max_plays || 1;
+    const autoComplete = metadata.auto_complete_after_play !== false;
+
     const updates: Partial<QueueItem> = {
-      play_count: newPlayCount,
-      last_played_at: payload.completedAt,
+      metadata: {
+        ...metadata,
+        play_count: playCount,
+        last_played_at: payload.completedAt,
+      },
     };
 
-    if (order.max_plays && newPlayCount >= order.max_plays && order.auto_complete_after_play) {
-      updates.display_status = 'completed';
+    if (maxPlays && playCount >= maxPlays && autoComplete) {
       updates.status = 'completed';
+      if (updates.metadata) {
+        updates.metadata.display_status = 'completed';
+      }
     }
 
     await this.updateOrder(orderId, updates);
