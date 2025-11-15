@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 export interface CreateCheckoutSessionInput {
   orderId: string;
   planId: string;
+  stripePriceId: string;
   userEmail: string;
   mediaUrl: string;
   title: string;
@@ -40,6 +41,7 @@ class SupabasePaymentService {
         body: JSON.stringify({
           order_id: input.orderId,
           plan_id: input.planId,
+          stripe_price_id: input.stripePriceId,
           user_email: input.userEmail,
           media_url: input.mediaUrl,
           title: input.title,

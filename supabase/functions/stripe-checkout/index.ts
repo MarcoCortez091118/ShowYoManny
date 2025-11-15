@@ -25,6 +25,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
+const STRIPE_PRICE_IDS: Record<string, string> = {
+  'photo-logo': 'price_1S8tkJF6Bz1PoBh55VqRIrC3',
+  'photo-border-logo': 'price_1S8tn8F6Bz1PoBh5nT9k1JT3',
+  'photo-clean': 'price_1S8tpmF6Bz1PoBh5FA5LLqTK',
+  'video-logo': 'price_1S8tqdF6Bz1PoBh5PKK3WZe9',
+  'video-border-logo': 'price_1S8trAF6Bz1PoBh5S1knkYcR',
+  'video-clean': 'price_1S8treF6Bz1PoBh59KkmfJiu',
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -44,9 +53,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { order_id, plan_id, user_email, media_url, title } = await req.json();
+    const { order_id, plan_id, user_email, stripe_price_id } = await req.json();
 
-    console.log('Creating checkout session:', { order_id, plan_id, user_email });
+    console.log('Creating checkout session:', { order_id, plan_id, user_email, stripe_price_id });
 
     if (!order_id || !plan_id || !user_email) {
       return new Response(
@@ -58,18 +67,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    const planPrices: Record<string, { price: number; name: string }> = {
-      'basic_10s': { price: 1000, name: 'Photo with Logo - 10s' },
-      'border_10s': { price: 1500, name: 'Photo with Border + Logo - 10s' },
-      'clean_10s': { price: 1500, name: 'Clean Photo - 10s' },
-      'video_basic': { price: 2500, name: 'Video with Logo' },
-      'video_clean': { price: 3000, name: 'Clean Video' },
-    };
+    const priceId = stripe_price_id || STRIPE_PRICE_IDS[plan_id];
 
-    const planInfo = planPrices[plan_id];
-    if (!planInfo) {
+    if (!priceId) {
+      console.error('Invalid plan_id or stripe_price_id:', { plan_id, stripe_price_id });
       return new Response(
-        JSON.stringify({ error: `Invalid plan_id: ${plan_id}` }),
+        JSON.stringify({ error: `Invalid plan: ${plan_id}. No Stripe Price ID found.` }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -81,18 +84,13 @@ Deno.serve(async (req) => {
     const successUrl = `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${order_id}`;
     const cancelUrl = `${baseUrl}/upload`;
 
+    console.log('Creating Stripe session with price:', priceId);
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: planInfo.name,
-              description: title || 'Digital Billboard Content',
-            },
-            unit_amount: planInfo.price,
-          },
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -104,12 +102,10 @@ Deno.serve(async (req) => {
         order_id: order_id,
         plan_id: plan_id,
         user_email: user_email,
-        media_url: media_url || '',
-        title: title || '',
       },
     });
 
-    console.log('Checkout session created:', session.id);
+    console.log('Checkout session created successfully:', session.id);
 
     return new Response(
       JSON.stringify({
@@ -126,6 +122,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: error.message || 'Failed to create checkout session',
+        details: error.stack,
       }),
       {
         status: 500,

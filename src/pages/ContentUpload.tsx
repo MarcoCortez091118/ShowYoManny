@@ -406,9 +406,15 @@ const ContentUpload = () => {
         autoCompleteAfterPlay: true,
       });
 
+      const stripePriceId = planService.getStripePriceId(selectedPlan);
+      if (!stripePriceId) {
+        throw new Error(`No Stripe Price ID found for plan: ${selectedPlan}`);
+      }
+
       const checkoutData = await supabasePaymentService.createCheckoutSession({
         orderId: order.id,
         planId: selectedPlan,
+        stripePriceId,
         userEmail: "guest@showyo.app",
         mediaUrl: uploadResult.url,
         title: processedFile.name,
