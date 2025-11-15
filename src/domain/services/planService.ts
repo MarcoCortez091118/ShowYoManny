@@ -5,6 +5,8 @@ import {
   PlanType,
   getPlanById,
   getPlansByType,
+  getStripePriceId,
+  getStripeMode,
 } from "../../../shared/plans";
 
 export type { PlanDefinition, PlanType } from "../../../shared/plans";
@@ -21,7 +23,7 @@ export interface PlanSummary {
 
 export const planService = {
   getAllPlans(): readonly PlanDefinition[] {
-    return PLAN_DEFINITIONS;
+    return PLAN_DEFINITIONS.filter((plan) => !plan.hidden);
   },
 
   getPlansByType(planType: PlanType): readonly PlanDefinition[] {
@@ -68,7 +70,8 @@ export const planService = {
   },
 
   getStripePriceId(planId: string): string | undefined {
-    return PLAN_PRICE_ID_LOOKUP[planId];
+    const mode = getStripeMode();
+    return getStripePriceId(planId, mode);
   },
 
   getDisplayFeatures(plan: PlanDefinition): readonly string[] {
