@@ -12,8 +12,12 @@ export interface PlanDefinition {
   readonly includesBorder: boolean;
   readonly includesLogo: boolean;
   readonly stripePriceId: string;
+  readonly stripePriceIdTest: string;
   readonly isPopular?: boolean;
+  readonly hidden?: boolean;
 }
+
+export type StripeMode = "test" | "live";
 
 export const PLAN_DEFINITIONS: readonly PlanDefinition[] = [
   {
@@ -28,6 +32,7 @@ export const PLAN_DEFINITIONS: readonly PlanDefinition[] = [
     includesBorder: false,
     includesLogo: true,
     stripePriceId: "price_1S8tkJF6Bz1PoBh55VqRIrC3",
+    stripePriceIdTest: "price_1ST52bF6Bz1PoBh529PZWWek",
   },
   {
     id: "photo-border-logo",
@@ -41,7 +46,9 @@ export const PLAN_DEFINITIONS: readonly PlanDefinition[] = [
     includesBorder: true,
     includesLogo: true,
     stripePriceId: "price_1S8tn8F6Bz1PoBh5nT9k1JT3",
+    stripePriceIdTest: "price_1ST53eF6Bz1PoBh5ysdQt2n3",
     isPopular: true,
+    hidden: true,
   },
   {
     id: "photo-clean",
@@ -55,6 +62,7 @@ export const PLAN_DEFINITIONS: readonly PlanDefinition[] = [
     includesBorder: false,
     includesLogo: false,
     stripePriceId: "price_1S8tpmF6Bz1PoBh5FA5LLqTK",
+    stripePriceIdTest: "price_1ST554F6Bz1PoBh56glS9TuX",
   },
   {
     id: "video-logo",
@@ -68,6 +76,7 @@ export const PLAN_DEFINITIONS: readonly PlanDefinition[] = [
     includesBorder: false,
     includesLogo: true,
     stripePriceId: "price_1S8tqdF6Bz1PoBh5PKK3WZe9",
+    stripePriceIdTest: "price_1ST55lF6Bz1PoBh5CNvMhYRE",
   },
   {
     id: "video-border-logo",
@@ -81,7 +90,9 @@ export const PLAN_DEFINITIONS: readonly PlanDefinition[] = [
     includesBorder: true,
     includesLogo: true,
     stripePriceId: "price_1S8trAF6Bz1PoBh5S1knkYcR",
+    stripePriceIdTest: "price_1ST56HF6Bz1PoBh5bOS27LXL",
     isPopular: true,
+    hidden: true,
   },
   {
     id: "video-clean",
@@ -95,6 +106,7 @@ export const PLAN_DEFINITIONS: readonly PlanDefinition[] = [
     includesBorder: false,
     includesLogo: false,
     stripePriceId: "price_1S8treF6Bz1PoBh59KkmfJiu",
+    stripePriceIdTest: "price_1ST56eF6Bz1PoBh5izVtz7Io",
   },
 ] as const;
 
@@ -107,10 +119,28 @@ export function getPlanById(planId: string): PlanDefinition | undefined {
 }
 
 export function getPlansByType(planType: PlanType): readonly PlanDefinition[] {
-  return PLAN_DEFINITIONS.filter((plan) => plan.type === planType);
+  return PLAN_DEFINITIONS.filter((plan) => plan.type === planType && !plan.hidden);
+}
+
+export function getStripePriceId(planId: string, mode: StripeMode = "test"): string {
+  const plan = PLAN_BY_ID.get(planId);
+  if (!plan) {
+    throw new Error(`Plan not found: ${planId}`);
+  }
+  return mode === "live" ? plan.stripePriceId : plan.stripePriceIdTest;
+}
+
+export function getStripeMode(): StripeMode {
+  const mode = import.meta.env.VITE_STRIPE_MODE as string | undefined;
+  return mode === "live" ? "live" : "test";
 }
 
 export const PLAN_PRICE_ID_LOOKUP: Readonly<Record<string, string>> = PLAN_DEFINITIONS.reduce(
   (acc, plan) => ({ ...acc, [plan.id]: plan.stripePriceId }),
+  {} as Record<string, string>
+);
+
+export const PLAN_PRICE_ID_TEST_LOOKUP: Readonly<Record<string, string>> = PLAN_DEFINITIONS.reduce(
+  (acc, plan) => ({ ...acc, [plan.id]: plan.stripePriceIdTest }),
   {} as Record<string, string>
 );
