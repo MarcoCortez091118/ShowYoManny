@@ -39,3 +39,4 @@
 # Environment variables needed (set in Netlify dashboard)
 # VITE_SUPABASE_URL
 # VITE_SUPABASE_ANON_KEY
+# VITE_STRIPE_MODE (set to "test" or "live")
