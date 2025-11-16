@@ -115,7 +115,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       console.info(`Successfully processed one-time payment for session: ${id}`);
 
       if (metadata?.order_id) {
-        await activateQueueItemAfterPayment(metadata.order_id);
+        await activateQueueItemAfterPayment(
+          metadata.order_id,
+          session.customer_details?.email || metadata.user_email,
+          session.customer_details?.name || undefined,
+          customer
+        );
       }
     } catch (error) {
       console.error('Error processing one-time payment:', error);
@@ -170,10 +175,18 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   await syncCustomerFromStripe(customer);
 }
 
-async function activateQueueItemAfterPayment(queueItemId: string) {
+async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?: string, customerName?: string, customerId?: string) {
   try {
     const now = new Date();
     const scheduledEnd = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    const { data: queueItem } = await supabase
+      .from('queue_items')
+      .select('metadata')
+      .eq('id', queueItemId)
+      .maybeSingle();
+
+    const existingMetadata = queueItem?.metadata || {};
 
     const { error } = await supabase
       .from('queue_items')
@@ -181,6 +194,13 @@ async function activateQueueItemAfterPayment(queueItemId: string) {
         status: 'active',
         published_at: now.toISOString(),
         scheduled_end: scheduledEnd.toISOString(),
+        metadata: {
+          ...existingMetadata,
+          customer_email: customerEmail,
+          customer_name: customerName,
+          stripe_customer_id: customerId,
+          payment_date: now.toISOString(),
+        },
       })
       .eq('id', queueItemId);
 
@@ -189,7 +209,7 @@ async function activateQueueItemAfterPayment(queueItemId: string) {
       return;
     }
 
-    console.info(`Queue item activated: ${queueItemId}, expires at: ${scheduledEnd.toISOString()}`);
+    console.info(`Queue item activated: ${queueItemId}, customer: ${customerEmail}, expires at: ${scheduledEnd.toISOString()}`);
   } catch (error) {
     console.error('Error in activateQueueItemAfterPayment:', error);
   }

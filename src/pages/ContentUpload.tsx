@@ -46,6 +46,9 @@ const ContentUpload = () => {
   const [uploadMetadata, setUploadMetadata] = useState<Record<string, string | number | boolean>>({});
   const [videoTrim, setVideoTrim] = useState<{ start: number; end: number; duration: number } | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState("");
+  const [userName, setUserName] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const plans = useMemo(() => planService.getAllPlans(), []);
@@ -290,6 +293,27 @@ const ContentUpload = () => {
       return;
     }
 
+    if (!userName || !userEmail) {
+      setEmailError("Please enter your name and email address");
+      toast({
+        title: "Missing Information",
+        description: "Please provide your name and email to continue",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userEmail)) {
+      setEmailError("Please enter a valid email address");
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const isVideo = processedFile.type.startsWith("video/");
     const maxBytes =
       (isVideo ? settings.maxVideoFileSizeMB : settings.maxImageFileSizeMB) * 1024 * 1024;
@@ -390,7 +414,7 @@ const ContentUpload = () => {
       }
 
       const order = await supabaseOrderService.createOrder({
-        userEmail: "guest@showyo.app",
+        userEmail: userEmail || "guest@showyo.app",
         pricingOptionId: selectedPlan,
         priceCents: selectedPlanData!.price * 100,
         fileName: processedFile.name,
@@ -415,7 +439,7 @@ const ContentUpload = () => {
         orderId: order.id,
         planId: selectedPlan,
         stripePriceId,
-        userEmail: "guest@showyo.app",
+        userEmail: userEmail || "guest@showyo.app",
         mediaUrl: uploadResult.url,
         title: processedFile.name,
       });
@@ -886,11 +910,49 @@ const ContentUpload = () => {
                   </div>
                 )}
                 <Separator />
+
+                {/* Customer Information */}
+                <div className="space-y-3">
+                  <Label htmlFor="customer-name">
+                    Your Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="customer-name"
+                    type="text"
+                    placeholder="John Doe"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    className={emailError && !userName ? "border-destructive" : ""}
+                  />
+
+                  <Label htmlFor="customer-email">
+                    Email Address <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="customer-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={userEmail}
+                    onChange={(e) => {
+                      setUserEmail(e.target.value);
+                      setEmailError(null);
+                    }}
+                    className={emailError ? "border-destructive" : ""}
+                  />
+                  {emailError && (
+                    <p className="text-xs text-destructive">{emailError}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    We'll send you a receipt and notify you when your content goes live
+                  </p>
+                </div>
+
+                <Separator />
                 <div className="flex justify-between items-center text-lg font-bold">
                   <span>Total</span>
                   <span>${selectedPlanData.price}</span>
                 </div>
-                
+
                 <Button
                   onClick={handlePaymentAndUpload}
                   disabled={!processedFile || !selectedPlan || isUploading || isCompressing}

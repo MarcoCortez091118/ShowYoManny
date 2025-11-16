@@ -97,7 +97,20 @@ Deno.serve(async (req) => {
       mode: 'payment',
       success_url: successUrl,
       cancel_url: cancelUrl,
-      customer_email: user_email,
+      customer_email: user_email === 'guest@showyo.app' ? undefined : user_email,
+      customer_creation: 'always',
+      phone_number_collection: {
+        enabled: true,
+      },
+      billing_address_collection: 'auto',
+      automatic_tax: {
+        enabled: false,
+      },
+      custom_text: {
+        submit: {
+          message: 'Tu contenido aparecerá en nuestro billboard digital por 24 horas',
+        },
+      },
       metadata: {
         order_id: order_id,
         plan_id: plan_id,
