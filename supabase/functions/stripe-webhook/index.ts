@@ -102,7 +102,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         currency: currency || 'usd',
         payment_status,
         status: 'completed',
-        metadata: metadata || {},
+        metadata: {
+          ...metadata,
+          customer_email: session.customer_details?.email,
+          customer_name: session.customer_details?.name,
+          customer_phone: session.customer_details?.phone,
+        },
       };
 
       const { error: orderError } = await supabase.from('stripe_orders').insert(orderData);
@@ -111,6 +116,14 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         console.error('Error inserting order:', orderError);
         return;
       }
+
+      await createOrUpdateCustomer({
+        email: session.customer_details?.email || metadata?.user_email,
+        name: session.customer_details?.name,
+        phone: session.customer_details?.phone,
+        stripeCustomerId: customer,
+        billingAddress: session.customer_details?.address,
+      });
 
       console.info(`Successfully processed one-time payment for session: ${id}`);
 
@@ -273,5 +286,51 @@ async function syncCustomerFromStripe(customerId: string) {
   } catch (error) {
     console.error(`Failed to sync subscription for customer ${customerId}:`, error);
     throw error;
+  }
+}
+
+async function createOrUpdateCustomer(data: {
+  email?: string;
+  name?: string;
+  phone?: string;
+  stripeCustomerId?: string;
+  billingAddress?: any;
+}) {
+  if (!data.email) {
+    console.warn('Cannot create customer without email');
+    return;
+  }
+
+  try {
+    const customerData = {
+      email: data.email,
+      name: data.name,
+      phone: data.phone,
+      stripe_customer_id: data.stripeCustomerId,
+      billing_address: data.billingAddress ? JSON.stringify(data.billingAddress) : null,
+      metadata: {
+        source: 'stripe_checkout',
+        last_updated: new Date().toISOString(),
+      },
+    };
+
+    const { error } = await supabase
+      .from('customers')
+      .upsert(
+        customerData,
+        {
+          onConflict: 'email',
+          ignoreDuplicates: false,
+        }
+      );
+
+    if (error) {
+      console.error('Error creating/updating customer:', error);
+      return;
+    }
+
+    console.info(`Customer record created/updated for: ${data.email}`);
+  } catch (error) {
+    console.error('Error in createOrUpdateCustomer:', error);
   }
 }
