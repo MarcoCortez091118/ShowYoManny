@@ -15,7 +15,6 @@ const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPAB
 
 Deno.serve(async (req) => {
   try {
-    // Handle OPTIONS request for CORS preflight
     if (req.method === 'OPTIONS') {
       return new Response(null, { status: 204 });
     }
@@ -24,17 +23,14 @@ Deno.serve(async (req) => {
       return new Response('Method not allowed', { status: 405 });
     }
 
-    // get the signature from the header
     const signature = req.headers.get('stripe-signature');
 
     if (!signature) {
       return new Response('No signature found', { status: 400 });
     }
 
-    // get the raw body
     const body = await req.text();
 
-    // verify the webhook signature
     let event: Stripe.Event;
 
     try {
@@ -118,14 +114,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
       console.info(`Successfully processed one-time payment for session: ${id}`);
 
-      if (metadata?.user_id && metadata?.plan_id) {
-        await createQueueItemFromPayment({
-          userId: metadata.user_id,
-          planId: metadata.plan_id,
-          orderId: id,
-          mediaUrl: metadata.media_url || '',
-          title: metadata.title || 'Untitled',
-        });
+      if (metadata?.order_id) {
+        await activateQueueItemAfterPayment(metadata.order_id);
       }
     } catch (error) {
       console.error('Error processing one-time payment:', error);
@@ -180,47 +170,33 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   await syncCustomerFromStripe(customer);
 }
 
-async function createQueueItemFromPayment(params: {
-  userId: string;
-  planId: string;
-  orderId: string;
-  mediaUrl: string;
-  title: string;
-}) {
-  const { userId, planId, orderId, mediaUrl, title } = params;
-
+async function activateQueueItemAfterPayment(queueItemId: string) {
   try {
     const now = new Date();
-    const scheduledStart = now.toISOString();
+    const scheduledEnd = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    const { error } = await supabase.from('queue_items').insert({
-      user_id: userId,
-      media_url: mediaUrl,
-      title: title,
-      file_name: title,
-      media_type: mediaUrl.includes('.mp4') || mediaUrl.includes('.mov') ? 'video' : 'image',
-      duration: 10,
-      scheduled_start: scheduledStart,
-      order: 0,
-      is_visible: true,
-      status: 'active',
-    });
+    const { error } = await supabase
+      .from('queue_items')
+      .update({
+        status: 'active',
+        published_at: now.toISOString(),
+        scheduled_end: scheduledEnd.toISOString(),
+      })
+      .eq('id', queueItemId);
 
     if (error) {
-      console.error('Error creating queue item:', error);
+      console.error('Error activating queue item:', error);
       return;
     }
 
-    console.info(`Queue item created for order: ${orderId}`);
+    console.info(`Queue item activated: ${queueItemId}, expires at: ${scheduledEnd.toISOString()}`);
   } catch (error) {
-    console.error('Error in createQueueItemFromPayment:', error);
+    console.error('Error in activateQueueItemAfterPayment:', error);
   }
 }
 
-// based on the excellent https://github.com/t3dotgg/stripe-recommendations
 async function syncCustomerFromStripe(customerId: string) {
   try {
-    // fetch latest subscription data from Stripe
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       limit: 1,
@@ -228,7 +204,6 @@ async function syncCustomerFromStripe(customerId: string) {
       expand: ['data.default_payment_method'],
     });
 
-    // TODO verify if needed
     if (subscriptions.data.length === 0) {
       console.info(`No active subscriptions found for customer: ${customerId}`);
       const { error: noSubError } = await supabase.from('stripe_subscriptions').upsert(
@@ -247,10 +222,8 @@ async function syncCustomerFromStripe(customerId: string) {
       }
     }
 
-    // assumes that a customer can only have a single subscription
     const subscription = subscriptions.data[0];
 
-    // store subscription state
     const { error: subError } = await supabase.from('stripe_subscriptions').upsert(
       {
         customer_id: customerId,

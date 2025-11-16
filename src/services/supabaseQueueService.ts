@@ -19,6 +19,10 @@ class SupabaseQueueService {
     const scheduledStart = item.scheduled_start ? new Date(item.scheduled_start) : null;
     const scheduledEnd = item.scheduled_end ? new Date(item.scheduled_end) : null;
 
+    if (item.status === 'pending') {
+      return { status: 'pending', isVisible: false };
+    }
+
     if (scheduledEnd && now > scheduledEnd) {
       return { status: 'expired', isVisible: false };
     }
@@ -32,8 +36,12 @@ class SupabaseQueueService {
       return { status: 'published', isVisible: true, expiresIn };
     }
 
-    const effectiveStatus = item.status === 'pending' ? 'active' : (item.status as ContentStatus);
-    return { status: effectiveStatus, isVisible: true };
+    if (item.status === 'active') {
+      const expiresIn = scheduledEnd ? Math.floor((scheduledEnd.getTime() - now.getTime()) / (1000 * 60)) : undefined;
+      return { status: 'active', isVisible: true, expiresIn };
+    }
+
+    return { status: item.status as ContentStatus, isVisible: false };
   }
 
   async getQueueItems(userId: string): Promise<EnrichedQueueItem[]> {
