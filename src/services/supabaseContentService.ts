@@ -111,7 +111,10 @@ class SupabaseContentService {
         timer_loop_enabled: timerLoopEnabled || false,
         timer_loop_minutes: timerLoopMinutes,
         timer_loop_automatic: timerLoopAutomatic || false,
-        metadata: metadata || null,
+        metadata: {
+          ...metadata,
+          is_admin_content: true,
+        },
       })
       .select()
       .single();

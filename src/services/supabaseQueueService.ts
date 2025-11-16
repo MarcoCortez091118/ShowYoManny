@@ -18,8 +18,11 @@ class SupabaseQueueService {
     const now = new Date();
     const scheduledStart = item.scheduled_start ? new Date(item.scheduled_start) : null;
     const scheduledEnd = item.scheduled_end ? new Date(item.scheduled_end) : null;
+    const isAdminContent = item.metadata && typeof item.metadata === 'object' && 'is_admin_content' in item.metadata
+      ? item.metadata.is_admin_content === true
+      : false;
 
-    if (item.status === 'pending') {
+    if (item.status === 'pending' && !isAdminContent) {
       return { status: 'pending', isVisible: false };
     }
 
@@ -36,7 +39,7 @@ class SupabaseQueueService {
       return { status: 'published', isVisible: true, expiresIn };
     }
 
-    if (item.status === 'active') {
+    if (item.status === 'active' || (item.status === 'pending' && isAdminContent)) {
       const expiresIn = scheduledEnd ? Math.floor((scheduledEnd.getTime() - now.getTime()) / (1000 * 60)) : undefined;
       return { status: 'active', isVisible: true, expiresIn };
     }
