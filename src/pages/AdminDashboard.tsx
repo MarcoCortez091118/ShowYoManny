@@ -17,6 +17,7 @@ import { BorderPreview } from "@/components/BorderPreview";
 import PreviewModal from "@/components/PreviewModal";
 import { AdminMediaEditor, AdminMediaEditorRef } from "@/components/media/AdminMediaEditor";
 import { DashboardMetrics } from "@/components/DashboardMetrics";
+import { CustomersTable } from "@/components/CustomersTable";
 import {
   Upload,
   Play,
@@ -789,6 +790,8 @@ const AdminDashboard = () => {
                   </CardContent>
                 </Card>
               </div>
+
+              <CustomersTable />
 
               <Card>
                 <CardHeader>
