@@ -50,6 +50,7 @@ const ContentUpload = () => {
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const plans = useMemo(() => planService.getAllPlans(), []);
@@ -677,6 +678,7 @@ const ContentUpload = () => {
                       file={sourceFile}
                       settings={settings}
                       includesLogo={selectedPlanData?.includesLogo}
+                      onHasUnappliedChanges={setHasUnappliedChanges}
                       onImageChange={handleImageAdjustments}
                       onVideoChange={handleVideoAdjustments}
                     />
@@ -955,9 +957,19 @@ const ContentUpload = () => {
                   <span>${selectedPlanData.price}</span>
                 </div>
 
+                {hasUnappliedChanges && (
+                  <Alert className="border-orange-500/50 bg-orange-500/10">
+                    <AlertCircle className="h-4 w-4 text-orange-500" />
+                    <div className="ml-2">
+                      <p className="text-sm font-medium text-orange-600">Unapplied Changes</p>
+                      <p className="text-xs text-orange-600/80">Please click "Apply Changes" button above to save your adjustments before proceeding.</p>
+                    </div>
+                  </Alert>
+                )}
+
                 <Button
                   onClick={handlePaymentAndUpload}
-                  disabled={!processedFile || !selectedPlan || !userName || !userEmail || isUploading || isCompressing}
+                  disabled={!processedFile || !selectedPlan || !userName || !userEmail || isUploading || isCompressing || hasUnappliedChanges}
                   className="w-full"
                   variant="electric"
                   size="lg"

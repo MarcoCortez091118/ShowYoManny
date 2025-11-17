@@ -11,6 +11,7 @@ interface VideoEditorProps {
   file: File;
   settings: DisplaySettings;
   includesLogo?: boolean;
+  onHasUnappliedChanges?: (hasChanges: boolean) => void;
   onChange: (result: {
     file: File;
     previewUrl: string;
@@ -20,7 +21,7 @@ interface VideoEditorProps {
   }) => void;
 }
 
-export const VideoEditor = ({ file, settings, includesLogo = false, onChange }: VideoEditorProps) => {
+export const VideoEditor = ({ file, settings, includesLogo = false, onHasUnappliedChanges, onChange }: VideoEditorProps) => {
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [duration, setDuration] = useState(0);
   const [start, setStart] = useState(0);
@@ -29,6 +30,9 @@ export const VideoEditor = ({ file, settings, includesLogo = false, onChange }: 
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const animationFrameRef = useRef<number>();
+  const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false);
+  const lastAppliedState = useRef({ start: 0, end: 0 });
+  const [hasAutoApplied, setHasAutoApplied] = useState(false);
 
   useEffect(() => {
     const url = URL.createObjectURL(file);
@@ -41,19 +45,18 @@ export const VideoEditor = ({ file, settings, includesLogo = false, onChange }: 
     };
   }, [file]);
 
-  const notifyChange = useCallback(
-    (nextStart: number, nextEnd: number) => {
-      const trimmed = Math.max(nextEnd - nextStart, 0);
-      onChange({
-        file,
-        previewUrl: videoUrl,
-        trimStartSeconds: Number(nextStart.toFixed(2)),
-        trimEndSeconds: Number(nextEnd.toFixed(2)),
-        durationSeconds: Number(trimmed.toFixed(2)),
-      });
-    },
-    [file, onChange, videoUrl]
-  );
+  const applyChanges = useCallback(() => {
+    const trimmed = Math.max(end - start, 0);
+    onChange({
+      file,
+      previewUrl: videoUrl,
+      trimStartSeconds: Number(start.toFixed(2)),
+      trimEndSeconds: Number(end.toFixed(2)),
+      durationSeconds: Number(trimmed.toFixed(2)),
+    });
+    lastAppliedState.current = { start, end };
+    setHasUnappliedChanges(false);
+  }, [file, onChange, videoUrl, start, end]);
 
   const handleLoaded = useCallback(() => {
     const video = videoRef.current;
@@ -61,15 +64,35 @@ export const VideoEditor = ({ file, settings, includesLogo = false, onChange }: 
     const total = video.duration || 0;
     setDuration(total);
     setStart(0);
-    setEnd(Math.min(total, settings.maxVideoDurationSeconds));
+    const initialEnd = Math.min(total, settings.maxVideoDurationSeconds);
+    setEnd(initialEnd);
     setCurrentTime(0);
-    notifyChange(0, Math.min(total, settings.maxVideoDurationSeconds));
-  }, [notifyChange, settings.maxVideoDurationSeconds]);
+    lastAppliedState.current = { start: 0, end: initialEnd };
+  }, [settings.maxVideoDurationSeconds]);
+
+  useEffect(() => {
+    if (duration > 0 && !hasAutoApplied) {
+      setHasAutoApplied(true);
+      applyChanges();
+    }
+  }, [duration, hasAutoApplied, applyChanges]);
+
+  useEffect(() => {
+    if (hasAutoApplied) {
+      const hasChanged =
+        start !== lastAppliedState.current.start ||
+        end !== lastAppliedState.current.end;
+      setHasUnappliedChanges(hasChanged);
+    }
+  }, [start, end, hasAutoApplied]);
+
+  useEffect(() => {
+    onHasUnappliedChanges?.(hasUnappliedChanges);
+  }, [hasUnappliedChanges, onHasUnappliedChanges]);
 
   const handleStartChange = (value: number) => {
     const clamped = Math.max(0, Math.min(value, end - 0.1));
     setStart(clamped);
-    notifyChange(clamped, end);
     if (videoRef.current) {
       videoRef.current.currentTime = clamped;
       setCurrentTime(clamped);
@@ -79,7 +102,6 @@ export const VideoEditor = ({ file, settings, includesLogo = false, onChange }: 
   const handleEndChange = (value: number) => {
     const clamped = Math.min(duration, Math.max(value, start + 0.1));
     setEnd(clamped);
-    notifyChange(start, clamped);
   };
 
   const handlePlayPause = () => {
@@ -258,6 +280,15 @@ export const VideoEditor = ({ file, settings, includesLogo = false, onChange }: 
           />
         </div>
       </div>
+
+      <Button
+        onClick={applyChanges}
+        disabled={!hasUnappliedChanges}
+        size="lg"
+        className={`w-full ${hasUnappliedChanges ? "animate-pulse bg-orange-600 hover:bg-orange-700 ring-2 ring-orange-400 ring-offset-2" : ""}`}
+      >
+        {hasUnappliedChanges ? "⚠️ Apply Changes" : "✓ Changes Applied"}
+      </Button>
 
       <Card className={`p-4 ${isValidDuration ? 'bg-primary/5 border-primary/20' : 'bg-destructive/5 border-destructive/20'}`}>
         <div className="flex items-start gap-3">

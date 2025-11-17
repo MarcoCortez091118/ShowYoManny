@@ -15,6 +15,7 @@ interface ImageEditorProps {
   file: File;
   settings: DisplaySettings;
   includesLogo?: boolean;
+  onHasUnappliedChanges?: (hasChanges: boolean) => void;
   onChange: (result: {
     file: File;
     previewUrl: string;
@@ -27,7 +28,7 @@ interface ImageEditorProps {
   }) => void;
 }
 
-export const ImageEditor = ({ file, settings, includesLogo = false, onChange }: ImageEditorProps) => {
+export const ImageEditor = ({ file, settings, includesLogo = false, onHasUnappliedChanges, onChange }: ImageEditorProps) => {
   const [zoom, setZoom] = useState(1);
   const [horizontal, setHorizontal] = useState(0);
   const [vertical, setVertical] = useState(0);
@@ -37,6 +38,8 @@ export const ImageEditor = ({ file, settings, includesLogo = false, onChange }: 
   const dragOrigin = useRef<{ x: number; y: number; horizontal: number; vertical: number } | null>(null);
   const canvasPreviewRef = useRef<HTMLDivElement | null>(null);
   const [hasAutoProcessed, setHasAutoProcessed] = useState(false);
+  const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false);
+  const lastAppliedState = useRef({ zoom: 1, horizontal: 0, vertical: 0, fitMode: "cover" as ImageFitMode });
 
   const { screenWidth, screenHeight } = settings;
   const aspectRatioStyle = useMemo(
@@ -76,6 +79,9 @@ export const ImageEditor = ({ file, settings, includesLogo = false, onChange }: 
         offsetYPercent: vertical,
         fitMode,
       });
+
+      lastAppliedState.current = { zoom, horizontal, vertical, fitMode };
+      setHasUnappliedChanges(false);
     } catch (error) {
       console.error("Image processing error:", error);
     } finally {
@@ -89,6 +95,22 @@ export const ImageEditor = ({ file, settings, includesLogo = false, onChange }: 
       void applyChanges();
     }
   }, [hasAutoProcessed, applyChanges]);
+
+  useEffect(() => {
+    if (hasAutoProcessed) {
+      const hasChanged =
+        zoom !== lastAppliedState.current.zoom ||
+        horizontal !== lastAppliedState.current.horizontal ||
+        vertical !== lastAppliedState.current.vertical ||
+        fitMode !== lastAppliedState.current.fitMode;
+
+      setHasUnappliedChanges(hasChanged);
+    }
+  }, [zoom, horizontal, vertical, fitMode, hasAutoProcessed]);
+
+  useEffect(() => {
+    onHasUnappliedChanges?.(hasUnappliedChanges);
+  }, [hasUnappliedChanges, onHasUnappliedChanges]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -276,11 +298,11 @@ export const ImageEditor = ({ file, settings, includesLogo = false, onChange }: 
       <div className="flex flex-wrap gap-2">
         <Button
           onClick={() => void applyChanges()}
-          disabled={isProcessing}
+          disabled={isProcessing || !hasUnappliedChanges}
           size="lg"
-          className="flex-1"
+          className={`flex-1 ${hasUnappliedChanges ? "animate-pulse bg-orange-600 hover:bg-orange-700 ring-2 ring-orange-400 ring-offset-2" : ""}`}
         >
-          {isProcessing ? "Processing..." : "Apply Changes"}
+          {isProcessing ? "Processing..." : hasUnappliedChanges ? "⚠️ Apply Changes" : "✓ Changes Applied"}
         </Button>
 
         <Button
