@@ -4,8 +4,6 @@ import { CheckCircle, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { firebaseOrderService } from "@/domain/services/firebase/orderService";
-import { firebasePaymentService } from "@/domain/services/firebase/paymentService";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -29,21 +27,30 @@ const PaymentSuccess = () => {
       }
 
       try {
-        // Update order status to paid (awaiting moderation)
-        await firebasePaymentService.confirmPayment({
-          orderId,
-          sessionId,
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        const response = await fetch(`${supabaseUrl}/functions/v1/confirm-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            order_id: orderId,
+          }),
         });
 
-        await firebaseOrderService.updateOrder(orderId, {
-          status: 'completed',
-          moderation_status: 'pending',
-          display_status: 'pending',
-        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to confirm payment');
+        }
 
         toast({
           title: "Payment Successful! 🎉",
-          description: "Your content is awaiting approval and will be queued once approved.",
+          description: "Your content is now active on the billboard for 24 hours!",
         });
 
         setIsProcessing(false);
@@ -93,17 +100,16 @@ const PaymentSuccess = () => {
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Thank You!</h3>
                   <p className="text-muted-foreground">
-                    Your payment has been processed successfully and your content is awaiting admin approval.
+                    Your payment has been processed successfully and your content is now active on the billboard!
                   </p>
                 </div>
 
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <p>✅ Payment confirmed</p>
-                  <p>⏳ Content awaiting approval</p>
-                  <p>🔍 Under review by admin</p>
+                  <p>✅ Content activated</p>
+                  <p>🎬 Now displaying on billboard</p>
                   <p className="text-xs mt-4">
-                    Your content will be reviewed by our team and displayed on the billboard once approved. 
-                    Paid content plays once and is automatically removed after display.
+                    Your content will display on the billboard for 24 hours and will be automatically removed after that period.
                   </p>
                 </div>
 
