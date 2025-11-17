@@ -455,7 +455,7 @@ const ContentUpload = () => {
         description: "Please complete your payment to submit your content.",
       });
 
-      window.location.href = checkoutData.url;
+      window.location.replace(checkoutData.url);
 
       setSourceFile(null);
       setProcessedFile(null);
