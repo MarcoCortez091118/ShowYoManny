@@ -10,6 +10,7 @@ const PaymentSuccess = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(true);
+  const [countdown, setCountdown] = useState(10);
 
   useEffect(() => {
     const processPayment = async () => {
@@ -22,7 +23,15 @@ const PaymentSuccess = () => {
           description: "Missing payment information",
           variant: "destructive",
         });
-        navigate('/');
+        navigate('/', { replace: true });
+        return;
+      }
+
+      const processedKey = `payment_processed_${sessionId}`;
+      const alreadyProcessed = sessionStorage.getItem(processedKey);
+
+      if (alreadyProcessed) {
+        navigate('/', { replace: true });
         return;
       }
 
@@ -48,6 +57,8 @@ const PaymentSuccess = () => {
           throw new Error(data.error || 'Failed to confirm payment');
         }
 
+        sessionStorage.setItem(processedKey, 'true');
+
         toast({
           title: "Payment Successful! 🎉",
           description: "Your content is now active on the billboard for 24 hours!",
@@ -67,6 +78,23 @@ const PaymentSuccess = () => {
 
     processPayment();
   }, [searchParams, navigate, toast]);
+
+  useEffect(() => {
+    if (!isProcessing) {
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            navigate('/', { replace: true });
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [isProcessing, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-12 flex items-center justify-center">
@@ -113,16 +141,22 @@ const PaymentSuccess = () => {
                   </p>
                 </div>
 
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Redirecting to home in <span className="font-bold text-lg text-blue-600 dark:text-blue-400">{countdown}</span> seconds...
+                  </p>
+                </div>
+
                 <div className="flex gap-4">
-                  <Button 
-                    onClick={() => navigate('/')}
+                  <Button
+                    onClick={() => navigate('/', { replace: true })}
                     variant="default"
                     className="flex-1"
                   >
-                    Return Home
+                    Return Home Now
                   </Button>
-                  <Button 
-                    onClick={() => navigate('/upload')}
+                  <Button
+                    onClick={() => navigate('/upload', { replace: true })}
                     variant="outline"
                     className="flex-1"
                   >
