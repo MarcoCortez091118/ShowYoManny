@@ -26,12 +26,12 @@ const corsHeaders = {
 };
 
 const STRIPE_PRICE_IDS: Record<string, string> = {
-  'photo-logo': 'price_1S8tkJF6Bz1PoBh55VqRIrC3',
+  'photo-logo': 'price_1SUXkXF6Bz1PoBh54S0YTgXp',
   'photo-border-logo': 'price_1S8tn8F6Bz1PoBh5nT9k1JT3',
-  'photo-clean': 'price_1S8tpmF6Bz1PoBh5FA5LLqTK',
-  'video-logo': 'price_1S8tqdF6Bz1PoBh5PKK3WZe9',
+  'photo-clean': 'price_1SUXlIF6Bz1PoBh5RXPGlSEJ',
+  'video-logo': 'price_1SUXm0F6Bz1PoBh5UNrchYks',
   'video-border-logo': 'price_1S8trAF6Bz1PoBh5S1knkYcR',
-  'video-clean': 'price_1S8treF6Bz1PoBh59KkmfJiu',
+  'video-clean': 'price_1SUXmLF6Bz1PoBh56uVMv8RC',
 };
 
 Deno.serve(async (req) => {
