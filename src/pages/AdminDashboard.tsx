@@ -16,16 +16,17 @@ import { DraggableQueueItem } from "@/components/DraggableQueueItem";
 import { BorderPreview } from "@/components/BorderPreview";
 import PreviewModal from "@/components/PreviewModal";
 import { AdminMediaEditor, AdminMediaEditorRef } from "@/components/media/AdminMediaEditor";
-import { 
-  Upload, 
-  Play, 
-  Pause, 
-  SkipForward, 
-  Trash2, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  Eye, 
+import { DashboardMetrics } from "@/components/DashboardMetrics";
+import {
+  Upload,
+  Play,
+  Pause,
+  SkipForward,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Eye,
   Settings,
   BarChart3,
   Users,
@@ -717,6 +718,8 @@ const AdminDashboard = () => {
 
           <TabsContent value="overview">
             <div className="space-y-6">
+              <DashboardMetrics />
+
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
