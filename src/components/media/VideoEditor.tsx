@@ -5,10 +5,12 @@ import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Play, Pause, RotateCcw, Scissors, AlertCircle } from "lucide-react";
+import showYoLogo from "@/assets/showyo-logo-color.png";
 
 interface VideoEditorProps {
   file: File;
   settings: DisplaySettings;
+  includesLogo?: boolean;
   onChange: (result: {
     file: File;
     previewUrl: string;
@@ -18,7 +20,7 @@ interface VideoEditorProps {
   }) => void;
 }
 
-export const VideoEditor = ({ file, settings, onChange }: VideoEditorProps) => {
+export const VideoEditor = ({ file, settings, includesLogo = false, onChange }: VideoEditorProps) => {
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [duration, setDuration] = useState(0);
   const [start, setStart] = useState(0);
@@ -184,6 +186,14 @@ export const VideoEditor = ({ file, settings, onChange }: VideoEditorProps) => {
                   style={{ width: `${Math.max(0, Math.min(100, progressPercent))}%` }}
                 />
               </div>
+              {includesLogo && (
+                <img
+                  src={showYoLogo}
+                  alt="ShowYo Logo"
+                  className="absolute bottom-6 right-4 w-24 h-auto pointer-events-none opacity-90"
+                  style={{ zIndex: 10 }}
+                />
+              )}
             </>
           )}
         </div>

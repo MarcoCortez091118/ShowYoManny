@@ -9,10 +9,12 @@ import {
 } from "@/utils/imageProcessing";
 import { DisplaySettings } from "@/hooks/use-display-settings";
 import { ZoomIn, ZoomOut, Maximize2, Move, RotateCcw } from "lucide-react";
+import showYoLogo from "@/assets/showyo-logo-color.png";
 
 interface ImageEditorProps {
   file: File;
   settings: DisplaySettings;
+  includesLogo?: boolean;
   onChange: (result: {
     file: File;
     previewUrl: string;
@@ -25,7 +27,7 @@ interface ImageEditorProps {
   }) => void;
 }
 
-export const ImageEditor = ({ file, settings, onChange }: ImageEditorProps) => {
+export const ImageEditor = ({ file, settings, includesLogo = false, onChange }: ImageEditorProps) => {
   const [zoom, setZoom] = useState(1);
   const [horizontal, setHorizontal] = useState(0);
   const [vertical, setVertical] = useState(0);
@@ -188,6 +190,14 @@ export const ImageEditor = ({ file, settings, onChange }: ImageEditorProps) => {
           </div>
           {isDragging && (
             <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
+          )}
+          {includesLogo && (
+            <img
+              src={showYoLogo}
+              alt="ShowYo Logo"
+              className="absolute bottom-4 right-4 w-24 h-auto pointer-events-none opacity-90"
+              style={{ zIndex: 10 }}
+            />
           )}
         </div>
 

@@ -6,6 +6,7 @@ import { VideoEditor } from "./VideoEditor";
 interface MediaEditorProps {
   file: File;
   settings: DisplaySettings;
+  includesLogo?: boolean;
   onImageChange: (result: {
     file: File;
     previewUrl: string;
@@ -25,13 +26,13 @@ interface MediaEditorProps {
   }) => void;
 }
 
-export const MediaEditor = ({ file, settings, onImageChange, onVideoChange }: MediaEditorProps) => {
+export const MediaEditor = ({ file, settings, includesLogo = false, onImageChange, onVideoChange }: MediaEditorProps) => {
   if (file.type.startsWith("image/")) {
-    return <ImageEditor file={file} settings={settings} onChange={onImageChange} />;
+    return <ImageEditor file={file} settings={settings} includesLogo={includesLogo} onChange={onImageChange} />;
   }
 
   if (file.type.startsWith("video/")) {
-    return <VideoEditor file={file} settings={settings} onChange={onVideoChange} />;
+    return <VideoEditor file={file} settings={settings} includesLogo={includesLogo} onChange={onVideoChange} />;
   }
 
   return null;

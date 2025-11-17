@@ -676,6 +676,7 @@ const ContentUpload = () => {
                     <MediaEditor
                       file={sourceFile}
                       settings={settings}
+                      includesLogo={selectedPlanData?.includesLogo}
                       onImageChange={handleImageAdjustments}
                       onVideoChange={handleVideoAdjustments}
                     />
