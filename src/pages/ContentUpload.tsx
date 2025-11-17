@@ -956,7 +956,7 @@ const ContentUpload = () => {
 
                 <Button
                   onClick={handlePaymentAndUpload}
-                  disabled={!processedFile || !selectedPlan || isUploading || isCompressing}
+                  disabled={!processedFile || !selectedPlan || !userName || !userEmail || isUploading || isCompressing}
                   className="w-full"
                   variant="electric"
                   size="lg"
