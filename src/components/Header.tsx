@@ -17,7 +17,7 @@ const Header = () => {
           </span>
         </div>
         
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="flex items-center gap-6">
           <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
             Features
           </a>
@@ -28,12 +28,6 @@ const Header = () => {
             Kiosk Demo
           </a>
         </nav>
-        
-        <div className="flex items-center gap-3">
-          <Button variant="electric" size="sm" onClick={() => navigate("/admin-login")}>
-            Admin Login
-          </Button>
-        </div>
       </div>
     </header>
   );
