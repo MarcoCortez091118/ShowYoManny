@@ -87,6 +87,23 @@ export async function compressAndTrimVideo(
   return new File([compressedBlob], fileName, { type: 'video/mp4' });
 }
 
+function getSupportedMimeType(): string {
+  const types = [
+    'video/webm;codecs=vp8,opus',
+    'video/webm;codecs=vp8',
+    'video/webm',
+    'video/mp4',
+  ];
+
+  for (const type of types) {
+    if (MediaRecorder.isTypeSupported(type)) {
+      return type;
+    }
+  }
+
+  return '';
+}
+
 async function loadVideoBlob(
   file: File,
   trimStart: number,
@@ -120,8 +137,14 @@ async function loadVideoBlob(
 
         stream.addTrack(destination.stream.getAudioTracks()[0]);
 
+        const mimeType = getSupportedMimeType();
+        if (!mimeType) {
+          reject(new Error('Tu navegador no soporta grabación de video'));
+          return;
+        }
+
         const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'video/webm;codecs=vp9',
+          mimeType,
           videoBitsPerSecond: 2500000
         });
 
@@ -203,8 +226,14 @@ async function compressVideoBlob(
 
         const stream = canvas.captureStream(25);
 
+        const mimeType = getSupportedMimeType();
+        if (!mimeType) {
+          reject(new Error('Tu navegador no soporta grabación de video'));
+          return;
+        }
+
         const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'video/webm;codecs=vp8',
+          mimeType,
           videoBitsPerSecond: Math.floor(targetBitrate * scale)
         });
 
