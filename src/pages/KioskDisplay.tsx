@@ -137,7 +137,10 @@ const KioskDisplay = () => {
     if (countdownTimer.current) clearInterval(countdownTimer.current);
 
     const duration = (currentItem.duration || 10) * 1000;
-    console.log(`KioskDisplay: Playing ${currentItem.title} for ${currentItem.duration}s`);
+    console.log(`🎬 KioskDisplay: STARTING PLAYBACK - ${currentItem.title} for ${currentItem.duration}s`);
+    console.log(`🎬 KioskDisplay: Will check for deletion in ${duration}ms`);
+    console.log(`🎬 KioskDisplay: Item ID: ${currentItem.id}`);
+    console.log(`🎬 KioskDisplay: Metadata at start:`, currentItem.metadata);
 
     localStorage.setItem('kiosk-current-index', currentIndex.toString());
     localStorage.setItem('kiosk-current-item-id', currentItem.id);
@@ -153,8 +156,8 @@ const KioskDisplay = () => {
     }, 1000);
 
     autoAdvanceTimer.current = setTimeout(async () => {
-      console.log(`KioskDisplay: Duration ${currentItem.duration}s completed for ${currentItem.title}`);
-      console.log('KioskDisplay: Item metadata:', JSON.stringify(currentItem.metadata, null, 2));
+      console.log(`⏰ KioskDisplay: TIMER FIRED - Duration ${currentItem.duration}s completed for ${currentItem.title}`);
+      console.log('📊 KioskDisplay: Item metadata:', JSON.stringify(currentItem.metadata, null, 2));
       console.log('KioskDisplay: scheduled_start:', currentItem.scheduled_start);
       console.log('KioskDisplay: scheduled_end:', currentItem.scheduled_end);
 

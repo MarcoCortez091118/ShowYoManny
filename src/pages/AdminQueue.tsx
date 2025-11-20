@@ -116,6 +116,11 @@ const SortableItem = ({
                 Hidden from Display
               </Badge>
             )}
+            {item.metadata?.is_user_paid_content && (
+              <Badge variant="default" className="bg-purple-600 text-xs flex-shrink-0">
+                💳 Paid {item.metadata?.slot_type === 'immediate' ? '(Slot 1)' : `(Slot ${item.metadata?.auto_scheduled_slot || '?'})`}
+              </Badge>
+            )}
             <span className="font-medium truncate">
               {item.title || 'Untitled'}
             </span>
