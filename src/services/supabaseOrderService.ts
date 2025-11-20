@@ -4,7 +4,7 @@ export type OrderStatus = "pending" | "completed" | "refunded" | "cancelled";
 
 export interface QueueItem {
   id: string;
-  user_id: string;
+  user_id: string | null;
   kiosk_id?: string | null;
   media_url: string;
   media_type: string;
@@ -54,8 +54,8 @@ class SupabaseOrderService {
     // Get current user session
     const { data: { session } } = await supabase.auth.getSession();
 
-    // Use authenticated user ID or create a guest user entry
-    const userId = session?.user?.id || '00000000-0000-0000-0000-000000000000';
+    // Use authenticated user ID or null for public/guest users
+    const userId = session?.user?.id || null;
 
     // Normalize media_type to "image" or "video" (remove MIME type)
     const normalizedMediaType = input.fileType.startsWith('image/') ? 'image' :
