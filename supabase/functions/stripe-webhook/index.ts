@@ -191,38 +191,103 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
 async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?: string, customerName?: string, customerId?: string) {
   try {
     const now = new Date();
-    const scheduledEnd = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const endOf24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    const { data: queueItem } = await supabase
+    const { data: originalItem, error: fetchError } = await supabase
       .from('queue_items')
-      .select('metadata')
+      .select('*')
       .eq('id', queueItemId)
       .maybeSingle();
 
-    const existingMetadata = queueItem?.metadata || {};
-
-    const { error } = await supabase
-      .from('queue_items')
-      .update({
-        status: 'active',
-        published_at: now.toISOString(),
-        scheduled_end: scheduledEnd.toISOString(),
-        metadata: {
-          ...existingMetadata,
-          customer_email: customerEmail,
-          customer_name: customerName,
-          stripe_customer_id: customerId,
-          payment_date: now.toISOString(),
-        },
-      })
-      .eq('id', queueItemId);
-
-    if (error) {
-      console.error('Error activating queue item:', error);
+    if (fetchError || !originalItem) {
+      console.error('Error fetching queue item:', fetchError);
       return;
     }
 
-    console.info(`Queue item activated: ${queueItemId}, customer: ${customerEmail}, expires at: ${scheduledEnd.toISOString()}`);
+    const isAdminContent = originalItem.metadata?.is_admin_content === true;
+
+    if (isAdminContent) {
+      const existingMetadata = originalItem.metadata || {};
+      const { error } = await supabase
+        .from('queue_items')
+        .update({
+          status: 'active',
+          published_at: now.toISOString(),
+          metadata: {
+            ...existingMetadata,
+            customer_email: customerEmail,
+            customer_name: customerName,
+            stripe_customer_id: customerId,
+            payment_date: now.toISOString(),
+          },
+        })
+        .eq('id', queueItemId);
+
+      if (error) {
+        console.error('Error activating admin queue item:', error);
+        return;
+      }
+
+      console.info(`Admin queue item activated without auto-scheduling: ${queueItemId}`);
+      return;
+    }
+
+    const eightHours = 8 * 60 * 60 * 1000;
+    const schedules = [
+      { start: now, end: new Date(now.getTime() + eightHours) },
+      { start: new Date(now.getTime() + eightHours), end: new Date(now.getTime() + eightHours * 2) },
+      { start: new Date(now.getTime() + eightHours * 2), end: endOf24Hours },
+    ];
+
+    const itemsToCreate = schedules.map((schedule, index) => ({
+      user_id: originalItem.user_id,
+      kiosk_id: originalItem.kiosk_id,
+      media_url: originalItem.media_url,
+      media_type: originalItem.media_type,
+      thumbnail_url: originalItem.thumbnail_url,
+      title: originalItem.title,
+      duration: originalItem.duration,
+      border_id: originalItem.border_id,
+      file_name: originalItem.file_name,
+      status: 'active',
+      published_at: schedule.start.toISOString(),
+      scheduled_start: schedule.start.toISOString(),
+      scheduled_end: schedule.end.toISOString(),
+      auto_delete_on_expire: true,
+      metadata: {
+        ...(originalItem.metadata || {}),
+        customer_email: customerEmail,
+        customer_name: customerName,
+        stripe_customer_id: customerId,
+        payment_date: now.toISOString(),
+        original_queue_item_id: queueItemId,
+        auto_scheduled_slot: index + 1,
+        is_user_paid_content: true,
+      },
+    }));
+
+    const { error: deleteError } = await supabase
+      .from('queue_items')
+      .delete()
+      .eq('id', queueItemId);
+
+    if (deleteError) {
+      console.error('Error deleting original queue item:', deleteError);
+    }
+
+    const { error: insertError } = await supabase
+      .from('queue_items')
+      .insert(itemsToCreate);
+
+    if (insertError) {
+      console.error('Error creating scheduled queue items:', insertError);
+      return;
+    }
+
+    console.info(`Created 3 auto-scheduled queue items for customer: ${customerEmail}`);
+    console.info(`Slot 1: ${schedules[0].start.toISOString()} - ${schedules[0].end.toISOString()}`);
+    console.info(`Slot 2: ${schedules[1].start.toISOString()} - ${schedules[1].end.toISOString()}`);
+    console.info(`Slot 3: ${schedules[2].start.toISOString()} - ${schedules[2].end.toISOString()}`);
   } catch (error) {
     console.error('Error in activateQueueItemAfterPayment:', error);
   }
