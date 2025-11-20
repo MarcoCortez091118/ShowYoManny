@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -180,11 +180,24 @@ const AdminQueue = () => {
     scheduled_end: '',
     duration: 0,
   });
+  const fetchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const isFetchingQueue = useRef(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const debouncedFetchQueue = () => {
+    if (fetchDebounceTimer.current) {
+      clearTimeout(fetchDebounceTimer.current);
+    }
+    fetchDebounceTimer.current = setTimeout(() => {
+      if (!isFetchingQueue.current) {
+        fetchQueue();
+      }
+    }, 300);
+  };
 
   const recalculateStatuses = () => {
     setItems(currentItems => {
@@ -221,6 +234,7 @@ const AdminQueue = () => {
 
   useEffect(() => {
     if (!loading && isAdmin && user?.id) {
+      const userId = user.id;
       fetchQueue();
 
       const channel = supabase
@@ -231,11 +245,11 @@ const AdminQueue = () => {
             event: '*',
             schema: 'public',
             table: 'queue_items',
-            filter: `user_id=eq.${user.id}`
+            filter: `user_id=eq.${userId}`
           },
           (payload) => {
             console.log('AdminQueue: Realtime change detected', payload);
-            fetchQueue();
+            debouncedFetchQueue();
           }
         )
         .subscribe();
@@ -250,11 +264,16 @@ const AdminQueue = () => {
         clearInterval(statusUpdateInterval);
       };
     }
-  }, [loading, isAdmin, user]);
+  }, [loading, isAdmin, user?.id]);
 
   const fetchQueue = async () => {
     if (!user?.id) return;
+    if (isFetchingQueue.current) {
+      console.log('AdminQueue: Fetch already in progress, skipping...');
+      return;
+    }
 
+    isFetchingQueue.current = true;
     try {
       setIsFetching(true);
       const data = await supabaseQueueService.getQueueItems(user.id);
@@ -263,6 +282,7 @@ const AdminQueue = () => {
       toast({ title: "Error loading queue", description: error.message, variant: "destructive" });
     } finally {
       setIsFetching(false);
+      isFetchingQueue.current = false;
     }
   };
 

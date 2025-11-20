@@ -101,12 +101,6 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const isAdmin = user?.roles?.includes('admin') || false;
 
-  logger.debug('Auth context render', {
-    hasUser: !!user,
-    isAdmin,
-    loading
-  });
-
   return (
     <AuthContext.Provider
       value={{

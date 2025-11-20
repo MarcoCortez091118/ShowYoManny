@@ -18,6 +18,19 @@ const KioskDisplay = () => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const autoAdvanceTimer = useRef<NodeJS.Timeout | null>(null);
   const countdownTimer = useRef<NodeJS.Timeout | null>(null);
+  const fetchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const isFetching = useRef(false);
+
+  const debouncedFetchContent = () => {
+    if (fetchDebounceTimer.current) {
+      clearTimeout(fetchDebounceTimer.current);
+    }
+    fetchDebounceTimer.current = setTimeout(() => {
+      if (!isFetching.current) {
+        fetchContent();
+      }
+    }, 500);
+  };
 
   useEffect(() => {
     fetchContent();
@@ -32,8 +45,8 @@ const KioskDisplay = () => {
           table: 'queue_items',
         },
         () => {
-          console.log('KioskDisplay: Queue changed, refetching...');
-          fetchContent();
+          console.log('KioskDisplay: Queue changed, scheduling refetch...');
+          debouncedFetchContent();
         }
       )
       .subscribe();
@@ -49,6 +62,12 @@ const KioskDisplay = () => {
   }, []);
 
   const fetchContent = async () => {
+    if (isFetching.current) {
+      console.log('KioskDisplay: Fetch already in progress, skipping...');
+      return;
+    }
+
+    isFetching.current = true;
     try {
       const result = await supabase
         .from('queue_items')
@@ -58,6 +77,7 @@ const KioskDisplay = () => {
       if (result.error) {
         console.error('Error fetching content:', result.error);
         setIsLoading(false);
+        isFetching.current = false;
         return;
       }
 
@@ -143,6 +163,8 @@ const KioskDisplay = () => {
     } catch (error) {
       console.error('Error fetching content:', error);
       setIsLoading(false);
+    } finally {
+      isFetching.current = false;
     }
   };
 
