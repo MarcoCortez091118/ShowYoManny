@@ -233,10 +233,24 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
     }
 
     const eightHours = 8 * 60 * 60 * 1000;
+    const contentDurationMs = (originalItem.duration || 10) * 1000;
+
     const schedules = [
-      { start: now, end: new Date(now.getTime() + eightHours) },
-      { start: new Date(now.getTime() + eightHours), end: new Date(now.getTime() + eightHours * 2) },
-      { start: new Date(now.getTime() + eightHours * 2), end: endOf24Hours },
+      {
+        start: now,
+        end: new Date(now.getTime() + contentDurationMs),
+        windowEnd: new Date(now.getTime() + eightHours)
+      },
+      {
+        start: new Date(now.getTime() + eightHours),
+        end: new Date(now.getTime() + eightHours + contentDurationMs),
+        windowEnd: new Date(now.getTime() + eightHours * 2)
+      },
+      {
+        start: new Date(now.getTime() + eightHours * 2),
+        end: new Date(now.getTime() + eightHours * 2 + contentDurationMs),
+        windowEnd: endOf24Hours
+      },
     ];
 
     const itemsToCreate = schedules.map((schedule, index) => ({
@@ -262,6 +276,8 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
         payment_date: now.toISOString(),
         original_queue_item_id: queueItemId,
         auto_scheduled_slot: index + 1,
+        slot_window_start: schedule.start.toISOString(),
+        slot_window_end: schedule.windowEnd.toISOString(),
         is_user_paid_content: true,
       },
     }));
@@ -285,9 +301,10 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
     }
 
     console.info(`Created 3 auto-scheduled queue items for customer: ${customerEmail}`);
-    console.info(`Slot 1: ${schedules[0].start.toISOString()} - ${schedules[0].end.toISOString()}`);
-    console.info(`Slot 2: ${schedules[1].start.toISOString()} - ${schedules[1].end.toISOString()}`);
-    console.info(`Slot 3: ${schedules[2].start.toISOString()} - ${schedules[2].end.toISOString()}`);
+    console.info(`Content duration: ${originalItem.duration}s (${contentDurationMs}ms)`);
+    console.info(`Slot 1: Shows at ${schedules[0].start.toISOString()}, expires ${schedules[0].end.toISOString()}`);
+    console.info(`Slot 2: Shows at ${schedules[1].start.toISOString()}, expires ${schedules[1].end.toISOString()}`);
+    console.info(`Slot 3: Shows at ${schedules[2].start.toISOString()}, expires ${schedules[2].end.toISOString()}`);
   } catch (error) {
     console.error('Error in activateQueueItemAfterPayment:', error);
   }
