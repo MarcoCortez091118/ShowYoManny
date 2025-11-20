@@ -234,6 +234,16 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
       return;
     }
 
+    const { data: maxOrderData } = await supabase
+      .from('queue_items')
+      .select('order_index')
+      .order('order_index', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const maxOrderIndex = maxOrderData?.order_index ?? 0;
+    console.info(`Current max order_index: ${maxOrderIndex}, will add items starting at ${maxOrderIndex + 1}`);
+
     const eightHours = 8 * 60 * 60 * 1000;
     const contentDurationMs = (originalItem.duration || 10) * 1000;
 
@@ -248,6 +258,7 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
         duration: originalItem.duration,
         border_id: originalItem.border_id,
         file_name: originalItem.file_name,
+        order_index: maxOrderIndex + 1,
         status: 'active',
         published_at: now.toISOString(),
         scheduled_start: null,
@@ -278,6 +289,7 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
         duration: originalItem.duration,
         border_id: originalItem.border_id,
         file_name: originalItem.file_name,
+        order_index: maxOrderIndex + 2,
         status: 'active',
         published_at: new Date(now.getTime() + eightHours).toISOString(),
         scheduled_start: new Date(now.getTime() + eightHours).toISOString(),
@@ -308,6 +320,7 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
         duration: originalItem.duration,
         border_id: originalItem.border_id,
         file_name: originalItem.file_name,
+        order_index: maxOrderIndex + 3,
         status: 'active',
         published_at: new Date(now.getTime() + eightHours * 2).toISOString(),
         scheduled_start: new Date(now.getTime() + eightHours * 2).toISOString(),
@@ -350,9 +363,9 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
 
     console.info(`Created 3 queue items for customer: ${customerEmail}`);
     console.info(`Content duration: ${originalItem.duration}s`);
-    console.info(`Slot 1 (immediate): Active now, will show in queue immediately`);
-    console.info(`Slot 2 (scheduled): Shows at ${new Date(now.getTime() + eightHours).toISOString()}`);
-    console.info(`Slot 3 (scheduled): Shows at ${new Date(now.getTime() + eightHours * 2).toISOString()}`);
+    console.info(`Slot 1 (immediate): order_index ${maxOrderIndex + 1}, active now, added to END of queue`);
+    console.info(`Slot 2 (scheduled): order_index ${maxOrderIndex + 2}, shows at ${new Date(now.getTime() + eightHours).toISOString()}`);
+    console.info(`Slot 3 (scheduled): order_index ${maxOrderIndex + 3}, shows at ${new Date(now.getTime() + eightHours * 2).toISOString()}`);
   } catch (error) {
     console.error('Error in activateQueueItemAfterPayment:', error);
   }
