@@ -1222,20 +1222,24 @@ const AdminDashboard = () => {
                       {!timerLoopAutomatic && (
                         <div>
                           <Label htmlFor="timer-interval">Intervalo Manual (minutos)</Label>
-                          <Select value={timerLoopMinutes.toString()} onValueChange={(value) => setTimerLoopMinutes(parseInt(value))}>
-                            <SelectTrigger className="mt-2">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="15">15 minutos</SelectItem>
-                              <SelectItem value="30">30 minutos</SelectItem>
-                              <SelectItem value="60">1 hora</SelectItem>
-                              <SelectItem value="120">2 horas</SelectItem>
-                              <SelectItem value="180">3 horas</SelectItem>
-                              <SelectItem value="240">4 horas</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <p className="text-xs text-muted-foreground mt-2">El contenido se repetirá después de este intervalo</p>
+                          <Input
+                            id="timer-interval"
+                            type="number"
+                            min="1"
+                            max="1440"
+                            value={timerLoopMinutes}
+                            onChange={(e) => {
+                              const value = parseInt(e.target.value);
+                              if (value >= 1 && value <= 1440) {
+                                setTimerLoopMinutes(value);
+                              }
+                            }}
+                            placeholder="Ej: 30, 45, 90..."
+                            className="mt-2"
+                          />
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Define el intervalo en minutos (1-1440). El contenido se repetirá después de este tiempo.
+                          </p>
                         </div>
                       )}
 
