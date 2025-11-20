@@ -220,6 +220,7 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
             stripe_customer_id: customerId,
             payment_date: now.toISOString(),
             payment_status: 'confirmed',
+            display_status: 'published',
           },
         })
         .eq('id', queueItemId);
@@ -259,10 +260,12 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
           stripe_customer_id: customerId,
           payment_date: now.toISOString(),
           payment_status: 'confirmed',
+          display_status: 'published',
           original_queue_item_id: queueItemId,
           auto_scheduled_slot: 1,
           slot_type: 'immediate',
           is_user_paid_content: true,
+          is_admin_content: false,
         },
       },
       {
@@ -287,10 +290,12 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
           stripe_customer_id: customerId,
           payment_date: now.toISOString(),
           payment_status: 'confirmed',
+          display_status: 'published',
           original_queue_item_id: queueItemId,
           auto_scheduled_slot: 2,
           slot_type: 'scheduled',
           is_user_paid_content: true,
+          is_admin_content: false,
         },
       },
       {
@@ -315,10 +320,12 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
           stripe_customer_id: customerId,
           payment_date: now.toISOString(),
           payment_status: 'confirmed',
+          display_status: 'published',
           original_queue_item_id: queueItemId,
           auto_scheduled_slot: 3,
           slot_type: 'scheduled',
           is_user_paid_content: true,
+          is_admin_content: false,
         },
       },
     ];
