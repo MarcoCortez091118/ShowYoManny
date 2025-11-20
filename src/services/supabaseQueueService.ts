@@ -30,6 +30,14 @@ class SupabaseQueueService {
       ? item.metadata.payment_status === 'confirmed'
       : false;
 
+    const displayStatus = item.metadata && typeof item.metadata === 'object' && 'display_status' in item.metadata
+      ? item.metadata.display_status
+      : null;
+
+    if (displayStatus === 'pending' && !isAdminContent) {
+      return { status: 'pending', isVisible: false };
+    }
+
     if (isPaidContent && !isPaymentConfirmed) {
       return { status: 'pending', isVisible: false };
     }

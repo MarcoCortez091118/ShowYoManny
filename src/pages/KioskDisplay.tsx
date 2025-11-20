@@ -70,14 +70,24 @@ const KioskDisplay = () => {
         let computed_status: 'scheduled' | 'published' | 'expired' | 'active' | 'pending' = 'active';
         let is_visible = true;
 
+        const isAdminContent = item.metadata?.is_admin_content === true;
         const isPaidContent = item.metadata?.is_user_paid_content === true ||
                               item.metadata?.is_user_paid_content === 'true';
         const isPaymentConfirmed = item.metadata?.payment_status === 'confirmed';
+        const displayStatus = item.metadata?.display_status;
 
-        if (isPaidContent && !isPaymentConfirmed) {
+        if (displayStatus === 'pending' && !isAdminContent) {
+          computed_status = 'pending';
+          is_visible = false;
+          console.log(`🚫 KioskDisplay: Hiding pending content (not admin): ${item.title} (ID: ${item.id})`);
+        } else if (isPaidContent && !isPaymentConfirmed) {
           computed_status = 'pending';
           is_visible = false;
           console.log(`🚫 KioskDisplay: Hiding unpaid content: ${item.title} (ID: ${item.id})`);
+        } else if (item.status === 'pending' && !isAdminContent) {
+          computed_status = 'pending';
+          is_visible = false;
+          console.log(`🚫 KioskDisplay: Hiding content with pending status: ${item.title} (ID: ${item.id})`);
         } else if (scheduledEnd && now > scheduledEnd) {
           computed_status = 'expired';
           is_visible = false;
