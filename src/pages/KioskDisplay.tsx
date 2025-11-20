@@ -70,7 +70,8 @@ const KioskDisplay = () => {
         let computed_status: 'scheduled' | 'published' | 'expired' | 'active' | 'pending' = 'active';
         let is_visible = true;
 
-        const isPaidContent = item.metadata?.is_user_paid_content === true;
+        const isPaidContent = item.metadata?.is_user_paid_content === true ||
+                              item.metadata?.is_user_paid_content === 'true';
         const isPaymentConfirmed = item.metadata?.payment_status === 'confirmed';
 
         if (isPaidContent && !isPaymentConfirmed) {
