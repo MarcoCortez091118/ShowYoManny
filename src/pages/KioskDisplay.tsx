@@ -154,23 +154,87 @@ const KioskDisplay = () => {
 
     autoAdvanceTimer.current = setTimeout(async () => {
       console.log(`KioskDisplay: Duration ${currentItem.duration}s completed for ${currentItem.title}`);
+      console.log('KioskDisplay: Item metadata:', JSON.stringify(currentItem.metadata, null, 2));
+      console.log('KioskDisplay: scheduled_start:', currentItem.scheduled_start);
+      console.log('KioskDisplay: scheduled_end:', currentItem.scheduled_end);
 
       const isPaidContent = currentItem.metadata?.is_user_paid_content === true;
       const isImmediateSlot = currentItem.metadata?.slot_type === 'immediate';
-      const shouldDelete = isPaidContent && isImmediateSlot && !currentItem.scheduled_start;
+      const hasNoSchedule = !currentItem.scheduled_start && !currentItem.scheduled_end;
+
+      console.log('KioskDisplay: isPaidContent:', isPaidContent);
+      console.log('KioskDisplay: isImmediateSlot:', isImmediateSlot);
+      console.log('KioskDisplay: hasNoSchedule:', hasNoSchedule);
+
+      const shouldDelete = isPaidContent && (isImmediateSlot || hasNoSchedule);
 
       if (shouldDelete) {
-        console.log(`KioskDisplay: Deleting immediate paid content after playback: ${currentItem.id}`);
-        try {
-          await supabase
-            .from('queue_items')
-            .delete()
-            .eq('id', currentItem.id);
+        console.log(`KioskDisplay: ✅ DELETING immediate paid content after playback: ${currentItem.id}`);
 
-          await fetchContent();
-        } catch (error) {
-          console.error('Error deleting played content:', error);
+        const hasBeenPlayed = currentItem.metadata?.has_been_played === true;
+        if (hasBeenPlayed) {
+          console.log('KioskDisplay: Content already marked as played, skipping re-deletion');
+        } else {
+          try {
+            console.log('KioskDisplay: Marking content as played and deleting...');
+
+            const { error: updateError } = await supabase
+              .from('queue_items')
+              .update({
+                metadata: {
+                  ...currentItem.metadata,
+                  has_been_played: true,
+                  played_at: new Date().toISOString(),
+                }
+              })
+              .eq('id', currentItem.id);
+
+            if (updateError) {
+              console.error('KioskDisplay: Error marking as played:', updateError);
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const { error: deleteError } = await supabase
+              .from('queue_items')
+              .delete()
+              .eq('id', currentItem.id);
+
+            if (deleteError) {
+              console.error('KioskDisplay: Error deleting content:', deleteError);
+            } else {
+              console.log('KioskDisplay: ✅ Successfully deleted paid content from database');
+            }
+
+            setIsVisible(false);
+
+            setTimeout(async () => {
+              await fetchContent();
+
+              setTimeout(() => {
+                setCurrentIndex(prevIndex => {
+                  const newLength = items.length - 1;
+                  if (newLength === 0) return 0;
+
+                  let nextIndex = prevIndex;
+                  if (prevIndex >= newLength) {
+                    nextIndex = 0;
+                  }
+
+                  console.log(`KioskDisplay: After deletion, moving to index ${nextIndex} of ${newLength} items`);
+                  return nextIndex;
+                });
+                setIsVisible(true);
+              }, 300);
+            }, 500);
+
+            return;
+          } catch (error) {
+            console.error('KioskDisplay: Exception deleting played content:', error);
+          }
         }
+      } else {
+        console.log('KioskDisplay: Content will NOT be deleted (normal content or scheduled slot)');
       }
 
       setIsVisible(false);
