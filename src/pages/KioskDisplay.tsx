@@ -70,7 +70,14 @@ const KioskDisplay = () => {
         let computed_status: 'scheduled' | 'published' | 'expired' | 'active' | 'pending' = 'active';
         let is_visible = true;
 
-        if (scheduledEnd && now > scheduledEnd) {
+        const isPaidContent = item.metadata?.is_user_paid_content === true;
+        const isPaymentConfirmed = item.metadata?.payment_status === 'confirmed';
+
+        if (isPaidContent && !isPaymentConfirmed) {
+          computed_status = 'pending';
+          is_visible = false;
+          console.log(`🚫 KioskDisplay: Hiding unpaid content: ${item.title} (ID: ${item.id})`);
+        } else if (scheduledEnd && now > scheduledEnd) {
           computed_status = 'expired';
           is_visible = false;
         } else if (scheduledStart && now < scheduledStart) {
@@ -92,6 +99,7 @@ const KioskDisplay = () => {
       });
 
       const visibleItems = enrichedItems.filter(item => item.is_visible);
+      console.log(`KioskDisplay: Filtered ${allItems.length} total items to ${visibleItems.length} visible items`);
 
       console.log('KioskDisplay: Loaded', visibleItems.length, 'visible items');
 

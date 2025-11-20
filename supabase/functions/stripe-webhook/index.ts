@@ -219,6 +219,7 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
             customer_name: customerName,
             stripe_customer_id: customerId,
             payment_date: now.toISOString(),
+            payment_status: 'confirmed',
           },
         })
         .eq('id', queueItemId);
@@ -257,6 +258,7 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
           customer_name: customerName,
           stripe_customer_id: customerId,
           payment_date: now.toISOString(),
+          payment_status: 'confirmed',
           original_queue_item_id: queueItemId,
           auto_scheduled_slot: 1,
           slot_type: 'immediate',
@@ -284,6 +286,7 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
           customer_name: customerName,
           stripe_customer_id: customerId,
           payment_date: now.toISOString(),
+          payment_status: 'confirmed',
           original_queue_item_id: queueItemId,
           auto_scheduled_slot: 2,
           slot_type: 'scheduled',
@@ -311,6 +314,7 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
           customer_name: customerName,
           stripe_customer_id: customerId,
           payment_date: now.toISOString(),
+          payment_status: 'confirmed',
           original_queue_item_id: queueItemId,
           auto_scheduled_slot: 3,
           slot_type: 'scheduled',
