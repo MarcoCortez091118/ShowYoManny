@@ -434,7 +434,7 @@ const AdminQueue = () => {
                     className="text-xs sm:text-sm data-[state=active]:bg-blue-500 data-[state=active]:text-white"
                   >
                     <ClockIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                    Programados ({items.filter(i => i.computed_status === 'scheduled' || i.computed_status === 'pending').length})
+                    Programados ({items.filter(i => i.computed_status === 'scheduled').length})
                   </TabsTrigger>
                   <TabsTrigger
                     value="expired"
@@ -469,15 +469,15 @@ const AdminQueue = () => {
                 </TabsContent>
 
                 <TabsContent value="scheduled">
-                  {items.filter(i => i.computed_status === 'scheduled' || i.computed_status === 'pending').length === 0 ? (
+                  {items.filter(i => i.computed_status === 'scheduled').length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
                       No hay contenido programado
                     </div>
                   ) : (
                     <ScrollArea className="h-[600px] pr-4">
                       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                        <SortableContext items={items.filter(i => i.computed_status === 'scheduled' || i.computed_status === 'pending').map(i => i.id)} strategy={verticalListSortingStrategy}>
-                          {items.filter(i => i.computed_status === 'scheduled' || i.computed_status === 'pending').map((item) => (
+                        <SortableContext items={items.filter(i => i.computed_status === 'scheduled').map(i => i.id)} strategy={verticalListSortingStrategy}>
+                          {items.filter(i => i.computed_status === 'scheduled').map((item) => (
                             <SortableItem
                               key={item.id}
                               item={item}

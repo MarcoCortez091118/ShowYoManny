@@ -22,6 +22,18 @@ class SupabaseQueueService {
       ? item.metadata.is_admin_content === true
       : false;
 
+    const isPaidContent = item.metadata && typeof item.metadata === 'object' && 'is_user_paid_content' in item.metadata
+      ? (item.metadata.is_user_paid_content === true || item.metadata.is_user_paid_content === 'true')
+      : false;
+
+    const isPaymentConfirmed = item.metadata && typeof item.metadata === 'object' && 'payment_status' in item.metadata
+      ? item.metadata.payment_status === 'confirmed'
+      : false;
+
+    if (isPaidContent && !isPaymentConfirmed) {
+      return { status: 'pending', isVisible: false };
+    }
+
     if (item.status === 'pending' && !isAdminContent) {
       return { status: 'pending', isVisible: false };
     }
