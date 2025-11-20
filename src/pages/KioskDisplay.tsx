@@ -152,8 +152,27 @@ const KioskDisplay = () => {
       });
     }, 1000);
 
-    autoAdvanceTimer.current = setTimeout(() => {
+    autoAdvanceTimer.current = setTimeout(async () => {
       console.log(`KioskDisplay: Duration ${currentItem.duration}s completed for ${currentItem.title}`);
+
+      const isPaidContent = currentItem.metadata?.is_user_paid_content === true;
+      const isImmediateSlot = currentItem.metadata?.slot_type === 'immediate';
+      const shouldDelete = isPaidContent && isImmediateSlot && !currentItem.scheduled_start;
+
+      if (shouldDelete) {
+        console.log(`KioskDisplay: Deleting immediate paid content after playback: ${currentItem.id}`);
+        try {
+          await supabase
+            .from('queue_items')
+            .delete()
+            .eq('id', currentItem.id);
+
+          await fetchContent();
+        } catch (error) {
+          console.error('Error deleting played content:', error);
+        }
+      }
+
       setIsVisible(false);
 
       setTimeout(() => {

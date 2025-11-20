@@ -235,52 +235,89 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
     const eightHours = 8 * 60 * 60 * 1000;
     const contentDurationMs = (originalItem.duration || 10) * 1000;
 
-    const schedules = [
+    const itemsToCreate = [
       {
-        start: now,
-        end: new Date(now.getTime() + contentDurationMs),
-        windowEnd: new Date(now.getTime() + eightHours)
+        user_id: originalItem.user_id,
+        kiosk_id: originalItem.kiosk_id,
+        media_url: originalItem.media_url,
+        media_type: originalItem.media_type,
+        thumbnail_url: originalItem.thumbnail_url,
+        title: originalItem.title,
+        duration: originalItem.duration,
+        border_id: originalItem.border_id,
+        file_name: originalItem.file_name,
+        status: 'active',
+        published_at: now.toISOString(),
+        scheduled_start: null,
+        scheduled_end: null,
+        auto_delete_on_expire: false,
+        metadata: {
+          ...(originalItem.metadata || {}),
+          customer_email: customerEmail,
+          customer_name: customerName,
+          stripe_customer_id: customerId,
+          payment_date: now.toISOString(),
+          original_queue_item_id: queueItemId,
+          auto_scheduled_slot: 1,
+          slot_type: 'immediate',
+          is_user_paid_content: true,
+        },
       },
       {
-        start: new Date(now.getTime() + eightHours),
-        end: new Date(now.getTime() + eightHours + contentDurationMs),
-        windowEnd: new Date(now.getTime() + eightHours * 2)
+        user_id: originalItem.user_id,
+        kiosk_id: originalItem.kiosk_id,
+        media_url: originalItem.media_url,
+        media_type: originalItem.media_type,
+        thumbnail_url: originalItem.thumbnail_url,
+        title: originalItem.title,
+        duration: originalItem.duration,
+        border_id: originalItem.border_id,
+        file_name: originalItem.file_name,
+        status: 'active',
+        published_at: new Date(now.getTime() + eightHours).toISOString(),
+        scheduled_start: new Date(now.getTime() + eightHours).toISOString(),
+        scheduled_end: new Date(now.getTime() + eightHours + contentDurationMs).toISOString(),
+        auto_delete_on_expire: true,
+        metadata: {
+          ...(originalItem.metadata || {}),
+          customer_email: customerEmail,
+          customer_name: customerName,
+          stripe_customer_id: customerId,
+          payment_date: now.toISOString(),
+          original_queue_item_id: queueItemId,
+          auto_scheduled_slot: 2,
+          slot_type: 'scheduled',
+          is_user_paid_content: true,
+        },
       },
       {
-        start: new Date(now.getTime() + eightHours * 2),
-        end: new Date(now.getTime() + eightHours * 2 + contentDurationMs),
-        windowEnd: endOf24Hours
+        user_id: originalItem.user_id,
+        kiosk_id: originalItem.kiosk_id,
+        media_url: originalItem.media_url,
+        media_type: originalItem.media_type,
+        thumbnail_url: originalItem.thumbnail_url,
+        title: originalItem.title,
+        duration: originalItem.duration,
+        border_id: originalItem.border_id,
+        file_name: originalItem.file_name,
+        status: 'active',
+        published_at: new Date(now.getTime() + eightHours * 2).toISOString(),
+        scheduled_start: new Date(now.getTime() + eightHours * 2).toISOString(),
+        scheduled_end: new Date(now.getTime() + eightHours * 2 + contentDurationMs).toISOString(),
+        auto_delete_on_expire: true,
+        metadata: {
+          ...(originalItem.metadata || {}),
+          customer_email: customerEmail,
+          customer_name: customerName,
+          stripe_customer_id: customerId,
+          payment_date: now.toISOString(),
+          original_queue_item_id: queueItemId,
+          auto_scheduled_slot: 3,
+          slot_type: 'scheduled',
+          is_user_paid_content: true,
+        },
       },
     ];
-
-    const itemsToCreate = schedules.map((schedule, index) => ({
-      user_id: originalItem.user_id,
-      kiosk_id: originalItem.kiosk_id,
-      media_url: originalItem.media_url,
-      media_type: originalItem.media_type,
-      thumbnail_url: originalItem.thumbnail_url,
-      title: originalItem.title,
-      duration: originalItem.duration,
-      border_id: originalItem.border_id,
-      file_name: originalItem.file_name,
-      status: 'active',
-      published_at: schedule.start.toISOString(),
-      scheduled_start: schedule.start.toISOString(),
-      scheduled_end: schedule.end.toISOString(),
-      auto_delete_on_expire: true,
-      metadata: {
-        ...(originalItem.metadata || {}),
-        customer_email: customerEmail,
-        customer_name: customerName,
-        stripe_customer_id: customerId,
-        payment_date: now.toISOString(),
-        original_queue_item_id: queueItemId,
-        auto_scheduled_slot: index + 1,
-        slot_window_start: schedule.start.toISOString(),
-        slot_window_end: schedule.windowEnd.toISOString(),
-        is_user_paid_content: true,
-      },
-    }));
 
     const { error: deleteError } = await supabase
       .from('queue_items')
@@ -300,11 +337,11 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
       return;
     }
 
-    console.info(`Created 3 auto-scheduled queue items for customer: ${customerEmail}`);
-    console.info(`Content duration: ${originalItem.duration}s (${contentDurationMs}ms)`);
-    console.info(`Slot 1: Shows at ${schedules[0].start.toISOString()}, expires ${schedules[0].end.toISOString()}`);
-    console.info(`Slot 2: Shows at ${schedules[1].start.toISOString()}, expires ${schedules[1].end.toISOString()}`);
-    console.info(`Slot 3: Shows at ${schedules[2].start.toISOString()}, expires ${schedules[2].end.toISOString()}`);
+    console.info(`Created 3 queue items for customer: ${customerEmail}`);
+    console.info(`Content duration: ${originalItem.duration}s`);
+    console.info(`Slot 1 (immediate): Active now, will show in queue immediately`);
+    console.info(`Slot 2 (scheduled): Shows at ${new Date(now.getTime() + eightHours).toISOString()}`);
+    console.info(`Slot 3 (scheduled): Shows at ${new Date(now.getTime() + eightHours * 2).toISOString()}`);
   } catch (error) {
     console.error('Error in activateQueueItemAfterPayment:', error);
   }
