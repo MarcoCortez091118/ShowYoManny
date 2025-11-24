@@ -31,10 +31,30 @@ const Index = () => {
     });
   }, []);
 
-  const features = [
-    { icon: Zap, title: "Instant Upload", description: "Fast and easy content submission" },
-    { icon: Shield, title: "AI Moderation", description: "Safe and appropriate content guaranteed" },
-    { icon: Eye, title: "Live Display", description: "See your content on the billboard" },
+  const howItWorksSteps = [
+    {
+      icon: Camera,
+      title: "Upload Your Content",
+      description: "Image (2048 × 2432 px) or MP4 video. Promote your brand, event, product, or personal message."
+    },
+    {
+      icon: Shield,
+      title: "AI Review",
+      description: "We validate that your content is safe and complies with our policies."
+    },
+    {
+      icon: Eye,
+      title: "See It Live",
+      description: "Once approved, you'll see it displayed on our LED screen in Times Square. A digital preview is provided before final publication."
+    },
+  ];
+
+  const whyAdvertiseFeatures = [
+    "High international visibility",
+    "Perfect for viral campaigns and product launches",
+    "Suitable for artists, influencers, startups, and established brands",
+    "Daily, weekly, monthly, semi-annual, or annual packages available",
+    "You don't need to be in New York to be displayed on the screen"
   ];
 
   return (
@@ -65,14 +85,17 @@ const Index = () => {
         <div className="container mx-auto max-w-5xl relative z-10">
           <div className="text-center space-y-8">
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-              Put your photo or video on the{" "}
+              Your Content in{" "}
               <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                billboard
+                Times Square, New York
               </span>
-              {" "}for 10 seconds
+              {" "}for 10 Seconds
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Upload your content and see it displayed on our digital billboard. Safe, fast, and powered by AI moderation.
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+              Make your image, video, or message appear on the iconic digital screen in Times Square. Upload your content, and we'll display it live on Broadway (1604, New York). Fast, secure, and AI-moderated.
+            </p>
+            <p className="text-lg md:text-xl text-accent font-semibold max-w-2xl mx-auto pt-2">
+              Impact the world in just 10 seconds. Ideal for artists, entrepreneurs, brands, and launches.
             </p>
             <div className="flex gap-4 justify-center pt-4">
               <Button
@@ -95,14 +118,53 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features */}
+      {/* What is ShowYoNy */}
       <section className="py-16 px-4 bg-gradient-to-b from-transparent via-navy/30 to-transparent">
         <div className="container mx-auto max-w-6xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+            What is ShowYoNy?
+          </h2>
+          <p className="text-lg md:text-xl text-muted-foreground text-center max-w-4xl mx-auto mb-8">
+            ShowYoNy is the platform that allows anyone—individuals or businesses—to appear on one of the most visible digital billboards in the world. Simply upload your file, and our system will automatically validate it to be broadcasted in Times Square, NYC.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <div className="bg-card/60 backdrop-blur border border-primary/30 rounded-lg p-4">
+              <p className="text-sm font-semibold text-primary mb-1">Location</p>
+              <p className="text-muted-foreground">1604 Broadway, New York</p>
+            </div>
+            <div className="bg-card/60 backdrop-blur border border-secondary/30 rounded-lg p-4">
+              <p className="text-sm font-semibold text-secondary mb-1">Ad Duration</p>
+              <p className="text-muted-foreground">10 seconds</p>
+            </div>
+            <div className="bg-card/60 backdrop-blur border border-accent/30 rounded-lg p-4">
+              <p className="text-sm font-semibold text-accent mb-1">Formats</p>
+              <p className="text-muted-foreground">PNG, MP4 (Full HD / 4K)</p>
+            </div>
+            <div className="bg-card/60 backdrop-blur border border-primary/30 rounded-lg p-4">
+              <p className="text-sm font-semibold text-primary mb-1">Moderation</p>
+              <p className="text-muted-foreground">Automatic AI moderation</p>
+            </div>
+            <div className="bg-card/60 backdrop-blur border border-secondary/30 rounded-lg p-4">
+              <p className="text-sm font-semibold text-secondary mb-1">Availability</p>
+              <p className="text-muted-foreground">Available from any country</p>
+            </div>
+            <div className="bg-card/60 backdrop-blur border border-accent/30 rounded-lg p-4">
+              <p className="text-sm font-semibold text-accent mb-1">Status</p>
+              <p className="text-muted-foreground">Live streaming 24/7</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-            How It Works
+            How Does ShowYoNy Work?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature, idx) => {
+            {howItWorksSteps.map((step, idx) => {
               const colors = [
                 { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/30' },
                 { bg: 'bg-secondary/10', text: 'text-secondary', border: 'border-secondary/30' },
@@ -111,16 +173,50 @@ const Index = () => {
               const color = colors[idx % 3];
               return (
                 <Card key={idx} className={`bg-card/80 backdrop-blur border ${color.border} hover:border-opacity-60 transition-all hover:scale-105`}>
-                  <CardContent className="pt-6 text-center">
+                  <CardContent className="pt-6">
                     <div className={`mx-auto w-16 h-16 ${color.bg} rounded-full flex items-center justify-center mb-4`}>
-                      <feature.icon className={`w-8 h-8 ${color.text}`} />
+                      <step.icon className={`w-8 h-8 ${color.text}`} />
                     </div>
-                    <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                    <p className="text-muted-foreground">{feature.description}</p>
+                    <h3 className="text-xl font-bold mb-3 text-center">Step {idx + 1}: {step.title}</h3>
+                    <p className="text-muted-foreground text-center">{step.description}</p>
                   </CardContent>
                 </Card>
               );
             })}
+          </div>
+          <div className="flex gap-4 justify-center pt-8">
+            <Button
+              size="lg"
+              onClick={() => navigate('/upload')}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8 electric-glow"
+            >
+              Start Now
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => navigate('/kiosk')}
+              className="border-secondary text-secondary hover:bg-secondary/10 font-bold px-8 neon-glow"
+            >
+              Watch Live
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Advertise */}
+      <section className="py-16 px-4 bg-gradient-to-b from-transparent via-navy/30 to-transparent">
+        <div className="container mx-auto max-w-5xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">
+            Why Advertise with ShowYoNy?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {whyAdvertiseFeatures.map((feature, idx) => (
+              <div key={idx} className="flex items-start gap-3 bg-card/60 backdrop-blur border border-accent/20 rounded-lg p-4">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0" />
+                <p className="text-muted-foreground">{feature}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -130,10 +226,10 @@ const Index = () => {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Simple Pricing
+              Available Packages
             </h2>
             <p className="text-xl text-muted-foreground">
-              Choose your display option and upload instantly
+              Choose your display option and upload instantly to Times Square
             </p>
           </div>
           
