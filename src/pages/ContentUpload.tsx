@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,7 @@ import { compressAndTrimVideo, formatFileSize } from "@/utils/videoCompression";
 
 const ContentUpload = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { settings } = useDisplaySettings();
   const [isUploading, setIsUploading] = useState(false);
@@ -42,6 +43,14 @@ const ContentUpload = () => {
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [processedFile, setProcessedFile] = useState<File | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
+
+  useEffect(() => {
+    const state = location.state as { selectedPlan?: string } | null;
+    if (state?.selectedPlan) {
+      setSelectedPlan(state.selectedPlan);
+      console.log('Plan preselected from home:', state.selectedPlan);
+    }
+  }, [location.state]);
   const [borderStyle, setBorderStyle] = useState("none");
   const [previewUrl, setPreviewUrl] = useState("");
   const [uploadMetadata, setUploadMetadata] = useState<Record<string, string | number | boolean>>({});

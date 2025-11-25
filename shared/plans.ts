@@ -33,6 +33,7 @@ export const PLAN_DEFINITIONS: readonly PlanDefinition[] = [
     includesLogo: true,
     stripePriceId: "price_1SVUGkF6Bz1PoBh5KrmXEX8f",
     stripePriceIdTest: "price_1SVUGkF6Bz1PoBh5KrmXEX8f",
+    isPopular: true,
   },
   {
     id: "photo-border-logo",
@@ -47,7 +48,6 @@ export const PLAN_DEFINITIONS: readonly PlanDefinition[] = [
     includesLogo: true,
     stripePriceId: "price_1S8tn8F6Bz1PoBh5nT9k1JT3",
     stripePriceIdTest: "price_1ST53eF6Bz1PoBh5ysdQt2n3",
-    isPopular: true,
     hidden: true,
   },
   {
@@ -91,7 +91,6 @@ export const PLAN_DEFINITIONS: readonly PlanDefinition[] = [
     includesLogo: true,
     stripePriceId: "price_1S8trAF6Bz1PoBh5S1knkYcR",
     stripePriceIdTest: "price_1ST56HF6Bz1PoBh5bOS27LXL",
-    isPopular: true,
     hidden: true,
   },
   {

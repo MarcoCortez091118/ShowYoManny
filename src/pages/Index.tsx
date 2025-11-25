@@ -13,17 +13,24 @@ const Index = () => {
     return planService.getAllPlans().map((plan) => {
       const Icon = plan.type === "photo" ? Camera : Video;
       const highlightIcon = plan.includesBorder ? Sparkles : Icon;
+
+      const baseCost = plan.price - 2;
+      const platformFee = 2;
+
       const features = [
         `${plan.displayDurationSeconds} seconds display`,
+        "Displayed 3 times in 24 hours",
         ...(plan.includesBorder ? ["Custom border"] : []),
         plan.includesLogo ? "ShowYo logo overlay" : "No logo overlay",
-        "Plays once",
+        `$${baseCost} + $${platformFee} platform fee`,
       ];
 
       return {
         id: plan.id,
         title: plan.title,
         price: plan.price,
+        baseCost,
+        platformFee,
         icon: plan.includesBorder ? highlightIcon : Icon,
         features,
         popular: Boolean(plan.isPopular),
