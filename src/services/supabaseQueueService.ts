@@ -34,11 +34,25 @@ class SupabaseQueueService {
       ? item.metadata.display_status
       : null;
 
+    // Debug logging para items con scheduled_start
+    if (scheduledStart) {
+      console.log(`[computeItemStatus] Item: ${item.title}`, {
+        scheduledStart: scheduledStart.toISOString(),
+        now: now.toISOString(),
+        isBeforeStart: now < scheduledStart,
+        isPaidContent,
+        isPaymentConfirmed,
+        displayStatus,
+        itemStatus: item.status
+      });
+    }
+
     if (displayStatus === 'pending' && !isAdminContent) {
       return { status: 'pending', isVisible: false };
     }
 
     if (isPaidContent && !isPaymentConfirmed) {
+      console.log(`[computeItemStatus] Blocking ${item.title} - paid but not confirmed`);
       return { status: 'pending', isVisible: false };
     }
 
@@ -51,6 +65,7 @@ class SupabaseQueueService {
     }
 
     if (scheduledStart && now < scheduledStart) {
+      console.log(`[computeItemStatus] ${item.title} is SCHEDULED`);
       return { status: 'scheduled', isVisible: false };
     }
 
