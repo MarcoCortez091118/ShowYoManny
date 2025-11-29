@@ -276,8 +276,12 @@ const AdminQueue = () => {
     isFetchingQueue.current = true;
     try {
       setIsFetching(true);
+      console.log(`[AdminQueue] fetchQueue - user.id: ${user.id}, isAdmin: ${isAdmin}`);
       // Pasar isAdmin=true para que admins vean TODO el contenido
       const data = await supabaseQueueService.getQueueItems(user.id, isAdmin);
+      console.log(`[AdminQueue] Received ${data.length} items`);
+      const scheduledItems = data.filter(i => i.computed_status === 'scheduled');
+      console.log(`[AdminQueue] Scheduled items count: ${scheduledItems.length}`, scheduledItems);
       setItems(data);
     } catch (error: any) {
       toast({ title: "Error loading queue", description: error.message, variant: "destructive" });

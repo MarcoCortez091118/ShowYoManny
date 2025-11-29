@@ -68,6 +68,8 @@ class SupabaseQueueService {
   }
 
   async getQueueItems(userId: string, isAdmin: boolean = false): Promise<EnrichedQueueItem[]> {
+    console.log(`[QueueService] getQueueItems called - userId: ${userId}, isAdmin: ${isAdmin}`);
+
     let query = supabase
       .from('queue_items')
       .select('*');
@@ -75,7 +77,10 @@ class SupabaseQueueService {
     // Si NO es admin, filtrar por user_id
     // Si ES admin, mostrar TODO el contenido (sin filtro)
     if (!isAdmin) {
+      console.log('[QueueService] Filtering by user_id (non-admin)');
       query = query.eq('user_id', userId);
+    } else {
+      console.log('[QueueService] NO filtering - showing ALL content (admin mode)');
     }
 
     const { data, error } = await query.order('order_index', { ascending: true });
@@ -85,7 +90,7 @@ class SupabaseQueueService {
       return [];
     }
 
-    return (data || []).map(item => {
+    const enrichedItems = (data || []).map(item => {
       const { status, isVisible, expiresIn } = this.computeItemStatus(item);
       return {
         ...item,
@@ -94,6 +99,11 @@ class SupabaseQueueService {
         expires_in_minutes: expiresIn,
       };
     });
+
+    const scheduledCount = enrichedItems.filter(i => i.computed_status === 'scheduled').length;
+    console.log(`[QueueService] Total items: ${enrichedItems.length}, Scheduled: ${scheduledCount}`);
+
+    return enrichedItems;
   }
 
   async getPublishedQueueItems(kioskId: string): Promise<EnrichedQueueItem[]> {
