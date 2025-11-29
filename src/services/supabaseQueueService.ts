@@ -67,12 +67,18 @@ class SupabaseQueueService {
     return { status: item.status as ContentStatus, isVisible: false };
   }
 
-  async getQueueItems(userId: string): Promise<EnrichedQueueItem[]> {
-    const { data, error } = await supabase
+  async getQueueItems(userId: string, isAdmin: boolean = false): Promise<EnrichedQueueItem[]> {
+    let query = supabase
       .from('queue_items')
-      .select('*')
-      .eq('user_id', userId)
-      .order('order_index', { ascending: true });
+      .select('*');
+
+    // Si NO es admin, filtrar por user_id
+    // Si ES admin, mostrar TODO el contenido (sin filtro)
+    if (!isAdmin) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query.order('order_index', { ascending: true });
 
     if (error) {
       console.error('Error fetching queue items:', error);

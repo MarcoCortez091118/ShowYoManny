@@ -276,7 +276,8 @@ const AdminQueue = () => {
     isFetchingQueue.current = true;
     try {
       setIsFetching(true);
-      const data = await supabaseQueueService.getQueueItems(user.id);
+      // Pasar isAdmin=true para que admins vean TODO el contenido
+      const data = await supabaseQueueService.getQueueItems(user.id, isAdmin);
       setItems(data);
     } catch (error: any) {
       toast({ title: "Error loading queue", description: error.message, variant: "destructive" });
