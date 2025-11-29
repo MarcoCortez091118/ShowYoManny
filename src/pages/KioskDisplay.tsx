@@ -205,28 +205,40 @@ const KioskDisplay = () => {
       const isPaidContent = currentItem.metadata?.is_user_paid_content === true;
       const isImmediateSlot = currentItem.metadata?.slot_type === 'immediate';
       const hasNoSchedule = !currentItem.scheduled_start && !currentItem.scheduled_end;
+      const autoComplete = currentItem.metadata?.auto_complete_after_play === true;
+      const maxPlays = currentItem.metadata?.max_plays || 0;
+      const playCount = currentItem.metadata?.play_count || 0;
+      const newPlayCount = playCount + 1;
 
       console.log('KioskDisplay: isPaidContent:', isPaidContent);
       console.log('KioskDisplay: isImmediateSlot:', isImmediateSlot);
       console.log('KioskDisplay: hasNoSchedule:', hasNoSchedule);
+      console.log('KioskDisplay: autoComplete:', autoComplete);
+      console.log('KioskDisplay: maxPlays:', maxPlays);
+      console.log('KioskDisplay: playCount:', playCount, '-> newPlayCount:', newPlayCount);
 
-      const shouldDelete = isPaidContent && (isImmediateSlot || hasNoSchedule);
+      const shouldDelete = isPaidContent && (
+        isImmediateSlot ||
+        hasNoSchedule ||
+        (autoComplete && maxPlays > 0 && newPlayCount >= maxPlays)
+      );
 
       if (shouldDelete) {
-        console.log(`KioskDisplay: ✅ DELETING immediate paid content after playback: ${currentItem.id}`);
+        console.log(`KioskDisplay: ✅ DELETING paid content after playback: ${currentItem.id} (plays: ${newPlayCount}/${maxPlays})`);
 
         const hasBeenPlayed = currentItem.metadata?.has_been_played === true;
         if (hasBeenPlayed) {
           console.log('KioskDisplay: Content already marked as played, skipping re-deletion');
         } else {
           try {
-            console.log('KioskDisplay: Marking content as played and deleting...');
+            console.log('KioskDisplay: Incrementing play_count and marking as played...');
 
             const { error: updateError } = await supabase
               .from('queue_items')
               .update({
                 metadata: {
                   ...currentItem.metadata,
+                  play_count: newPlayCount,
                   has_been_played: true,
                   played_at: new Date().toISOString(),
                 }
