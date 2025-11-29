@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Monitor, Zap, LogOut, Settings, Home } from "lucide-react";
+import { Monitor, Zap, LogOut, Settings, Home, AlertCircle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/SimpleAuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -107,6 +107,10 @@ const AdminHeader = () => {
               <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/admin/orphaned-payments')}>
+                <AlertCircle className="mr-2 h-4 w-4" />
+                <span>Orphaned Payments</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogoutClick} className="text-destructive focus:text-destructive">

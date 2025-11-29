@@ -16,6 +16,7 @@ import AdminSettings from "./pages/AdminSettings";
 import AdminLogs from "./pages/AdminLogs";
 import AdminBilling from "./pages/AdminBilling";
 import AdminHistory from "./pages/AdminHistory";
+import AdminOrphanedPayments from "./pages/AdminOrphanedPayments";
 import ContentUpload from "./pages/ContentUpload";
 import ThankYou from "./pages/ThankYou";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -92,6 +93,14 @@ const App = () => {
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <AdminHistory />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/orphaned-payments"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminOrphanedPayments />
                 </ProtectedRoute>
               }
             />

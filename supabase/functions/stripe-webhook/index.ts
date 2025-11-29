@@ -81,8 +81,20 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
   console.info(`Checkout session completed: ${id}, mode: ${mode}, status: ${payment_status}`);
 
+  await logAudit('webhook_received', session.customer_details?.email, null, 'stripe_session', {
+    session_id: id,
+    mode,
+    payment_status,
+    amount_total,
+    customer_email: session.customer_details?.email,
+  }, true);
+
   if (!customer || typeof customer !== 'string') {
     console.error('No customer ID in checkout session');
+    await logAudit('error', session.customer_details?.email, null, 'stripe_session', {
+      session_id: id,
+      error: 'No customer ID in checkout session',
+    }, false, 'No customer ID in checkout session');
     return;
   }
 
@@ -114,8 +126,18 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
       if (orderError) {
         console.error('Error inserting order:', orderError);
+        await logAudit('error', session.customer_details?.email, null, 'stripe_order', {
+          session_id: id,
+          error: orderError.message,
+        }, false, `Error inserting order: ${orderError.message}`);
         return;
       }
+
+      await logAudit('payment_completed', session.customer_details?.email, null, 'stripe_order', {
+        session_id: id,
+        amount: amount_total,
+        order_id: metadata?.order_id,
+      }, true);
 
       await createOrUpdateCustomer({
         email: session.customer_details?.email || metadata?.user_email,
@@ -128,12 +150,43 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       console.info(`Successfully processed one-time payment for session: ${id}`);
 
       if (metadata?.order_id) {
+        await updatePaymentTracking({
+          sessionId: id,
+          paymentIntentId: typeof payment_intent === 'string' ? payment_intent : payment_intent?.id,
+          customerId: customer,
+          customerEmail: session.customer_details?.email || metadata.user_email,
+          customerName: session.customer_details?.name,
+          amountCents: amount_total || 0,
+          planId: metadata.plan_id,
+          queueItemId: metadata.order_id,
+          paymentReceived: true,
+        });
+
         await activateQueueItemAfterPayment(
           metadata.order_id,
           session.customer_details?.email || metadata.user_email,
           session.customer_details?.name || undefined,
           customer
         );
+      } else {
+        console.warn('No order_id in metadata - payment without content upload');
+        await logAudit('error', session.customer_details?.email, null, 'stripe_session', {
+          session_id: id,
+          warning: 'Payment received but no order_id in metadata',
+        }, false, 'Payment received but no order_id in metadata');
+
+        await updatePaymentTracking({
+          sessionId: id,
+          paymentIntentId: typeof payment_intent === 'string' ? payment_intent : payment_intent?.id,
+          customerId: customer,
+          customerEmail: session.customer_details?.email || metadata.user_email,
+          customerName: session.customer_details?.name,
+          amountCents: amount_total || 0,
+          planId: metadata.plan_id,
+          paymentReceived: true,
+          contentUploaded: false,
+          activationFailedReason: 'No order_id in metadata - user did not upload content',
+        });
       }
     } catch (error) {
       console.error('Error processing one-time payment:', error);
@@ -190,6 +243,12 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
 
 async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?: string, customerName?: string, customerId?: string) {
   try {
+    console.info(`Starting activation for queue item: ${queueItemId}`);
+    await logAudit('webhook_processed', customerEmail, queueItemId, 'queue_item', {
+      queue_item_id: queueItemId,
+      customer_email: customerEmail,
+    }, true);
+
     const now = new Date();
     const endOf24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
@@ -201,6 +260,15 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
 
     if (fetchError || !originalItem) {
       console.error('Error fetching queue item:', fetchError);
+      await logAudit('error', customerEmail, queueItemId, 'queue_item', {
+        error: fetchError?.message || 'Queue item not found',
+      }, false, `Error fetching queue item: ${fetchError?.message || 'Not found'}`);
+      await updatePaymentTracking({
+        queueItemId,
+        webhookProcessed: true,
+        contentActivated: false,
+        activationFailedReason: `Queue item not found: ${fetchError?.message || 'Not found'}`,
+      });
       return;
     }
 
@@ -227,10 +295,29 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
 
       if (error) {
         console.error('Error activating admin queue item:', error);
+        await logAudit('error', customerEmail, queueItemId, 'queue_item', {
+          error: error.message,
+        }, false, `Error activating admin queue item: ${error.message}`);
+        await updatePaymentTracking({
+          queueItemId,
+          webhookProcessed: true,
+          contentActivated: false,
+          activationFailedReason: `Error activating admin content: ${error.message}`,
+        });
         return;
       }
 
       console.info(`Admin queue item activated without auto-scheduling: ${queueItemId}`);
+      await logAudit('content_activated', customerEmail, queueItemId, 'queue_item', {
+        queue_item_id: queueItemId,
+        is_admin_content: true,
+      }, true);
+      await updatePaymentTracking({
+        queueItemId,
+        webhookProcessed: true,
+        contentActivated: true,
+        activationTimestamp: now,
+      });
       return;
     }
 
@@ -358,6 +445,15 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
 
     if (insertError) {
       console.error('Error creating scheduled queue items:', insertError);
+      await logAudit('error', customerEmail, queueItemId, 'queue_item', {
+        error: insertError.message,
+      }, false, `Error creating scheduled queue items: ${insertError.message}`);
+      await updatePaymentTracking({
+        queueItemId,
+        webhookProcessed: true,
+        contentActivated: false,
+        activationFailedReason: `Error creating scheduled items: ${insertError.message}`,
+      });
       return;
     }
 
@@ -366,8 +462,31 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
     console.info(`Slot 1 (immediate): order_index ${maxOrderIndex + 1}, active now, added to END of queue`);
     console.info(`Slot 2 (scheduled): order_index ${maxOrderIndex + 2}, shows at ${new Date(now.getTime() + eightHours).toISOString()}`);
     console.info(`Slot 3 (scheduled): order_index ${maxOrderIndex + 3}, shows at ${new Date(now.getTime() + eightHours * 2).toISOString()}`);
+
+    await logAudit('content_activated', customerEmail, queueItemId, 'queue_item', {
+      queue_item_id: queueItemId,
+      slots_created: 3,
+      customer_email: customerEmail,
+    }, true);
+
+    await updatePaymentTracking({
+      queueItemId,
+      webhookProcessed: true,
+      contentActivated: true,
+      activationTimestamp: now,
+    });
   } catch (error) {
     console.error('Error in activateQueueItemAfterPayment:', error);
+    await logAudit('error', customerEmail, queueItemId, 'queue_item', {
+      error: error.message,
+      stack: error.stack,
+    }, false, `Critical error in activateQueueItemAfterPayment: ${error.message}`);
+    await updatePaymentTracking({
+      queueItemId,
+      webhookProcessed: true,
+      contentActivated: false,
+      activationFailedReason: `Exception: ${error.message}`,
+    });
   }
 }
 
@@ -429,6 +548,101 @@ async function syncCustomerFromStripe(customerId: string) {
   } catch (error) {
     console.error(`Failed to sync subscription for customer ${customerId}:`, error);
     throw error;
+  }
+}
+
+async function logAudit(
+  eventType: string,
+  userEmail?: string,
+  relatedId?: string | null,
+  relatedType?: string,
+  metadata?: any,
+  success: boolean = true,
+  errorMessage?: string
+) {
+  try {
+    await supabase.from('audit_logs').insert({
+      event_type: eventType,
+      user_email: userEmail,
+      related_id: relatedId,
+      related_type: relatedType,
+      metadata: metadata || {},
+      success,
+      error_message: errorMessage,
+      created_at: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error logging audit:', error);
+  }
+}
+
+async function updatePaymentTracking(data: {
+  sessionId?: string;
+  paymentIntentId?: string;
+  customerId?: string;
+  customerEmail?: string;
+  customerName?: string;
+  amountCents?: number;
+  planId?: string;
+  queueItemId?: string;
+  contentUploaded?: boolean;
+  paymentReceived?: boolean;
+  webhookProcessed?: boolean;
+  contentActivated?: boolean;
+  activationFailedReason?: string;
+  paymentTimestamp?: Date;
+  activationTimestamp?: Date;
+}) {
+  try {
+    if (data.paymentIntentId) {
+      const { error } = await supabase
+        .from('payment_content_tracking')
+        .upsert(
+          {
+            stripe_payment_intent_id: data.paymentIntentId,
+            stripe_session_id: data.sessionId,
+            stripe_customer_id: data.customerId,
+            customer_email: data.customerEmail,
+            customer_name: data.customerName,
+            amount_cents: data.amountCents,
+            plan_id: data.planId,
+            queue_item_id: data.queueItemId,
+            content_uploaded: data.contentUploaded,
+            payment_received: data.paymentReceived,
+            webhook_processed: data.webhookProcessed,
+            content_activated: data.contentActivated,
+            activation_failed_reason: data.activationFailedReason,
+            payment_timestamp: data.paymentTimestamp?.toISOString(),
+            activation_timestamp: data.activationTimestamp?.toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'stripe_payment_intent_id',
+            ignoreDuplicates: false,
+          }
+        );
+
+      if (error) {
+        console.error('Error updating payment tracking:', error);
+      }
+    } else if (data.queueItemId) {
+      const { error } = await supabase
+        .from('payment_content_tracking')
+        .update({
+          webhook_processed: data.webhookProcessed,
+          content_activated: data.contentActivated,
+          activation_failed_reason: data.activationFailedReason,
+          activation_timestamp: data.activationTimestamp?.toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('queue_item_id', data.queueItemId);
+
+      if (error) {
+        console.error('Error updating payment tracking by queue_item_id:', error);
+      }
+    }
+  } catch (error) {
+    console.error('Error in updatePaymentTracking:', error);
   }
 }
 
