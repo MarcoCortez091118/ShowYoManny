@@ -1045,7 +1045,7 @@ const AdminDashboard = () => {
                   <p className="text-xs text-muted-foreground mt-2">
                     Click nuevamente en un borde seleccionado para deseleccionarlo
                   </p>
-                </div> */}
+                </div>
 
                 <div>
                   <Label htmlFor="admin-duration">Display Duration (seconds)</Label>
