@@ -1,164 +1,106 @@
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BorderPreview } from "@/components/BorderPreview";
+import { BorderThemeUploader } from '@/components/BorderThemeUploader';
+import { supabaseBorderThemeService, type BorderTheme } from '@/services/supabaseBorderThemeService';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 
 const AdminBorders = () => {
   const navigate = useNavigate();
+  const [borderThemes, setBorderThemes] = useState<BorderTheme[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploaderOpen, setUploaderOpen] = useState(false);
+  const [editingTheme, setEditingTheme] = useState<BorderTheme | null>(null);
+  const [deletingThemeId, setDeletingThemeId] = useState<string | null>(null);
 
-  const borderLibrary = [
-    // 🎄 Holiday Borders
-    { 
-      id: "merry-christmas", 
-      name: "🎄 Merry Christmas",
-      category: "Holiday",
-      preview: "border-4 border-red-600 bg-gradient-to-r from-red-100 via-green-100 to-red-100",
-      description: "Festive Christmas celebration",
-      message: "Merry Christmas"
-    },
-    { 
-      id: "happy-new-year", 
-      name: "🎊 Happy New Year",
-      category: "Holiday",
-      preview: "border-4 border-yellow-500 bg-gradient-to-r from-yellow-100 via-orange-100 to-yellow-100",
-      description: "New Year celebration",
-      message: "Happy New Year"
-    },
-    { 
-      id: "happy-valentines", 
-      name: "💝 Happy Valentine's Day",
-      category: "Holiday",
-      preview: "border-4 border-pink-500 bg-gradient-to-r from-pink-100 via-red-100 to-pink-100",
-      description: "Love and romance celebration",
-      message: "Happy Valentine's Day"
-    },
-    { 
-      id: "happy-halloween", 
-      name: "🎃 Happy Halloween",
-      category: "Holiday",
-      preview: "border-4 border-orange-600 bg-gradient-to-r from-orange-100 via-black/10 to-orange-100",
-      description: "Spooky Halloween fun",
-      message: "Happy Halloween"
-    },
-    { 
-      id: "happy-easter", 
-      name: "🐰 Happy Easter",
-      category: "Holiday",
-      preview: "border-4 border-purple-500 bg-gradient-to-r from-purple-100 via-yellow-100 to-purple-100",
-      description: "Easter celebration",
-      message: "Happy Easter"
-    },
-    { 
-      id: "happy-thanksgiving", 
-      name: "🦃 Happy Thanksgiving",
-      category: "Holiday",
-      preview: "border-4 border-amber-600 bg-gradient-to-r from-amber-100 via-orange-100 to-amber-100",
-      description: "Thanksgiving gratitude",
-      message: "Happy Thanksgiving"
-    },
-    // 🎓 Special Occasions
-    { 
-      id: "happy-birthday", 
-      name: "🎂 Happy Birthday",
-      category: "Special Occasions",
-      preview: "border-4 border-blue-500 bg-gradient-to-r from-blue-100 via-pink-100 to-blue-100",
-      description: "Birthday celebration",
-      message: "Happy Birthday"
-    },
-    { 
-      id: "congrats-graduate", 
-      name: "🎓 Congrats Graduate",
-      category: "Special Occasions",
-      preview: "border-4 border-indigo-600 bg-gradient-to-r from-indigo-100 via-yellow-100 to-indigo-100",
-      description: "Graduation achievement",
-      message: "Congrats Graduate"
-    },
-    { 
-      id: "happy-anniversary", 
-      name: "💍 Happy Anniversary",
-      category: "Special Occasions",
-      preview: "border-4 border-rose-500 bg-gradient-to-r from-rose-100 via-gold-100 to-rose-100",
-      description: "Anniversary celebration",
-      message: "Happy Anniversary"
-    },
-    { 
-      id: "wedding-day", 
-      name: "👰 Wedding Day",
-      category: "Special Occasions",
-      preview: "border-4 border-white bg-gradient-to-r from-white via-pink-50 to-white",
-      description: "Wedding celebration",
-      message: "Wedding Day"
-    },
-    // 🚀 Futuristic Borders
-    { 
-      id: "neon-glow", 
-      name: "🌐 Neon Glow",
-      category: "Futuristic",
-      preview: "border-4 border-cyan-400 bg-gradient-to-r from-cyan-100 via-purple-100 to-cyan-100",
-      description: "Neon glow effects",
-      message: "Neon Glow"
-    },
-    { 
-      id: "tech-circuit", 
-      name: "⚡ Tech Circuit",
-      category: "Futuristic",
-      preview: "border-4 border-blue-600 bg-gradient-to-r from-blue-100 via-cyan-100 to-blue-100",
-      description: "Tech circuit pattern",
-      message: "Tech Circuit"
-    },
-    { 
-      id: "galaxy", 
-      name: "🌌 Galaxy",
-      category: "Futuristic",
-      preview: "border-4 border-indigo-600 bg-gradient-to-r from-indigo-100 via-purple-100 to-pink-100",
-      description: "Stars and space",
-      message: "Galaxy"
-    },
-    { 
-      id: "cyberpunk", 
-      name: "💠 Cyberpunk",
-      category: "Futuristic",
-      preview: "border-4 border-fuchsia-500 bg-gradient-to-r from-fuchsia-100 via-cyan-100 to-fuchsia-100",
-      description: "Cyberpunk neon grid",
-      message: "Cyberpunk"
-    },
-    // 🌤️ Seasonal Borders
-    { 
-      id: "summer", 
-      name: "☀️ Summer",
-      category: "Seasonal",
-      preview: "border-4 border-yellow-400 bg-gradient-to-r from-yellow-100 via-orange-100 to-yellow-100",
-      description: "Summer vibes",
-      message: "Summer"
-    },
-    { 
-      id: "winter", 
-      name: "❄️ Winter",
-      category: "Seasonal",
-      preview: "border-4 border-blue-300 bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50",
-      description: "Winter wonderland",
-      message: "Winter"
-    },
-    { 
-      id: "autumn", 
-      name: "🍂 Autumn",
-      category: "Seasonal",
-      preview: "border-4 border-orange-500 bg-gradient-to-r from-orange-100 via-red-100 to-orange-100",
-      description: "Fall leaves",
-      message: "Autumn"
-    },
-  ];
+  useEffect(() => {
+    loadBorderThemes();
+  }, []);
 
-  const categories = ["Basic", "Holiday", "Special Occasions", "Futuristic", "Seasonal"];
+  const loadBorderThemes = async () => {
+    try {
+      setLoading(true);
+      const themes = await supabaseBorderThemeService.getAll();
+      setBorderThemes(themes);
+    } catch (error) {
+      console.error('Error loading border themes:', error);
+      toast.error('Failed to load border themes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (theme: BorderTheme) => {
+    setEditingTheme(theme);
+    setUploaderOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingThemeId) return;
+
+    try {
+      await supabaseBorderThemeService.delete(deletingThemeId);
+      toast.success('Border theme deleted successfully');
+      loadBorderThemes();
+    } catch (error) {
+      console.error('Error deleting border theme:', error);
+      toast.error('Failed to delete border theme');
+    } finally {
+      setDeletingThemeId(null);
+    }
+  };
+
+  const handleToggleActive = async (theme: BorderTheme) => {
+    try {
+      await supabaseBorderThemeService.toggleActive(theme.id, !theme.is_active);
+      toast.success(`Border theme ${theme.is_active ? 'disabled' : 'enabled'}`);
+      loadBorderThemes();
+    } catch (error) {
+      console.error('Error toggling border theme:', error);
+      toast.error('Failed to update border theme');
+    }
+  };
+
+  const handleUploaderClose = () => {
+    setUploaderOpen(false);
+    setEditingTheme(null);
+  };
+
+  const groupedThemes = borderThemes.reduce((acc, theme) => {
+    if (!acc[theme.category]) {
+      acc[theme.category] = [];
+    }
+    acc[theme.category].push(theme);
+    return acc;
+  }, {} as Record<string, BorderTheme[]>);
+
+  const categories = Object.keys(groupedThemes).sort();
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container py-8 px-4 max-w-6xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center justify-between mb-8">
           <Button variant="ghost" onClick={() => navigate('/admin')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
+          </Button>
+          <Button onClick={() => setUploaderOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Upload New Border
           </Button>
         </div>
 
@@ -166,18 +108,125 @@ const AdminBorders = () => {
           <CardHeader>
             <CardTitle>Border Themes</CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Border themes are temporarily disabled
+              Manage custom PNG border overlays that can be applied to content
             </p>
           </CardHeader>
           <CardContent className="space-y-8">
-            <div className="p-12 text-center bg-muted/30 rounded-lg border-2 border-dashed">
-              <p className="text-muted-foreground">
-                Border theme customization is coming soon. For now, content will display without border overlays.
-              </p>
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : borderThemes.length === 0 ? (
+              <div className="p-12 text-center bg-muted/30 rounded-lg border-2 border-dashed">
+                <p className="text-muted-foreground mb-4">
+                  No border themes yet. Upload your first PNG border overlay to get started.
+                </p>
+                <Button onClick={() => setUploaderOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Upload Border Theme
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {categories.map((category) => (
+                  <div key={category}>
+                    <h3 className="text-lg font-semibold mb-4">{category}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {groupedThemes[category].map((theme) => (
+                        <div
+                          key={theme.id}
+                          className="relative border rounded-lg p-4 hover:shadow-lg transition-shadow"
+                        >
+                          <div className="absolute top-2 right-2 z-10">
+                            <Badge variant={theme.is_active ? 'default' : 'secondary'}>
+                              {theme.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </div>
+
+                          <div className="aspect-[2048/2432] rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 mb-3">
+                            <img
+                              src={theme.image_url}
+                              alt={theme.name}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+
+                          <h4 className="font-semibold mb-1">{theme.name}</h4>
+                          {theme.description && (
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {theme.description}
+                            </p>
+                          )}
+
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleToggleActive(theme)}
+                              className="flex-1"
+                            >
+                              {theme.is_active ? (
+                                <>
+                                  <EyeOff className="w-4 h-4 mr-1" />
+                                  Disable
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  Enable
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEdit(theme)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => setDeletingThemeId(theme.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      <BorderThemeUploader
+        open={uploaderOpen}
+        onClose={handleUploaderClose}
+        onSuccess={loadBorderThemes}
+        editTheme={editingTheme}
+      />
+
+      <AlertDialog open={!!deletingThemeId} onOpenChange={() => setDeletingThemeId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Border Theme</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this border theme? This action cannot be undone.
+              The border image will be permanently removed from storage.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

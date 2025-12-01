@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { BORDER_THEMES } from '../../shared/border-themes';
 import showYoLogo from "@/assets/showyo-logo-overlay.png";
 import { useDisplaySettings } from "@/hooks/use-display-settings";
+import { supabaseBorderThemeService, type BorderTheme as UploadedBorderTheme } from '@/services/supabaseBorderThemeService';
 
 const KioskDisplay = () => {
   const { settings } = useDisplaySettings();
@@ -16,6 +17,7 @@ const KioskDisplay = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [uploadedBorderThemes, setUploadedBorderThemes] = useState<UploadedBorderTheme[]>([]);
   const autoAdvanceTimer = useRef<NodeJS.Timeout | null>(null);
   const countdownTimer = useRef<NodeJS.Timeout | null>(null);
   const fetchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -34,6 +36,7 @@ const KioskDisplay = () => {
 
   useEffect(() => {
     fetchContent();
+    loadBorderThemes();
 
     const channel = supabase
       .channel('queue-changes')
@@ -60,6 +63,15 @@ const KioskDisplay = () => {
       if (countdownTimer.current) clearInterval(countdownTimer.current);
     };
   }, []);
+
+  const loadBorderThemes = async () => {
+    try {
+      const themes = await supabaseBorderThemeService.getActive();
+      setUploadedBorderThemes(themes);
+    } catch (error) {
+      console.error('Error loading border themes:', error);
+    }
+  };
 
   const fetchContent = async () => {
     if (isFetching.current) {
@@ -347,7 +359,27 @@ const KioskDisplay = () => {
     ? BORDER_THEMES.find(b => b.id === currentItem.border_style)
     : null;
 
+  const uploadedBorder = currentItem.border_style && currentItem.border_style !== 'none'
+    ? uploadedBorderThemes.find(b => b.id === currentItem.border_style)
+    : null;
+
   const renderBorderOverlay = () => {
+    if (uploadedBorder) {
+      return (
+        <div className="absolute inset-0 pointer-events-none z-10">
+          <img
+            src={uploadedBorder.image_url}
+            alt={uploadedBorder.name}
+            className="w-full h-full object-cover"
+            style={{
+              width: `${SCREEN_WIDTH}px`,
+              height: `${SCREEN_HEIGHT}px`,
+            }}
+          />
+        </div>
+      );
+    }
+
     if (!border) return null;
 
     return (

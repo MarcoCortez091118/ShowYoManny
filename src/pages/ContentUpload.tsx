@@ -25,6 +25,7 @@ import { borderService } from "@/domain/services/borderService";
 import { supabaseStorageService } from "@/services/supabaseStorageService";
 import { supabaseOrderService } from "@/services/supabaseOrderService";
 import { supabasePaymentService } from "@/services/supabasePaymentService";
+import { supabaseBorderThemeService, type BorderTheme as UploadedBorderTheme } from "@/services/supabaseBorderThemeService";
 import { MediaEditor } from "@/components/media/MediaEditor";
 import { useDisplaySettings } from "@/hooks/use-display-settings";
 import { Alert } from "@/components/ui/alert";
@@ -60,6 +61,7 @@ const ContentUpload = () => {
   const [userName, setUserName] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false);
+  const [uploadedBorderThemes, setUploadedBorderThemes] = useState<UploadedBorderTheme[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const plans = useMemo(() => planService.getAllPlans(), []);
@@ -82,6 +84,19 @@ const ContentUpload = () => {
       }
     };
   }, [previewUrl]);
+
+  React.useEffect(() => {
+    const loadUploadedBorderThemes = async () => {
+      try {
+        const themes = await supabaseBorderThemeService.getActive();
+        setUploadedBorderThemes(themes);
+      } catch (error) {
+        console.error('Error loading uploaded border themes:', error);
+      }
+    };
+
+    loadUploadedBorderThemes();
+  }, []);
 
   // Reset border when switching to/from clean plans
   React.useEffect(() => {
@@ -830,6 +845,44 @@ const ContentUpload = () => {
                 <p className="text-sm text-destructive mb-4">⚠️ Please select a border style for your border plan</p>
               )}
               <div className="space-y-6">
+                {uploadedBorderThemes.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-base text-foreground flex items-center gap-2">
+                      <span className="text-primary">Custom Uploaded Borders</span>
+                      <span className="text-sm text-muted-foreground font-normal">({uploadedBorderThemes.length})</span>
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {uploadedBorderThemes.map((theme) => (
+                        <div
+                          key={theme.id}
+                          onClick={() => setBorderStyle(theme.id)}
+                          className={`cursor-pointer rounded-lg border-2 transition-all duration-200 hover:shadow-xl ${
+                            borderStyle === theme.id
+                              ? 'border-primary bg-primary/10 ring-2 ring-primary/30 shadow-xl'
+                              : 'border-border hover:border-primary/60 hover:bg-primary/5'
+                          }`}
+                        >
+                          <div className="p-3">
+                            <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                              <img
+                                src={theme.image_url}
+                                alt={theme.name}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                          </div>
+                          <div className="px-4 pb-4">
+                            <h4 className="font-semibold text-base mb-1">{theme.name}</h4>
+                            {theme.description && (
+                              <p className="text-sm text-muted-foreground">{theme.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {borderCategories.map((category) => {
                   const categoryBorders = borderThemes.filter(border => border.category === category);
                   if (categoryBorders.length === 0) return null;
