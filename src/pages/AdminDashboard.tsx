@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { borderService } from "@/domain/services/borderService";
 import { supabaseContentService, QueueItem } from "@/services/supabaseContentService";
+import { supabaseBorderThemeService, type BorderTheme as UploadedBorderTheme } from "@/services/supabaseBorderThemeService";
 import { useAuth } from "@/contexts/SimpleAuthContext";
 import {
   DropdownMenu,
@@ -126,7 +127,8 @@ const AdminDashboard = () => {
   const [timerLoopEnabled, setTimerLoopEnabled] = useState(false);
   const [timerLoopMinutes, setTimerLoopMinutes] = useState(30);
   const [timerLoopAutomatic, setTimerLoopAutomatic] = useState(false);
-  
+  const [uploadedBorderThemes, setUploadedBorderThemes] = useState<UploadedBorderTheme[]>([]);
+
   const borderThemes = useMemo(() => borderService.getAll(), []);
   const borderCategories = useMemo(() => borderService.getCategories(), []);
   const borderCategoryLabels = useMemo(
@@ -175,6 +177,19 @@ const AdminDashboard = () => {
       fetchContentHistory();
     }
   }, [authLoading, isAdmin]);
+
+  useEffect(() => {
+    const loadUploadedBorderThemes = async () => {
+      try {
+        const themes = await supabaseBorderThemeService.getActive();
+        setUploadedBorderThemes(themes);
+      } catch (error) {
+        console.error('Error loading uploaded border themes:', error);
+      }
+    };
+
+    loadUploadedBorderThemes();
+  }, []);
 
   const fetchContentQueue = async () => {
     if (!isAdmin) {
@@ -1382,6 +1397,20 @@ const AdminDashboard = () => {
 
                         {/* Border Overlay */}
                         {borderStyle !== "none" && (() => {
+                          const uploadedBorder = uploadedBorderThemes.find(b => b.id === borderStyle);
+                          if (uploadedBorder) {
+                            return (
+                              <div className="absolute inset-0 pointer-events-none z-10">
+                                <img
+                                  src={uploadedBorder.image_url}
+                                  alt={uploadedBorder.name}
+                                  className="w-full h-full object-fill"
+                                  style={{ mixBlendMode: 'normal' }}
+                                />
+                              </div>
+                            );
+                          }
+
                           const selectedBorder = borderThemes.find(b => b.id === borderStyle);
                           if (!selectedBorder) return null;
 
