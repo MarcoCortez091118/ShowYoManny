@@ -989,8 +989,7 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
-                {/* Border Style - Temporarily Hidden */}
-                {/* <div>
+                <div>
                   <Label htmlFor="admin-border">Border Style</Label>
                   <div className="space-y-4 mt-4 max-h-80 overflow-y-auto">
                     <div className="space-y-3">
@@ -999,7 +998,7 @@ const AdminDashboard = () => {
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <button
-                          onClick={() => setBorderStyle(borderStyle === "none" ? "" : "none")}
+                          onClick={() => setBorderStyle("none")}
                           className={`p-4 rounded-lg border-2 transition-all text-left ${
                             borderStyle === "none"
                               ? "border-primary bg-primary/10 ring-2 ring-primary/20"
@@ -1019,6 +1018,48 @@ const AdminDashboard = () => {
                       </div>
                     </div>
 
+                    {uploadedBorderThemes.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                          CUSTOM BORDERS
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {uploadedBorderThemes.map((theme) => (
+                            <div
+                              key={theme.id}
+                              onClick={() => setBorderStyle(theme.id)}
+                              className={`cursor-pointer rounded-lg border-2 transition-all duration-200 hover:shadow-xl ${
+                                borderStyle === theme.id
+                                  ? 'border-primary bg-primary/10 ring-2 ring-primary/30 shadow-xl'
+                                  : 'border-border hover:border-primary/60 hover:bg-primary/5'
+                              }`}
+                            >
+                              <div className="p-2">
+                                <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                                  <img
+                                    src={theme.image_url}
+                                    alt={theme.name}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                              </div>
+                              <div className="px-3 pb-3">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-semibold text-sm">{theme.name}</h4>
+                                  {borderStyle === theme.id && (
+                                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                                  )}
+                                </div>
+                                {theme.description && (
+                                  <p className="text-xs text-muted-foreground mt-1">{theme.description}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {borderCategories.map((category) => {
                       const categoryBorders = borderThemes.filter(border => border.category === category);
                       if (categoryBorders.length === 0) return null;
@@ -1034,7 +1075,7 @@ const AdminDashboard = () => {
                                 key={border.id}
                                 border={border}
                                 isSelected={borderStyle === border.id}
-                                onClick={() => setBorderStyle(borderStyle === border.id ? "none" : border.id)}
+                                onClick={() => setBorderStyle(border.id)}
                               />
                             ))}
                           </div>
@@ -1043,7 +1084,7 @@ const AdminDashboard = () => {
                     })}
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Click nuevamente en un borde seleccionado para deseleccionarlo
+                    Selecciona un borde o mantén "Sin Borde" para contenido sin marco
                   </p>
                 </div>
 
