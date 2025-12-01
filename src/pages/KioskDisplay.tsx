@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Monitor } from "lucide-react";
 import { supabaseQueueService, type EnrichedQueueItem } from "@/services/supabaseQueueService";
 import { supabase } from '@/lib/supabase';
-import { BORDER_THEMES } from '../../shared/border-themes';
 import showYoLogo from "@/assets/showyo-logo-overlay.png";
 import { useDisplaySettings } from "@/hooks/use-display-settings";
 import { supabaseBorderThemeService, type BorderTheme as UploadedBorderTheme } from '@/services/supabaseBorderThemeService';
@@ -355,93 +354,24 @@ const KioskDisplay = () => {
     );
   }
 
-  const border = currentItem.border_style && currentItem.border_style !== 'none'
-    ? BORDER_THEMES.find(b => b.id === currentItem.border_style)
-    : null;
-
-  const uploadedBorder = currentItem.border_style && currentItem.border_style !== 'none'
-    ? uploadedBorderThemes.find(b => b.id === currentItem.border_style)
+  const uploadedBorder = currentItem.border_id && currentItem.border_id !== 'none'
+    ? uploadedBorderThemes.find(b => b.id === currentItem.border_id)
     : null;
 
   const renderBorderOverlay = () => {
-    if (uploadedBorder) {
-      return (
-        <div className="absolute inset-0 pointer-events-none z-10">
-          <img
-            src={uploadedBorder.image_url}
-            alt={uploadedBorder.name}
-            className="w-full h-full object-cover"
-            style={{
-              width: `${SCREEN_WIDTH}px`,
-              height: `${SCREEN_HEIGHT}px`,
-            }}
-          />
-        </div>
-      );
-    }
-
-    if (!border) return null;
+    if (!uploadedBorder) return null;
 
     return (
       <div className="absolute inset-0 pointer-events-none z-10">
-        {border.message && (
-          <>
-            <div className="absolute inset-x-0 top-0 py-12 bg-gradient-to-b from-black/90 via-black/80 to-transparent text-white flex items-center justify-center">
-              <div className="text-6xl font-bold tracking-wide drop-shadow-lg">
-                {border.message}
-              </div>
-            </div>
-            <div className="absolute inset-x-0 bottom-0 py-12 bg-gradient-to-t from-black/90 via-black/80 to-transparent text-white flex items-center justify-center">
-              <div className="text-6xl font-bold tracking-wide drop-shadow-lg">
-                {border.message}
-              </div>
-            </div>
-          </>
-        )}
-
-        {border.category === 'Holiday' && (
-          <>
-            <div className="absolute top-12 left-12 text-8xl drop-shadow-xl">🎄</div>
-            <div className="absolute top-12 right-12 text-8xl drop-shadow-xl">🎄</div>
-            <div className="absolute bottom-12 left-12 text-8xl drop-shadow-xl">🎁</div>
-            <div className="absolute bottom-12 right-12 text-8xl drop-shadow-xl">⭐</div>
-          </>
-        )}
-
-        {border.category === 'Special Occasions' && (
-          <>
-            <div className="absolute top-12 left-12 text-8xl drop-shadow-xl">✨</div>
-            <div className="absolute top-12 right-12 text-8xl drop-shadow-xl">✨</div>
-            <div className="absolute bottom-12 left-12 text-8xl drop-shadow-xl">🎉</div>
-            <div className="absolute bottom-12 right-12 text-8xl drop-shadow-xl">🎊</div>
-          </>
-        )}
-
-        {border.category === 'Futuristic' && (
-          <>
-            <div className="absolute top-12 left-12 text-7xl drop-shadow-xl">⚡</div>
-            <div className="absolute top-12 right-12 text-7xl drop-shadow-xl">⚡</div>
-            <div className="absolute bottom-12 left-12 text-7xl drop-shadow-xl">🔮</div>
-            <div className="absolute bottom-12 right-12 text-7xl drop-shadow-xl">🔮</div>
-          </>
-        )}
-
-        {border.category === 'Seasonal' && (
-          <>
-            <div className="absolute top-12 left-12 text-8xl drop-shadow-xl">
-              {border.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
-            </div>
-            <div className="absolute top-12 right-12 text-8xl drop-shadow-xl">
-              {border.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
-            </div>
-            <div className="absolute bottom-12 left-12 text-8xl drop-shadow-xl">
-              {border.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
-            </div>
-            <div className="absolute bottom-12 right-12 text-8xl drop-shadow-xl">
-              {border.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
-            </div>
-          </>
-        )}
+        <img
+          src={uploadedBorder.image_url}
+          alt={uploadedBorder.name}
+          className="w-full h-full object-fill"
+          style={{
+            width: `${SCREEN_WIDTH}px`,
+            height: `${SCREEN_HEIGHT}px`,
+          }}
+        />
       </div>
     );
   };
