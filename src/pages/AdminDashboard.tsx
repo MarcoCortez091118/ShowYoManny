@@ -41,7 +41,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { borderService } from "@/domain/services/borderService";
 import { supabaseContentService, QueueItem } from "@/services/supabaseContentService";
 import { supabaseBorderThemeService, type BorderTheme as UploadedBorderTheme } from "@/services/supabaseBorderThemeService";
 import { useAuth } from "@/contexts/SimpleAuthContext";
@@ -128,18 +127,6 @@ const AdminDashboard = () => {
   const [timerLoopMinutes, setTimerLoopMinutes] = useState(30);
   const [timerLoopAutomatic, setTimerLoopAutomatic] = useState(false);
   const [uploadedBorderThemes, setUploadedBorderThemes] = useState<UploadedBorderTheme[]>([]);
-
-  const borderThemes = useMemo(() => borderService.getAll(), []);
-  const borderCategories = useMemo(() => borderService.getCategories(), []);
-  const borderCategoryLabels = useMemo(
-    () => ({
-      Holiday: "🎄 Holiday Borders",
-      "Special Occasions": "🎓 Special Occasions",
-      Futuristic: "🚀 Futuristic Borders",
-      Seasonal: "🌤️ Seasonal Borders",
-    }),
-    []
-  );
 
   const getUserInitials = () => {
     if (!user?.email) return 'A';
@@ -1074,32 +1061,11 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     )}
-
-                    {borderCategories.map((category) => {
-                      const categoryBorders = borderThemes.filter(border => border.category === category);
-                      if (categoryBorders.length === 0) return null;
-
-                      return (
-                        <div key={category} className="space-y-3">
-                          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                            {borderCategoryLabels[category] ?? category}
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {categoryBorders.map((border) => (
-                              <BorderPreview
-                                key={border.id}
-                                border={border}
-                                isSelected={borderStyle === border.id}
-                                onClick={() => setBorderStyle(border.id)}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Selecciona un borde o mantén "Sin Borde" para contenido sin marco
+                    {uploadedBorderThemes.length > 0
+                      ? "Selecciona un borde personalizado o mantén 'Sin Borde' para contenido sin marco"
+                      : "No hay borders personalizados. Ve a la sección 'Borders' para subir algunos."}
                   </p>
                 </div>
 
@@ -1411,75 +1377,7 @@ const AdminDashboard = () => {
                             );
                           }
 
-                          const selectedBorder = borderThemes.find(b => b.id === borderStyle);
-                          if (!selectedBorder) return null;
-
-                          return (
-                            <div className="absolute inset-0 pointer-events-none z-10">
-                              {/* Top Banner */}
-                              {selectedBorder.message && (
-                                <div className="absolute inset-x-0 top-0 py-3 bg-gradient-to-b from-black/90 via-black/80 to-transparent text-white flex items-center justify-center">
-                                  <div className="text-lg font-bold tracking-wide drop-shadow-lg">
-                                    {selectedBorder.message}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Bottom Banner */}
-                              {selectedBorder.message && (
-                                <div className="absolute inset-x-0 bottom-0 py-3 bg-gradient-to-t from-black/90 via-black/80 to-transparent text-white flex items-center justify-center">
-                                  <div className="text-lg font-bold tracking-wide drop-shadow-lg">
-                                    {selectedBorder.message}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Corner Decorations */}
-                              {selectedBorder.category === 'Holiday' && (
-                                <>
-                                  <div className="absolute top-4 left-4 text-4xl drop-shadow-xl">🎄</div>
-                                  <div className="absolute top-4 right-4 text-4xl drop-shadow-xl">🎄</div>
-                                  <div className="absolute bottom-4 left-4 text-4xl drop-shadow-xl">🎁</div>
-                                  <div className="absolute bottom-4 right-4 text-4xl drop-shadow-xl">⭐</div>
-                                </>
-                              )}
-
-                              {selectedBorder.category === 'Special Occasions' && (
-                                <>
-                                  <div className="absolute top-4 left-4 text-4xl drop-shadow-xl">✨</div>
-                                  <div className="absolute top-4 right-4 text-4xl drop-shadow-xl">✨</div>
-                                  <div className="absolute bottom-4 left-4 text-4xl drop-shadow-xl">🎉</div>
-                                  <div className="absolute bottom-4 right-4 text-4xl drop-shadow-xl">🎊</div>
-                                </>
-                              )}
-
-                              {selectedBorder.category === 'Futuristic' && (
-                                <>
-                                  <div className="absolute top-4 left-4 text-3xl drop-shadow-xl">⚡</div>
-                                  <div className="absolute top-4 right-4 text-3xl drop-shadow-xl">⚡</div>
-                                  <div className="absolute bottom-4 left-4 text-3xl drop-shadow-xl">🔮</div>
-                                  <div className="absolute bottom-4 right-4 text-3xl drop-shadow-xl">🔮</div>
-                                </>
-                              )}
-
-                              {selectedBorder.category === 'Seasonal' && (
-                                <>
-                                  <div className="absolute top-4 left-4 text-4xl drop-shadow-xl">
-                                    {selectedBorder.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
-                                  </div>
-                                  <div className="absolute top-4 right-4 text-4xl drop-shadow-xl">
-                                    {selectedBorder.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
-                                  </div>
-                                  <div className="absolute bottom-4 left-4 text-4xl drop-shadow-xl">
-                                    {selectedBorder.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
-                                  </div>
-                                  <div className="absolute bottom-4 right-4 text-4xl drop-shadow-xl">
-                                    {selectedBorder.name.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || '✨'}
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          );
+                          return null;
                         })()}
                       </div>
                       <p className="text-xs text-center text-muted-foreground mt-3">

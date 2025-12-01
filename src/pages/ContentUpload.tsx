@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { BorderPreview } from "@/components/BorderPreview";
 import showYoLogo from "@/assets/showyo-logo-color.png";
 import { planService } from "@/domain/services/planService";
-import { borderService } from "@/domain/services/borderService";
 import { supabaseStorageService } from "@/services/supabaseStorageService";
 import { supabaseOrderService } from "@/services/supabaseOrderService";
 import { supabasePaymentService } from "@/services/supabasePaymentService";
@@ -55,17 +54,6 @@ const ContentUpload = () => {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const plans = useMemo(() => planService.getAllPlans(), []);
-  const borderThemes = useMemo(() => borderService.getAll(), []);
-  const borderCategories = useMemo(() => borderService.getCategories(), []);
-  const borderCategoryLabels = useMemo(
-    () => ({
-      Holiday: "🎄 Holiday Borders",
-      "Special Occasions": "🎓 Special Occasions",
-      Futuristic: "🚀 Futuristic Borders",
-      Seasonal: "🌤️ Seasonal Borders",
-    }),
-    []
-  );
 
   React.useEffect(() => {
     return () => {
@@ -872,30 +860,6 @@ const ContentUpload = () => {
                     </div>
                   </div>
                 )}
-
-                {borderCategories.map((category) => {
-                  const categoryBorders = borderThemes.filter(border => border.category === category);
-                  if (categoryBorders.length === 0) return null;
-
-                  return (
-                    <div key={category} className="space-y-4">
-                      <h4 className="font-semibold text-base text-foreground flex items-center gap-2">
-                        <span className="text-primary">{borderCategoryLabels[category] ?? category}</span>
-                        <span className="text-sm text-muted-foreground font-normal">({categoryBorders.length})</span>
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {categoryBorders.map((border) => (
-                          <BorderPreview
-                            key={border.id}
-                            border={border}
-                            isSelected={borderStyle === border.id}
-                            onClick={() => setBorderStyle(border.id)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             </CardContent>
           </Card>
@@ -956,7 +920,7 @@ const ContentUpload = () => {
                 {planService.planSupportsBorderSelection(selectedPlanData.id) && (
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
                     <span>Border Style</span>
-                    <span>{borderService.getById(borderStyle)?.name ?? 'Not selected'}</span>
+                    <span>{uploadedBorderThemes.find(b => b.id === borderStyle)?.name ?? (borderStyle === 'none' ? 'Sin Borde' : 'Not selected')}</span>
                   </div>
                 )}
                 {selectedPlanData && !selectedPlanData.includesBorder && !selectedPlanData.includesLogo && (
