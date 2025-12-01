@@ -6,17 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import {
-  Upload,
-  Camera,
-  Video,
-  CreditCard,
-  Image,
-  Clock,
-  ArrowLeft,
-  AlertCircle,
-  Trash2,
-} from "lucide-react";
+import { Upload, Camera, Video, CreditCard, Image, Clock, ArrowLeft, CircleAlert as AlertCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BorderPreview } from "@/components/BorderPreview";
 import showYoLogo from "@/assets/showyo-logo-color.png";
