@@ -809,61 +809,67 @@ const ContentUpload = () => {
           </Card>
         </div>
 
-        {/* Border Selection - Temporarily Hidden */}
-        {/* {selectedPlanData && planService.planSupportsBorderSelection(selectedPlanData.id) && (
+        {selectedPlanData && planService.planSupportsBorderSelection(selectedPlanData.id) && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle>Choose Your Border Style</CardTitle>
               <CardDescription>
-                Select a border style for your content <span className="text-destructive">*Required</span>
+                Select a border style for your content (optional)
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {borderStyle === 'none' && (
-                <p className="text-sm text-destructive mb-4">⚠️ Please select a border style for your border plan</p>
-              )}
               <div className="space-y-6">
-                {uploadedBorderThemes.length > 0 && (
-                  <div className="space-y-4">
-                    <h4 className="font-semibold text-base text-foreground flex items-center gap-2">
-                      <span className="text-primary">Custom Uploaded Borders</span>
-                      <span className="text-sm text-muted-foreground font-normal">({uploadedBorderThemes.length})</span>
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {uploadedBorderThemes.map((theme) => (
-                        <div
-                          key={theme.id}
-                          onClick={() => setBorderStyle(theme.id)}
-                          className={`cursor-pointer rounded-lg border-2 transition-all duration-200 hover:shadow-xl ${
-                            borderStyle === theme.id
-                              ? 'border-primary bg-primary/10 ring-2 ring-primary/30 shadow-xl'
-                              : 'border-border hover:border-primary/60 hover:bg-primary/5'
-                          }`}
-                        >
-                          <div className="p-3">
-                            <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-                              <img
-                                src={theme.image_url}
-                                alt={theme.name}
-                                className="w-full h-full object-contain"
-                              />
-                            </div>
-                          </div>
-                          <div className="px-4 pb-4">
-                            <h4 className="font-semibold text-base mb-1">{theme.name}</h4>
-                            {theme.description && (
-                              <p className="text-sm text-muted-foreground">{theme.description}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div
+                    onClick={() => setBorderStyle('none')}
+                    className={`cursor-pointer rounded-lg border-2 transition-all duration-200 hover:shadow-xl ${
+                      borderStyle === 'none'
+                        ? 'border-primary bg-primary/10 ring-2 ring-primary/30 shadow-xl'
+                        : 'border-border hover:border-primary/60 hover:bg-primary/5'
+                    }`}
+                  >
+                    <div className="p-3">
+                      <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <span className="text-4xl text-muted-foreground">∅</span>
+                      </div>
+                    </div>
+                    <div className="px-4 pb-4">
+                      <h4 className="font-semibold text-base mb-1">Sin Borde</h4>
+                      <p className="text-sm text-muted-foreground">No border overlay</p>
                     </div>
                   </div>
-                )}
+                  {uploadedBorderThemes.map((theme) => (
+                    <div
+                      key={theme.id}
+                      onClick={() => setBorderStyle(theme.id)}
+                      className={`cursor-pointer rounded-lg border-2 transition-all duration-200 hover:shadow-xl ${
+                        borderStyle === theme.id
+                          ? 'border-primary bg-primary/10 ring-2 ring-primary/30 shadow-xl'
+                          : 'border-border hover:border-primary/60 hover:bg-primary/5'
+                      }`}
+                    >
+                      <div className="p-3">
+                        <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                          <img
+                            src={theme.image_url}
+                            alt={theme.name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      </div>
+                      <div className="px-4 pb-4">
+                        <h4 className="font-semibold text-base mb-1">{theme.name}</h4>
+                        {theme.description && (
+                          <p className="text-sm text-muted-foreground">{theme.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
-        )} */}
+        )}
 
         {/* Logo Preview */}
         {selectedPlanData && selectedPlanData.includesLogo && !selectedPlanData.includesBorder && (
