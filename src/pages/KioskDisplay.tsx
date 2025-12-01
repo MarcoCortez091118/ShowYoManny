@@ -358,21 +358,8 @@ const KioskDisplay = () => {
     ? uploadedBorderThemes.find(b => b.id === currentItem.border_id)
     : null;
 
-  console.log('KioskDisplay Debug:', {
-    currentItemId: currentItem.id,
-    border_id: currentItem.border_id,
-    uploadedBorderThemesCount: uploadedBorderThemes.length,
-    uploadedBorderThemesIds: uploadedBorderThemes.map(b => b.id),
-    foundBorder: uploadedBorder,
-  });
-
   const renderBorderOverlay = () => {
-    if (!uploadedBorder) {
-      console.log('No border to render');
-      return null;
-    }
-
-    console.log('Rendering border:', uploadedBorder.name, uploadedBorder.image_url);
+    if (!uploadedBorder) return null;
 
     return (
       <div className="absolute inset-0 pointer-events-none z-10">
