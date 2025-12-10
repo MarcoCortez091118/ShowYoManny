@@ -40,7 +40,7 @@ Upload your photos and videos to digital billboards with stunning borders, profe
 
   <!-- Google Analytics (Only for user pages, not admin) -->
   <script>
-    if (!window.location.pathname.includes('/admin')) {
+    if (window.location.pathname.indexOf('/admin') === -1) {
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
