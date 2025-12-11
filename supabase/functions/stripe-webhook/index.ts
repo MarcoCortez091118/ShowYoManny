@@ -166,7 +166,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
           metadata.order_id,
           session.customer_details?.email || metadata.user_email,
           session.customer_details?.name || undefined,
-          customer
+          customer,
+          amount_total || 0,
+          metadata.plan_id
         );
       } else {
         console.warn('No order_id in metadata - payment without content upload');
@@ -241,7 +243,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   await syncCustomerFromStripe(customer);
 }
 
-async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?: string, customerName?: string, customerId?: string) {
+async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?: string, customerName?: string, customerId?: string, amountCents: number = 0, planId?: string) {
   try {
     console.info(`Starting activation for queue item: ${queueItemId}`);
     await logAudit('webhook_processed', customerEmail, queueItemId, 'queue_item', {
@@ -318,6 +320,28 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
         contentActivated: true,
         activationTimestamp: now,
       });
+
+      EdgeRuntime.waitUntil(
+        sendToN8nWebhook({
+          customerEmail: customerEmail || '',
+          customerName: customerName,
+          amountCents: amountCents,
+          planId: planId || originalItem.metadata?.plan_id || 'admin',
+          mediaType: originalItem.media_type,
+          mediaUrl: originalItem.media_url,
+          fileName: originalItem.file_name,
+          duration: originalItem.duration || 10,
+          slots: [{
+            slotNumber: 1,
+            slotType: 'immediate',
+            scheduledStart: null,
+            scheduledEnd: null,
+            status: 'active',
+            durationSeconds: originalItem.duration || 10,
+          }],
+          paymentDate: now.toISOString(),
+        })
+      );
       return;
     }
 
@@ -475,6 +499,28 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
       contentActivated: true,
       activationTimestamp: now,
     });
+
+    EdgeRuntime.waitUntil(
+      sendToN8nWebhook({
+        customerEmail: customerEmail || '',
+        customerName: customerName,
+        amountCents: amountCents,
+        planId: planId || originalItem.metadata?.plan_id || 'unknown',
+        mediaType: originalItem.media_type,
+        mediaUrl: originalItem.media_url,
+        fileName: originalItem.file_name,
+        duration: originalItem.duration || 10,
+        slots: itemsToCreate.map((item, index) => ({
+          slotNumber: index + 1,
+          slotType: item.metadata.slot_type,
+          scheduledStart: item.scheduled_start,
+          scheduledEnd: item.scheduled_end,
+          status: item.status,
+          durationSeconds: item.duration || 10,
+        })),
+        paymentDate: now.toISOString(),
+      })
+    );
   } catch (error) {
     console.error('Error in activateQueueItemAfterPayment:', error);
     await logAudit('error', customerEmail, queueItemId, 'queue_item', {
@@ -689,5 +735,80 @@ async function createOrUpdateCustomer(data: {
     console.info(`Customer record created/updated for: ${data.email}`);
   } catch (error) {
     console.error('Error in createOrUpdateCustomer:', error);
+  }
+}
+
+async function sendToN8nWebhook(data: {
+  customerEmail: string;
+  customerName?: string;
+  amountCents: number;
+  planId: string;
+  mediaType: string;
+  mediaUrl: string;
+  fileName?: string;
+  duration: number;
+  slots: Array<{
+    slotNumber: number;
+    slotType: string;
+    scheduledStart: string | null;
+    scheduledEnd: string | null;
+    status: string;
+    durationSeconds: number;
+  }>;
+  paymentDate: string;
+}) {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('Missing Supabase configuration for n8n webhook');
+      return;
+    }
+
+    const payload = {
+      customer_email: data.customerEmail,
+      customer_name: data.customerName,
+      payment_status: data.amountCents > 0 ? 'paid' : 'not_paid',
+      amount_cents: data.amountCents,
+      amount_dollars: data.amountCents / 100,
+      currency: 'usd',
+      plan_id: data.planId,
+      media_type: data.mediaType,
+      media_url: data.mediaUrl,
+      file_name: data.fileName,
+      slots: data.slots.map(slot => ({
+        slot_number: slot.slotNumber,
+        slot_type: slot.slotType,
+        scheduled_start: slot.scheduledStart,
+        scheduled_end: slot.scheduledEnd,
+        status: slot.status,
+        duration_seconds: slot.durationSeconds,
+      })),
+      payment_date: data.paymentDate,
+      content_activated: true,
+    };
+
+    console.info('Sending data to n8n webhook:', JSON.stringify(payload, null, 2));
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-n8n-webhook`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Failed to send n8n webhook:', response.status, errorText);
+      return;
+    }
+
+    const result = await response.json();
+    console.info('n8n webhook sent successfully:', result);
+  } catch (error) {
+    console.error('Error sending n8n webhook:', error);
   }
 }
