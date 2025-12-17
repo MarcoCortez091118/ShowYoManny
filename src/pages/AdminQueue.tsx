@@ -83,84 +83,86 @@ const SortableItem = ({
 
   return (
     <div ref={setNodeRef} style={style} className="bg-card border rounded-lg p-4 mb-2">
-      <div className="flex items-center gap-4">
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing flex-shrink-0">
-          <GripVertical className="w-5 h-5 text-muted-foreground" />
-        </div>
-
-        <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted">
-          {item.media_type === 'image' ? (
-            <img
-              src={item.media_url}
-              alt={item.title || 'Preview'}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <video
-              src={item.media_url}
-              className="w-full h-full object-cover"
-              muted
-              preload="metadata"
-            />
-          )}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <Badge className={`${getStatusColor(item.computed_status)} flex-shrink-0`}>
-              {getStatusLabel(item)}
-            </Badge>
-            {!item.is_visible && (
-              <Badge variant="outline" className="text-xs flex-shrink-0">
-                Hidden from Display
-              </Badge>
-            )}
-            {item.metadata?.is_user_paid_content && (
-              <Badge variant="default" className="bg-purple-600 text-xs flex-shrink-0">
-                💳 Paid {item.metadata?.slot_type === 'immediate' ? '(Slot 1)' : `(Slot ${item.metadata?.auto_scheduled_slot || '?'})`}
-              </Badge>
-            )}
-            <span className="font-medium truncate">
-              {item.title || 'Untitled'}
-            </span>
+      <ScrollArea className="w-full" orientation="horizontal">
+        <div className="flex items-center gap-4" style={{ minWidth: 'max-content' }}>
+          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing flex-shrink-0">
+            <GripVertical className="w-5 h-5 text-muted-foreground" />
           </div>
 
-          <div className="flex gap-3 text-sm text-muted-foreground flex-wrap">
-            <span className="flex items-center gap-1 whitespace-nowrap">
-              <Play className="w-3 h-3" />
-              {item.duration}s • {item.media_type}
-            </span>
-            {item.scheduled_start && (
-              <span className="flex items-center gap-1 whitespace-nowrap">
-                <Calendar className="w-3 h-3" />
-                {new Date(item.scheduled_start).toLocaleString()}
+          <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+            {item.media_type === 'image' ? (
+              <img
+                src={item.media_url}
+                alt={item.title || 'Preview'}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <video
+                src={item.media_url}
+                className="w-full h-full object-cover"
+                muted
+                preload="metadata"
+              />
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <Badge className={`${getStatusColor(item.computed_status)} flex-shrink-0`}>
+                {getStatusLabel(item)}
+              </Badge>
+              {!item.is_visible && (
+                <Badge variant="outline" className="text-xs flex-shrink-0">
+                  Hidden from Display
+                </Badge>
+              )}
+              {item.metadata?.is_user_paid_content && (
+                <Badge variant="default" className="bg-purple-600 text-xs flex-shrink-0">
+                  💳 Paid {item.metadata?.slot_type === 'immediate' ? '(Slot 1)' : `(Slot ${item.metadata?.auto_scheduled_slot || '?'})`}
+                </Badge>
+              )}
+              <span className="font-medium whitespace-nowrap">
+                {item.title || 'Untitled'}
               </span>
-            )}
+            </div>
+
+            <div className="flex gap-3 text-sm text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1 whitespace-nowrap">
+                <Play className="w-3 h-3" />
+                {item.duration}s • {item.media_type}
+              </span>
+              {item.scheduled_start && (
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                  <Calendar className="w-3 h-3" />
+                  {new Date(item.scheduled_start).toLocaleString()}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onEdit(item)}
+              title="Editar item"
+              className="h-9 w-9"
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(item)}
+              title="Eliminar item"
+              className="h-9 w-9 hover:text-destructive"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
           </div>
         </div>
-
-        <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onEdit(item)}
-            title="Editar item"
-            className="h-9 w-9"
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onDelete(item)}
-            title="Eliminar item"
-            className="h-9 w-9 hover:text-destructive"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 };
@@ -476,22 +478,19 @@ const AdminQueue = () => {
                       No hay contenido publicado
                     </div>
                   ) : (
-                    <ScrollArea className="w-full" orientation="horizontal">
-                      <div className="flex gap-2 pb-4" style={{ minWidth: 'max-content' }}>
-                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                          <SortableContext items={items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').map(i => i.id)} strategy={verticalListSortingStrategy}>
-                            {items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').map((item) => (
-                              <div key={item.id} className="flex-shrink-0" style={{ width: '400px' }}>
-                                <SortableItem
-                                  item={item}
-                                  onDelete={handleDeleteClick}
-                                  onEdit={handleEditClick}
-                                />
-                              </div>
-                            ))}
-                          </SortableContext>
-                        </DndContext>
-                      </div>
+                    <ScrollArea className="h-[600px] pr-4">
+                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').map(i => i.id)} strategy={verticalListSortingStrategy}>
+                          {items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').map((item) => (
+                            <SortableItem
+                              key={item.id}
+                              item={item}
+                              onDelete={handleDeleteClick}
+                              onEdit={handleEditClick}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
                     </ScrollArea>
                   )}
                 </TabsContent>
