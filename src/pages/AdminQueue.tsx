@@ -476,19 +476,22 @@ const AdminQueue = () => {
                       No hay contenido publicado
                     </div>
                   ) : (
-                    <ScrollArea className="h-[600px] pr-4">
-                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                        <SortableContext items={items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').map(i => i.id)} strategy={verticalListSortingStrategy}>
-                          {items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').map((item) => (
-                            <SortableItem
-                              key={item.id}
-                              item={item}
-                              onDelete={handleDeleteClick}
-                              onEdit={handleEditClick}
-                            />
-                          ))}
-                        </SortableContext>
-                      </DndContext>
+                    <ScrollArea className="w-full" orientation="horizontal">
+                      <div className="flex gap-2 pb-4" style={{ minWidth: 'max-content' }}>
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                          <SortableContext items={items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').map(i => i.id)} strategy={verticalListSortingStrategy}>
+                            {items.filter(i => i.computed_status === 'published' || i.computed_status === 'active').map((item) => (
+                              <div key={item.id} className="flex-shrink-0" style={{ width: '400px' }}>
+                                <SortableItem
+                                  item={item}
+                                  onDelete={handleDeleteClick}
+                                  onEdit={handleEditClick}
+                                />
+                              </div>
+                            ))}
+                          </SortableContext>
+                        </DndContext>
+                      </div>
                     </ScrollArea>
                   )}
                 </TabsContent>
