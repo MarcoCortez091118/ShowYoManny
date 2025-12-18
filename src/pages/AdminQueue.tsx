@@ -83,8 +83,8 @@ const SortableItem = ({
 
   return (
     <div ref={setNodeRef} style={style} className="bg-card border rounded-lg p-4 mb-2">
-      <ScrollArea className="w-full" orientation="horizontal">
-        <div className="flex items-center gap-4" style={{ minWidth: 'max-content' }}>
+      <div className="w-full overflow-x-auto overflow-y-visible pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex items-center gap-4 min-w-max">
           <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing flex-shrink-0">
             <GripVertical className="w-5 h-5 text-muted-foreground" />
           </div>
@@ -107,8 +107,8 @@ const SortableItem = ({
             )}
           </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <div className="flex-1 min-w-[200px]">
+            <div className="flex items-center gap-2 mb-1">
               <Badge className={`${getStatusColor(item.computed_status)} flex-shrink-0`}>
                 {getStatusLabel(item)}
               </Badge>
@@ -127,7 +127,7 @@ const SortableItem = ({
               </span>
             </div>
 
-            <div className="flex gap-3 text-sm text-muted-foreground flex-wrap">
+            <div className="flex gap-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-1 whitespace-nowrap">
                 <Play className="w-3 h-3" />
                 {item.duration}s • {item.media_type}
@@ -141,7 +141,7 @@ const SortableItem = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
@@ -162,7 +162,7 @@ const SortableItem = ({
             </Button>
           </div>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
