@@ -37,13 +37,16 @@ import {
   Repeat,
   CheckCircle2,
   Sparkles,
-  GripVertical
+  GripVertical,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabaseContentService, QueueItem } from "@/services/supabaseContentService";
 import { supabaseBorderThemeService, type BorderTheme as UploadedBorderTheme } from "@/services/supabaseBorderThemeService";
 import { useAuth } from "@/contexts/SimpleAuthContext";
+import { supabase } from "@/lib/supabase";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -106,6 +109,9 @@ const AdminDashboard = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const mediaEditorRef = useRef<AdminMediaEditorRef>(null);
+  const [historyPage, setHistoryPage] = useState(0);
+  const [totalHistoryCount, setTotalHistoryCount] = useState(0);
+  const ITEMS_PER_PAGE = 10;
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -161,9 +167,9 @@ const AdminDashboard = () => {
     if (!authLoading && isAdmin) {
       fetchContentQueue();
       fetchPendingOrders();
-      fetchContentHistory();
+      fetchContentHistory(historyPage);
     }
-  }, [authLoading, isAdmin]);
+  }, [authLoading, isAdmin, historyPage]);
 
   useEffect(() => {
     const loadUploadedBorderThemes = async () => {
@@ -200,7 +206,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const fetchContentHistory = async () => {
+  const fetchContentHistory = async (page: number = 0) => {
     if (!isAdmin || !user?.id) {
       setIsHistoryLoading(false);
       return;
@@ -208,15 +214,20 @@ const AdminDashboard = () => {
 
     try {
       setIsHistoryLoading(true);
-      const { data, error } = await supabase
+
+      const from = page * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      const { data, error, count } = await supabase
         .from('content_history')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .range(from, to);
 
       if (error) throw error;
       setContentHistory(data || []);
+      setTotalHistoryCount(count || 0);
     } catch (error) {
       console.error('Error fetching history:', error);
     } finally {
@@ -928,6 +939,38 @@ const AdminDashboard = () => {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+
+                  {/* Pagination Controls */}
+                  {totalHistoryCount > ITEMS_PER_PAGE && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <p className="text-sm text-muted-foreground">
+                        Mostrando {historyPage * ITEMS_PER_PAGE + 1} - {Math.min((historyPage + 1) * ITEMS_PER_PAGE, totalHistoryCount)} de {totalHistoryCount} registros
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setHistoryPage(prev => Math.max(0, prev - 1))}
+                          disabled={historyPage === 0}
+                        >
+                          <ChevronLeft className="h-4 w-4 mr-1" />
+                          Anterior
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          Página {historyPage + 1} de {Math.ceil(totalHistoryCount / ITEMS_PER_PAGE)}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setHistoryPage(prev => prev + 1)}
+                          disabled={(historyPage + 1) * ITEMS_PER_PAGE >= totalHistoryCount}
+                        >
+                          Siguiente
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
