@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, GripVertical, Play, Trash2, Calendar, Clock, Edit, CheckCircle2, ClockIcon, XCircle } from "lucide-react";
+import { ArrowLeft, GripVertical, Play, Trash2, Calendar, Clock, CreditCard as Edit, CircleCheck as CheckCircle2, Clock as ClockIcon, Circle as XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
