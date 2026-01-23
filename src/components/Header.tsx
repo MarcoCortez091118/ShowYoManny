@@ -24,6 +24,13 @@ const Header = () => {
           <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
             Pricing
           </a>
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/business-plans")}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Business Plans
+          </Button>
           <a href="#kiosk" className="text-muted-foreground hover:text-foreground transition-colors">
             Kiosk Demo
           </a>

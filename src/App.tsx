@@ -21,6 +21,7 @@ import ContentUpload from "./pages/ContentUpload";
 import ThankYou from "./pages/ThankYou";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import KioskDisplay from "./pages/KioskDisplay";
+import BusinessPlans from "./pages/BusinessPlans";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -108,6 +109,7 @@ const App = () => {
             <Route path="/thank-you" element={<ThankYou />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/kiosk" element={<KioskDisplay />} />
+            <Route path="/business-plans" element={<BusinessPlans />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
