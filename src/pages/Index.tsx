@@ -73,8 +73,8 @@ const Index = () => {
             <img src={showYoLogo} alt="ShowYo" className="h-10 w-auto" />
           </div>
           <div className="flex gap-4">
-            <Button variant="ghost" onClick={() => navigate('/kiosk')} className="text-accent hover:text-accent/80">
-              Live Display
+            <Button variant="ghost" onClick={() => navigate('/business-plans')} className="text-accent hover:text-accent/80">
+              Business Plans
             </Button>
           </div>
         </div>
