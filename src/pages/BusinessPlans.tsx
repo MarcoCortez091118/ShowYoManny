@@ -3,8 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Monitor, Zap, MapPin, Maximize2, Clock, Repeat, DollarSign, Gift, CheckCircle2, Crown, Star, TrendingUp, ArrowLeft } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Monitor, Zap, MapPin, Maximize2, Clock, Repeat, DollarSign, Gift, CheckCircle2, Crown, Star, TrendingUp, ArrowLeft, MessageCircle, Send, Mail, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface PackageDetails {
   name: string;
@@ -21,6 +24,44 @@ interface PackageDetails {
 const BusinessPlans = () => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<"monthly" | "extended" | "weekly">("monthly");
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("https://n8n.srv991322.hstgr.cloud/webhook/b1304d04-3c9b-4bfe-9062-f3d767cbe921", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(contactForm),
+      });
+
+      if (response.ok) {
+        toast.success("Message sent successfully! We'll get back to you soon.");
+        setContactForm({ name: "", email: "", phone: "", message: "" });
+      } else {
+        toast.error("Failed to send message. Please try WhatsApp instead.");
+      }
+    } catch (error) {
+      toast.error("Failed to send message. Please try WhatsApp instead.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleWhatsAppClick = () => {
+    const whatsappUrl = "https://wa.me/19297421127";
+    window.open(whatsappUrl, "_blank");
+  };
 
   const packages: Record<string, PackageDetails[]> = {
     monthly: [
@@ -430,6 +471,163 @@ const BusinessPlans = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Contact Section */}
+        <section className="mt-20 py-16 px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Get in Touch
+              </h2>
+              <p className="text-xl text-muted-foreground">
+                Ready to showcase your brand? Contact us for custom packages and enterprise solutions
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Contact Form */}
+              <Card className="bg-card/80 backdrop-blur border border-primary/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Mail className="w-5 h-5 text-primary" />
+                    Send us a Message
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleContactSubmit} className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Name</label>
+                      <Input
+                        type="text"
+                        placeholder="Your name"
+                        value={contactForm.name}
+                        onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                        required
+                        className="bg-background/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Email</label>
+                      <Input
+                        type="email"
+                        placeholder="your@email.com"
+                        value={contactForm.email}
+                        onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                        required
+                        className="bg-background/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Phone (optional)</label>
+                      <Input
+                        type="tel"
+                        placeholder="+1 (555) 123-4567"
+                        value={contactForm.phone}
+                        onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                        className="bg-background/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Message</label>
+                      <Textarea
+                        placeholder="Tell us about your advertising needs..."
+                        value={contactForm.message}
+                        onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                        required
+                        className="bg-background/50 min-h-[120px]"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+                    >
+                      {isSubmitting ? (
+                        "Sending..."
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Send Message
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Contact Options */}
+              <div className="space-y-6">
+                <Card className="bg-card/80 backdrop-blur border border-secondary/30 hover:border-secondary/60 transition-all">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-secondary/10 rounded-lg">
+                        <MessageCircle className="w-6 h-6 text-secondary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold mb-2">WhatsApp</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Get instant responses to your questions via WhatsApp
+                        </p>
+                        <Button
+                          onClick={handleWhatsAppClick}
+                          className="bg-[#25D366] hover:bg-[#20BA5A] text-white font-bold w-full"
+                        >
+                          <MessageCircle className="w-4 h-4 mr-2" />
+                          Chat on WhatsApp
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-card/80 backdrop-blur border border-accent/30">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-accent/10 rounded-lg">
+                        <Phone className="w-6 h-6 text-accent" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold mb-2">Phone Number</h3>
+                        <p className="text-xl text-accent font-semibold">
+                          +1 (929) 742-1127
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Available for calls and text messages
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-card/80 backdrop-blur border border-primary/30">
+                  <CardContent className="pt-6">
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-bold">Enterprise Solutions</h3>
+                      <ul className="space-y-2">
+                        <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
+                          Custom long-term contracts
+                        </li>
+                        <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
+                          Volume discounts for multiple campaigns
+                        </li>
+                        <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
+                          Dedicated account manager
+                        </li>
+                        <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
+                          Strategic partnership opportunities
+                        </li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
