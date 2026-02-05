@@ -38,18 +38,20 @@ const Hero = () => {
           </div>
           
           {/* Main Headline */}
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-            <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-              ShowYo
+          <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+            <span className="text-foreground">
+              Times Square Billboard Advertising from $22 – Show Your Content on a Digital Billboard
             </span>
-            <br />
-            <span className="text-foreground">Your Content</span>
           </h1>
-          
+
           {/* Subheadline */}
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Upload your photos and videos to digital billboards with stunning borders, 
-            professional watermarks, and real-time display management.
+          <p className="text-xl md:text-2xl font-semibold text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Advertise in Times Square, New York for 10 Seconds on a High-Impact Digital Billboard
+          </p>
+
+          {/* Description */}
+          <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Upload your image or video and get featured on a real digital billboard at 1604 Broadway, Times Square, NYC. Affordable, fast, secure, and AI-moderated
           </p>
           
           {/* CTA Buttons */}
