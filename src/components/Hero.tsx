@@ -39,25 +39,17 @@ const Hero = () => {
           
           {/* Main Headline */}
           <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-            <span className="text-foreground">Your Content in </span>
-            <span className="bg-gradient-to-r from-[#FF1B6D] via-[#45CAFF] to-[#45CAFF] bg-clip-text text-transparent">
-              Times Square,
-            </span>
-            <br />
-            <span className="bg-gradient-to-r from-[#00D9A3] via-[#FFD700] to-[#FFD700] bg-clip-text text-transparent">
-              New York
-            </span>
-            <span className="text-foreground"> for 10 Seconds</span>
+            <span className="text-foreground">Times Square Billboard Advertising from $22 – Show Your Content on a Digital Billboard</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Make your image, video, or message appear on the iconic digital screen in Times Square. Upload your content, and we'll display it live on Broadway (1604, New York). Fast, secure, and AI-moderated.
-          </p>
+          <h2 className="text-2xl md:text-3xl font-semibold text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Advertise in Times Square, New York for 10 Seconds on a High-Impact Digital Billboard
+          </h2>
 
-          {/* Secondary Headline */}
-          <p className="text-xl md:text-2xl font-semibold bg-gradient-to-r from-[#FFD700] to-[#FFA500] bg-clip-text text-transparent max-w-3xl mx-auto leading-relaxed">
-            Impact the world in just 10 seconds. Ideal for artists, entrepreneurs, brands, and launches.
+          {/* Description */}
+          <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Upload your image or video and get featured on a real digital billboard at 1604 Broadway, Times Square, NYC. Affordable, fast, secure, and AI-moderated.
           </p>
           
           {/* CTA Buttons */}
