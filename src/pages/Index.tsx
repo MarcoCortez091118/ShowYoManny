@@ -42,8 +42,8 @@ const Index = () => {
 
           setScrollProgress(progress);
 
-          // Determine current slide (0, 1, or 2)
-          const slideIndex = Math.min(2, Math.floor(progress * 3));
+          // Determine current slide (0, 1, 2, or 3) - 4 slides total
+          const slideIndex = Math.min(3, Math.floor(progress * 4));
           setCurrentSlide(slideIndex);
         }
       }
@@ -160,134 +160,137 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero XL */}
-      <section className="relative min-h-screen flex flex-col" ref={scrollerRef}>
-        {/* Hero Main */}
-        <div className="relative flex-1 flex items-center justify-center px-6 py-20 lg:py-32 overflow-hidden">
+      {/* Hero + Slides Section */}
+      <section
+        className="relative"
+        style={{ height: `${scrollerHeight}px` }}
+        ref={scrollerRef}
+      >
+        <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
           {/* Animated Shader Background */}
           <WarpShaderHero />
 
-          <div className="relative z-10 container mx-auto max-w-5xl text-center">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-8 leading-tight drop-shadow-lg">
-              Display your content on Times Square's iconic billboard
-            </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-              Upload your image or video and broadcast it on a real digital billboard at 1604 Broadway, NYC. Affordable, fast, and accessible to everyone.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                onClick={() => navigate('/upload')}
-                className="bg-white text-gray-900 hover:bg-gray-100 text-lg px-8 py-6 h-auto group shadow-xl"
-              >
-                Start Now
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => navigate('/business-plans')}
-                className="text-lg px-8 py-6 h-auto border-2 border-white text-white hover:bg-white/10 backdrop-blur-sm shadow-xl"
-              >
-                Business Plans
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Scroller Section - Scroll-driven Slider */}
-        <div
-          className="relative"
-          style={{ height: `${scrollerHeight}px` }}
-        >
-          <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
-            {/* Animated Shader Background */}
-            <WarpShaderHero />
-
-            {/* Label - Top Left */}
-            <div className="absolute top-8 left-8 lg:left-16 z-20">
+          {/* Label - Top Left (only show after first slide) */}
+          {currentSlide > 0 && (
+            <div className="absolute top-8 left-8 lg:left-16 z-20 transition-opacity duration-500">
               <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-white/80 backdrop-blur-sm bg-white/10 px-3 py-2 rounded-full border border-white/20">
                 <div className="w-2 h-2 bg-white rounded-sm" />
                 What we do
               </div>
             </div>
+          )}
 
-            {/* Slide Counter - Bottom Left */}
-            <div className="absolute bottom-8 left-8 lg:left-16 z-20">
-              <div className="px-4 py-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-md shadow-xl">
-                <span className="text-sm font-medium text-white">
-                  0{currentSlide + 1}
-                </span>
-                <span className="text-sm text-white/60 mx-1">/</span>
-                <span className="text-sm text-white/60">03</span>
-              </div>
+          {/* Slide Counter - Bottom Left */}
+          <div className="absolute bottom-8 left-8 lg:left-16 z-20">
+            <div className="px-4 py-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-md shadow-xl">
+              <span className="text-sm font-medium text-white">
+                0{currentSlide + 1}
+              </span>
+              <span className="text-sm text-white/60 mx-1">/</span>
+              <span className="text-sm text-white/60">04</span>
             </div>
+          </div>
 
-            {/* Progress Line */}
-            <div className="absolute left-8 lg:left-16 top-20 bottom-20 w-px bg-white/20 z-20">
-              <div
-                className="w-full bg-gradient-to-b from-white via-cyan-200 to-white transition-all duration-300 ease-out shadow-lg"
-                style={{ height: `${(scrollProgress % (1/3)) * 300}%` }}
-              />
-            </div>
-
-            {/* Main Content - Center */}
-            <div className="relative z-10 container mx-auto px-8 lg:px-16 max-w-6xl">
-              <div className="text-center">
-                {scrollSlides.map((slide, slideIndex) => {
-                  const isActive = currentSlide === slideIndex;
-                  const slideProgress = Math.max(0, Math.min(1, ((scrollProgress * 3) - slideIndex)));
-
-                  return (
-                    <div
-                      key={slideIndex}
-                      className={`transition-all duration-700 ease-out ${
-                        isActive
-                          ? 'opacity-100 translate-y-0'
-                          : currentSlide < slideIndex
-                          ? 'opacity-0 translate-y-8 absolute inset-0 pointer-events-none'
-                          : 'opacity-0 -translate-y-8 absolute inset-0 pointer-events-none'
-                      }`}
-                    >
-                      <h2 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight drop-shadow-2xl">
-                        {slide.text.split(' ').map((word, wordIndex) => {
-                          const isHighlightWord = slide.highlight.includes(word);
-                          const wordProgress = Math.max(0, Math.min(1, slideProgress * 2 - (wordIndex * 0.1)));
-
-                          return (
-                            <span
-                              key={wordIndex}
-                              className="transition-all duration-700 ease-out inline-block mr-3 md:mr-4"
-                              style={{
-                                color: isHighlightWord
-                                  ? 'rgb(255, 255, 255)'
-                                  : `rgba(255, 255, 255, ${0.3 + (wordProgress * 0.7)})`,
-                                transform: `translateY(${(1 - wordProgress) * 10}px)`,
-                                textShadow: isHighlightWord
-                                  ? '0 4px 20px rgba(0, 0, 0, 0.3), 0 0 40px rgba(255, 255, 255, 0.2)'
-                                  : '0 2px 10px rgba(0, 0, 0, 0.2)'
-                              }}
-                            >
-                              {word}
-                            </span>
-                          );
-                        })}
-                      </h2>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Scroll Indicator */}
+          {/* Progress Line */}
+          <div className="absolute left-8 lg:left-16 top-20 bottom-20 w-px bg-white/20 z-20">
             <div
-              className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/70 transition-opacity duration-500 z-20 ${
-                scrollProgress > 0.1 ? 'opacity-0' : 'opacity-100 animate-bounce'
-              }`}
-            >
-              <span className="text-xs uppercase tracking-wider drop-shadow-lg">Scroll</span>
-              <div className="w-px h-8 bg-gradient-to-b from-white/70 to-transparent" />
+              className="w-full bg-gradient-to-b from-white via-cyan-200 to-white transition-all duration-300 ease-out shadow-lg"
+              style={{ height: `${(scrollProgress % (1/4)) * 400}%` }}
+            />
+          </div>
+
+          {/* Main Content - Center */}
+          <div className="relative z-10 container mx-auto px-8 lg:px-16 max-w-6xl">
+            <div className="text-center">
+              {/* Slide 0: Hero */}
+              <div
+                className={`transition-all duration-700 ease-out ${
+                  currentSlide === 0
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-0 -translate-y-8 absolute inset-0 pointer-events-none'
+                }`}
+              >
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-8 leading-tight drop-shadow-lg">
+                  Display your content on Times Square's iconic billboard
+                </h1>
+                <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
+                  Upload your image or video and broadcast it on a real digital billboard at 1604 Broadway, NYC. Affordable, fast, and accessible to everyone.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button
+                    size="lg"
+                    onClick={() => navigate('/upload')}
+                    className="bg-white text-gray-900 hover:bg-gray-100 text-lg px-8 py-6 h-auto group shadow-xl"
+                  >
+                    Start Now
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={() => navigate('/business-plans')}
+                    className="text-lg px-8 py-6 h-auto border-2 border-white text-white hover:bg-white/10 backdrop-blur-sm shadow-xl"
+                  >
+                    Business Plans
+                  </Button>
+                </div>
+              </div>
+
+              {/* Slides 1-3: What We Do */}
+              {scrollSlides.map((slide, slideIndex) => {
+                const actualSlideIndex = slideIndex + 1;
+                const isActive = currentSlide === actualSlideIndex;
+                const slideProgress = Math.max(0, Math.min(1, ((scrollProgress * 4) - actualSlideIndex)));
+
+                return (
+                  <div
+                    key={slideIndex}
+                    className={`transition-all duration-700 ease-out ${
+                      isActive
+                        ? 'opacity-100 translate-y-0'
+                        : currentSlide < actualSlideIndex
+                        ? 'opacity-0 translate-y-8 absolute inset-0 pointer-events-none'
+                        : 'opacity-0 -translate-y-8 absolute inset-0 pointer-events-none'
+                    }`}
+                  >
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight drop-shadow-2xl">
+                      {slide.text.split(' ').map((word, wordIndex) => {
+                        const isHighlightWord = slide.highlight.includes(word);
+                        const wordProgress = Math.max(0, Math.min(1, slideProgress * 2 - (wordIndex * 0.1)));
+
+                        return (
+                          <span
+                            key={wordIndex}
+                            className="transition-all duration-700 ease-out inline-block mr-3 md:mr-4"
+                            style={{
+                              color: isHighlightWord
+                                ? 'rgb(255, 255, 255)'
+                                : `rgba(255, 255, 255, ${0.3 + (wordProgress * 0.7)})`,
+                              transform: `translateY(${(1 - wordProgress) * 10}px)`,
+                              textShadow: isHighlightWord
+                                ? '0 4px 20px rgba(0, 0, 0, 0.3), 0 0 40px rgba(255, 255, 255, 0.2)'
+                                : '0 2px 10px rgba(0, 0, 0, 0.2)'
+                            }}
+                          >
+                            {word}
+                          </span>
+                        );
+                      })}
+                    </h2>
+                  </div>
+                );
+              })}
             </div>
+          </div>
+
+          {/* Scroll Indicator */}
+          <div
+            className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/70 transition-opacity duration-500 z-20 ${
+              scrollProgress > 0.05 ? 'opacity-0' : 'opacity-100 animate-bounce'
+            }`}
+          >
+            <span className="text-xs uppercase tracking-wider drop-shadow-lg">Scroll</span>
+            <div className="w-px h-8 bg-gradient-to-b from-white/70 to-transparent" />
           </div>
         </div>
       </section>
