@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom";
 const Header = () => {
   const navigate = useNavigate();
   return (
-    <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+    <header className="sticky top-0 z-50 backdrop-blur-md">
+      <div className="container mx-auto px-4 py-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="relative">
             <Monitor className="h-8 w-8 text-primary animate-electric-pulse" />
@@ -16,24 +16,38 @@ const Header = () => {
             ShowYo
           </span>
         </div>
-        
-        <nav className="flex items-center gap-6">
-          <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-            Features
+
+        <nav className="flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-full px-2 py-2 border border-border/50 shadow-lg">
+          <a
+            href="#features"
+            className="px-5 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-full hover:bg-accent/10"
+          >
+            FEATURES
           </a>
-          <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-            Pricing
+          <a
+            href="#pricing"
+            className="px-5 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-full hover:bg-accent/10"
+          >
+            PRICING
+          </a>
+          <button
+            onClick={() => navigate("/business-plans")}
+            className="px-5 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-full hover:bg-accent/10"
+          >
+            BUSINESS
+          </button>
+          <a
+            href="#kiosk"
+            className="px-5 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-full hover:bg-accent/10"
+          >
+            KIOSK DEMO
           </a>
           <Button
-            variant="ghost"
-            onClick={() => navigate("/business-plans")}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => navigate("/content-upload")}
+            className="ml-2 px-6 py-2 text-sm font-bold bg-foreground text-background hover:bg-foreground/90 rounded-full shadow-md transition-all hover:shadow-lg"
           >
-            Business Plans
+            GET STARTED
           </Button>
-          <a href="#kiosk" className="text-muted-foreground hover:text-foreground transition-colors">
-            Kiosk Demo
-          </a>
         </nav>
       </div>
     </header>
