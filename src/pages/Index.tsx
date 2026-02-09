@@ -24,6 +24,8 @@ const Index = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [scrollerHeight, setScrollerHeight] = useState(0);
+  const [showHeader, setShowHeader] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -70,6 +72,25 @@ const Index = () => {
       // Set height to 4x viewport to allow smooth scrolling through 3 slides
       setScrollerHeight(window.innerHeight * 4);
     }
+  }, []);
+
+  useEffect(() => {
+    const handleHeaderScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY < 10) {
+        setShowHeader(true);
+      } else if (currentScrollY > lastScrollY.current) {
+        setShowHeader(false);
+      } else {
+        setShowHeader(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleHeaderScroll);
+    return () => window.removeEventListener('scroll', handleHeaderScroll);
   }, []);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
@@ -120,7 +141,9 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-background">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-sm">
+      <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-sm transition-transform duration-300 ${
+        showHeader ? 'translate-y-0' : '-translate-y-full'
+      }`}>
         <div className="container mx-auto px-6 lg:px-12 py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
