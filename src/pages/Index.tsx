@@ -263,7 +263,8 @@ const Index = () => {
                     <h2 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight drop-shadow-2xl">
                       {slide.text.split(' ').map((word, wordIndex) => {
                         const isHighlightWord = slide.highlight.includes(word);
-                        const wordProgress = Math.max(0, Math.min(1, slideProgress * 2 - (wordIndex * 0.1)));
+                        const baseProgress = Math.max(0, Math.min(1, slideProgress * 3 - (wordIndex * 0.05)));
+                        const wordProgress = isActive && slideProgress > 0.5 ? 1 : baseProgress;
 
                         return (
                           <span
@@ -272,7 +273,7 @@ const Index = () => {
                             style={{
                               color: isHighlightWord
                                 ? 'rgb(255, 255, 255)'
-                                : `rgba(255, 255, 255, ${0.3 + (wordProgress * 0.7)})`,
+                                : `rgba(255, 255, 255, ${Math.max(0.3, Math.min(1, 0.3 + (wordProgress * 0.7)))})`,
                               transform: `translateY(${(1 - wordProgress) * 10}px)`,
                               textShadow: isHighlightWord
                                 ? '0 4px 20px rgba(0, 0, 0, 0.3), 0 0 40px rgba(255, 255, 255, 0.2)'
