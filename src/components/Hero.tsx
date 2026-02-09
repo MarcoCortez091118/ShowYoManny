@@ -37,7 +37,7 @@ const Hero = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="px-12 py-6 bg-white/90 backdrop-blur-sm border-2 border-cyan-400 rounded-full text-gray-900 text-lg font-medium hover:scale-105 hover:bg-cyan-400/20 transition-all duration-300"
+                className="px-12 py-6 bg-transparent backdrop-blur-sm border-2 border-cyan-400 rounded-full text-black text-lg font-semibold hover:scale-105 hover:bg-cyan-400/10 transition-all duration-300 shadow-lg"
                 onClick={() => navigate('/business-plans')}
               >
                 Business Plans
