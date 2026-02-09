@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Monitor, Zap, MapPin, Maximize2, Clock, Repeat, DollarSign, Gift, CheckCircle2, Crown, Star, TrendingUp, ArrowLeft, MessageCircle, Send, Mail, Phone } from "lucide-react";
+import { Monitor, Zap, MapPin, Maximize2, Clock, Repeat, DollarSign, Gift, CheckCircle2, Crown, Star, TrendingUp, ArrowLeft, MessageCircle, Send, Mail, Phone, Moon, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface PackageDetails {
   name: string;
@@ -23,6 +24,7 @@ interface PackageDetails {
 
 const BusinessPlans = () => {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [selectedCategory, setSelectedCategory] = useState<"monthly" | "extended" | "weekly">("monthly");
   const [contactForm, setContactForm] = useState({
     name: "",
@@ -259,8 +261,8 @@ const BusinessPlans = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+    <div className="min-h-screen bg-white dark:bg-background">
+      <header className="border-b border-border bg-white/90 dark:bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
@@ -282,6 +284,14 @@ const BusinessPlans = () => {
               </span>
             </div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="text-gray-700 dark:text-accent hover:text-accent/80"
+          >
+            {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          </Button>
         </div>
       </header>
 
@@ -290,33 +300,33 @@ const BusinessPlans = () => {
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-purple-500 to-secondary bg-clip-text text-transparent">
             Business Advertising Plans
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-gray-600 dark:text-muted-foreground max-w-3xl mx-auto mb-8">
             Showcase your brand on the world's most iconic digital billboard in Times Square, New York
           </p>
 
-          <Card className="max-w-2xl mx-auto bg-gradient-to-br from-primary/10 to-secondary/10 border-primary/20">
+          <Card className="max-w-2xl mx-auto bg-gradient-to-br from-primary/10 to-secondary/10 border-primary/20 shadow-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 justify-center">
+              <CardTitle className="flex items-center gap-2 justify-center text-gray-900 dark:text-white">
                 <MapPin className="h-5 w-5 text-primary" />
                 Premium Location Details
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Location:</span>
-                <span className="font-semibold">1604 Broadway, Times Square, New York</span>
+                <span className="text-gray-600 dark:text-muted-foreground">Location:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">1604 Broadway, Times Square, New York</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Billboard Size:</span>
-                <span className="font-semibold">26'2.96" W × 31'2.02" H</span>
+                <span className="text-gray-600 dark:text-muted-foreground">Billboard Size:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">26'2.96" W × 31'2.02" H</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Resolution:</span>
-                <span className="font-semibold">2048 × 2432 pixels</span>
+                <span className="text-gray-600 dark:text-muted-foreground">Resolution:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">2048 × 2432 pixels</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Supported Formats:</span>
-                <span className="font-semibold">JPG, JPEG, PNG, GIF, MP4, MOV, AVI, WMV</span>
+                <span className="text-gray-600 dark:text-muted-foreground">Supported Formats:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">JPG, JPEG, PNG, GIF, MP4, MOV, AVI, WMV</span>
               </div>
             </CardContent>
           </Card>
@@ -476,17 +486,17 @@ const BusinessPlans = () => {
         <section className="mt-20 py-16 px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
                 Get in Touch
               </h2>
-              <p className="text-xl text-muted-foreground">
+              <p className="text-xl text-gray-600 dark:text-muted-foreground">
                 Ready to showcase your brand? Contact us for custom packages and enterprise solutions
               </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Contact Form */}
-              <Card className="bg-card/80 backdrop-blur border border-primary/30">
+              <Card className="bg-white/80 dark:bg-card/80 backdrop-blur border border-primary/30 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Mail className="w-5 h-5 text-primary" />
@@ -557,15 +567,15 @@ const BusinessPlans = () => {
 
               {/* Contact Options */}
               <div className="space-y-6">
-                <Card className="bg-card/80 backdrop-blur border border-secondary/30 hover:border-secondary/60 transition-all">
+                <Card className="bg-white/80 dark:bg-card/80 backdrop-blur border border-secondary/30 hover:border-secondary/60 transition-all shadow-sm">
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-4">
                       <div className="p-3 bg-secondary/10 rounded-lg">
                         <MessageCircle className="w-6 h-6 text-secondary" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-bold mb-2">WhatsApp</h3>
-                        <p className="text-muted-foreground mb-4">
+                        <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">WhatsApp</h3>
+                        <p className="text-gray-600 dark:text-muted-foreground mb-4">
                           Get instant responses to your questions via WhatsApp
                         </p>
                         <Button
@@ -580,18 +590,18 @@ const BusinessPlans = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card/80 backdrop-blur border border-accent/30">
+                <Card className="bg-white/80 dark:bg-card/80 backdrop-blur border border-accent/30 shadow-sm">
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-4">
                       <div className="p-3 bg-accent/10 rounded-lg">
                         <Phone className="w-6 h-6 text-accent" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-bold mb-2">Phone Number</h3>
+                        <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Phone Number</h3>
                         <p className="text-xl text-accent font-semibold">
                           +1 (929) 742-1127
                         </p>
-                        <p className="text-sm text-muted-foreground mt-2">
+                        <p className="text-sm text-gray-600 dark:text-muted-foreground mt-2">
                           Available for calls and text messages
                         </p>
                       </div>
@@ -599,24 +609,24 @@ const BusinessPlans = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card/80 backdrop-blur border border-primary/30">
+                <Card className="bg-white/80 dark:bg-card/80 backdrop-blur border border-primary/30 shadow-sm">
                   <CardContent className="pt-6">
                     <div className="space-y-3">
-                      <h3 className="text-lg font-bold">Enterprise Solutions</h3>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">Enterprise Solutions</h3>
                       <ul className="space-y-2">
-                        <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-muted-foreground">
                           <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
                           Custom long-term contracts
                         </li>
-                        <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-muted-foreground">
                           <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
                           Volume discounts for multiple campaigns
                         </li>
-                        <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-muted-foreground">
                           <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
                           Dedicated account manager
                         </li>
-                        <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-muted-foreground">
                           <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
                           Strategic partnership opportunities
                         </li>

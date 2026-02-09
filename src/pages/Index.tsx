@@ -4,14 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
-import { Camera, Video, Sparkles, Zap, Eye, Shield, MessageCircle, Send, Mail, Phone, Users, Briefcase, Link as LinkIcon } from "lucide-react";
+import { Camera, Video, Sparkles, Zap, Eye, Shield, MessageCircle, Send, Mail, Phone, Users, Briefcase, Link as LinkIcon, Moon, Sun } from "lucide-react";
 import showYoLogo from "@/assets/showyo-logo-color.png";
 import { planService } from "@/domain/services/planService";
 import { toast } from "sonner";
 import { WrapShader } from "@/components/ui/wrap-shader";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -104,23 +106,31 @@ const Index = () => {
   ];
 
   const whyAdvertiseFeatures = [
-    "High international visibility",
-    "Perfect for viral campaigns and product launches",
-    "Suitable for artists, influencers, startups, and established brands",
-    "Daily, weekly, monthly, semi-annual, or annual packages available",
-    "You don't need to be in New York to be displayed on the screen"
+    "One of the lowest Times Square billboard costs available",
+    "Ideal for viral marketing, launches, and brand visibility",
+    "Used by artists, influencers, startups, and businesses",
+    "Flexible packages: daily, weekly, monthly, and annual",
+    "No need to be in New York"
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-white dark:bg-background text-foreground">
       {/* Navigation */}
-      <nav className="border-b border-border bg-navy/90 backdrop-blur-sm sticky top-0 z-50">
+      <nav className="border-b border-border bg-white/90 dark:bg-navy/90 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <img src={showYoLogo} alt="ShowYo" className="h-10 w-auto" />
           </div>
-          <div className="flex gap-4">
-            <Button variant="ghost" onClick={() => navigate('/business-plans')} className="text-accent hover:text-accent/80">
+          <div className="flex gap-4 items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="text-gray-700 dark:text-accent hover:text-accent/80"
+            >
+              {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/business-plans')} className="text-gray-700 dark:text-accent hover:text-accent/80">
               Business Plans
             </Button>
           </div>
@@ -241,26 +251,26 @@ const Index = () => {
       </section>
 
       {/* What is ShowYoNy */}
-      <section className="py-16 px-4 bg-gradient-to-b from-transparent via-navy/30 to-transparent">
+      <section className="py-16 px-4 bg-gradient-to-b from-transparent via-gray-50 dark:via-navy/30 to-transparent">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6 text-gray-900 dark:text-white">
             What Is ShowYoNy?
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground text-center max-w-4xl mx-auto mb-4">
+          <p className="text-lg md:text-xl text-gray-600 dark:text-muted-foreground text-center max-w-4xl mx-auto mb-4">
             ShowYoNy is an affordable Times Square billboard advertising platform that allows individuals and businesses to display their content on one of the most iconic digital billboards in the world.
           </p>
-          <p className="text-lg md:text-xl text-muted-foreground text-center max-w-4xl mx-auto mb-12">
+          <p className="text-lg md:text-xl text-gray-600 dark:text-muted-foreground text-center max-w-4xl mx-auto mb-12">
             Whether you're promoting a brand, product, event, music release, startup, or personal message, ShowYoNy makes Times Square advertising accessible to everyone — without agencies or long-term contracts.
           </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Billboard Location */}
-            <div className="bg-card/80 backdrop-blur border border-primary/30 rounded-xl p-6">
+            <div className="bg-white/80 dark:bg-card/80 backdrop-blur border border-primary/30 rounded-xl p-6 shadow-sm">
               <h3 className="text-2xl font-bold mb-4 text-primary">Billboard Location</h3>
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm font-semibold text-muted-foreground mb-1">Digital Billboard Location:</p>
-                  <p className="text-base">1604 Broadway, Times Square, New York, NY</p>
+                  <p className="text-sm font-semibold text-gray-600 dark:text-muted-foreground mb-1">Digital Billboard Location:</p>
+                  <p className="text-base text-gray-900 dark:text-white">1604 Broadway, Times Square, New York, NY</p>
                 </div>
                 <div>
                   <a
@@ -279,7 +289,7 @@ const Index = () => {
             </div>
 
             {/* Ad Specifications */}
-            <div className="bg-card/80 backdrop-blur border border-secondary/30 rounded-xl p-6">
+            <div className="bg-white/80 dark:bg-card/80 backdrop-blur border border-secondary/30 rounded-xl p-6 shadow-sm">
               <h3 className="text-2xl font-bold mb-4 text-secondary">Ad Specifications</h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
@@ -417,16 +427,16 @@ const Index = () => {
       </section>
 
       {/* Why Advertise */}
-      <section className="py-16 px-4 bg-gradient-to-b from-transparent via-navy/30 to-transparent">
+      <section className="py-16 px-4 bg-gradient-to-b from-transparent via-gray-50 dark:via-navy/30 to-transparent">
         <div className="container mx-auto max-w-5xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">
-            Why Advertise with ShowYoNy?
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-gray-900 dark:text-white">
+            Why Advertise in Times Square with ShowYoNy?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {whyAdvertiseFeatures.map((feature, idx) => (
-              <div key={idx} className="flex items-start gap-3 bg-card/60 backdrop-blur border border-accent/20 rounded-lg p-4">
+              <div key={idx} className="flex items-start gap-3 bg-white/60 dark:bg-card/60 backdrop-blur border border-accent/20 rounded-lg p-4 shadow-sm">
                 <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0" />
-                <p className="text-muted-foreground">{feature}</p>
+                <p className="text-gray-700 dark:text-muted-foreground">{feature}</p>
               </div>
             ))}
           </div>
@@ -438,9 +448,12 @@ const Index = () => {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Available Packages
+              Times Square Billboard Pricing
             </h2>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-muted-foreground mb-2">
+              Affordable digital billboard advertising in Times Square — no hidden fees.
+            </p>
+            <p className="text-lg text-muted-foreground">
               Choose your display option and upload instantly to Times Square
             </p>
           </div>
@@ -497,20 +510,20 @@ const Index = () => {
       </section>
 
       {/* Contact Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-transparent via-navy/30 to-transparent">
+      <section className="py-20 px-4 bg-gradient-to-b from-transparent via-gray-50 dark:via-navy/30 to-transparent">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
               Get in Touch
             </h2>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-gray-600 dark:text-muted-foreground">
               Have questions or need a custom package? Contact us directly
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Contact Form */}
-            <Card className="bg-card/80 backdrop-blur border border-primary/30">
+            <Card className="bg-white/80 dark:bg-card/80 backdrop-blur border border-primary/30 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Mail className="w-5 h-5 text-primary" />
@@ -581,15 +594,15 @@ const Index = () => {
 
             {/* Contact Options */}
             <div className="space-y-6">
-              <Card className="bg-card/80 backdrop-blur border border-secondary/30 hover:border-secondary/60 transition-all">
+              <Card className="bg-white/80 dark:bg-card/80 backdrop-blur border border-secondary/30 hover:border-secondary/60 transition-all shadow-sm">
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
                     <div className="p-3 bg-secondary/10 rounded-lg">
                       <MessageCircle className="w-6 h-6 text-secondary" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold mb-2">WhatsApp</h3>
-                      <p className="text-muted-foreground mb-4">
+                      <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">WhatsApp</h3>
+                      <p className="text-gray-600 dark:text-muted-foreground mb-4">
                         Get instant responses to your questions via WhatsApp
                       </p>
                       <Button
@@ -604,14 +617,14 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/80 backdrop-blur border border-accent/30">
+              <Card className="bg-white/80 dark:bg-card/80 backdrop-blur border border-accent/30 shadow-sm">
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
                     <div className="p-3 bg-accent/10 rounded-lg">
                       <Phone className="w-6 h-6 text-accent" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold mb-2">Phone Number</h3>
+                      <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Phone Number</h3>
                       <p className="text-xl text-accent font-semibold">
                         +1 (929) 742-1127
                       </p>
