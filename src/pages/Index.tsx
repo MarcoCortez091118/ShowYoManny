@@ -8,6 +8,7 @@ import { Camera, Video, Zap, Eye, Shield, MessageCircle, Send, Mail, Phone, Moon
 import showYoLogo from "@/assets/showyo-logo-color.png";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
+import { WrapShader } from "@/components/ui/wrap-shader";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -162,27 +163,32 @@ const Index = () => {
       {/* Hero XL */}
       <section className="relative min-h-screen flex flex-col" ref={scrollerRef}>
         {/* Hero Main */}
-        <div className="relative flex-1 flex items-center justify-center px-6 py-20 lg:py-32 overflow-hidden">
-          {/* Background Video/Animation */}
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-100 via-white to-gray-50 dark:from-gray-900 dark:via-background dark:to-gray-900">
-            <div className="absolute inset-0 opacity-30 dark:opacity-20">
-              <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-              <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-            </div>
+        <div className="relative flex-1 flex items-center justify-center px-6 py-20 lg:py-32 overflow-hidden bg-gray-900">
+          {/* Animated Shader Background */}
+          <div className="absolute inset-0 z-0">
+            <WrapShader
+              style={{
+                height: "100%",
+                width: "100%",
+                position: "absolute",
+                top: 0,
+                left: 0
+              }}
+            />
           </div>
 
           <div className="relative z-10 container mx-auto max-w-5xl text-center">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 dark:text-white mb-8 leading-tight">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-8 leading-tight drop-shadow-lg">
               Display your content on Times Square's iconic billboard
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
               Upload your image or video and broadcast it on a real digital billboard at 1604 Broadway, NYC. Affordable, fast, and accessible to everyone.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 size="lg"
                 onClick={() => navigate('/upload')}
-                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 text-lg px-8 py-6 h-auto group"
+                className="bg-white text-gray-900 hover:bg-gray-100 text-lg px-8 py-6 h-auto group shadow-xl"
               >
                 Start Now
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -191,7 +197,7 @@ const Index = () => {
                 size="lg"
                 variant="outline"
                 onClick={() => navigate('/business-plans')}
-                className="text-lg px-8 py-6 h-auto border-2"
+                className="text-lg px-8 py-6 h-auto border-2 border-white text-white hover:bg-white/10 backdrop-blur-sm shadow-xl"
               >
                 Business Plans
               </Button>
@@ -201,52 +207,48 @@ const Index = () => {
 
         {/* Scroller Section - Scroll-driven Slider */}
         <div
-          className="relative bg-gradient-to-br from-gray-100 via-white to-gray-50 dark:from-gray-900 dark:via-background dark:to-gray-900"
+          className="relative bg-gray-900"
           style={{ height: `${scrollerHeight}px` }}
         >
           <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
-            {/* Background Animation */}
-            <div className="absolute inset-0 opacity-30 dark:opacity-20">
-              <div
-                className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"
+            {/* Animated Shader Background */}
+            <div className="absolute inset-0 z-0">
+              <WrapShader
+                speed={1.2}
                 style={{
-                  transform: `translateX(${scrollProgress * 100}px) translateY(${scrollProgress * -50}px)`,
-                  transition: 'transform 0.3s ease-out'
-                }}
-              />
-              <div
-                className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse"
-                style={{
-                  animationDelay: '1s',
-                  transform: `translateX(${scrollProgress * -100}px) translateY(${scrollProgress * 50}px)`,
-                  transition: 'transform 0.3s ease-out'
+                  height: "100%",
+                  width: "100%",
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  opacity: 0.9
                 }}
               />
             </div>
 
             {/* Label - Top Left */}
-            <div className="absolute top-8 left-8 lg:left-16">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                <div className="w-2 h-2 bg-primary rounded-sm" />
+            <div className="absolute top-8 left-8 lg:left-16 z-20">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-white/80 backdrop-blur-sm bg-white/10 px-3 py-2 rounded-full border border-white/20">
+                <div className="w-2 h-2 bg-white rounded-sm" />
                 What we do
               </div>
             </div>
 
             {/* Slide Counter - Bottom Left */}
-            <div className="absolute bottom-8 left-8 lg:left-16">
-              <div className="px-4 py-2 rounded-full border border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 backdrop-blur">
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
+            <div className="absolute bottom-8 left-8 lg:left-16 z-20">
+              <div className="px-4 py-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-md shadow-xl">
+                <span className="text-sm font-medium text-white">
                   0{currentSlide + 1}
                 </span>
-                <span className="text-sm text-gray-400 dark:text-gray-600 mx-1">/</span>
-                <span className="text-sm text-gray-400 dark:text-gray-600">03</span>
+                <span className="text-sm text-white/60 mx-1">/</span>
+                <span className="text-sm text-white/60">03</span>
               </div>
             </div>
 
             {/* Progress Line */}
-            <div className="absolute left-8 lg:left-16 top-20 bottom-20 w-px bg-gray-200 dark:bg-gray-800">
+            <div className="absolute left-8 lg:left-16 top-20 bottom-20 w-px bg-white/20 z-20">
               <div
-                className="w-full bg-gradient-to-b from-primary via-secondary to-accent transition-all duration-300 ease-out"
+                className="w-full bg-gradient-to-b from-white via-cyan-200 to-white transition-all duration-300 ease-out shadow-lg"
                 style={{ height: `${(scrollProgress % (1/3)) * 300}%` }}
               />
             </div>
@@ -269,11 +271,10 @@ const Index = () => {
                           : 'opacity-0 -translate-y-8 absolute inset-0 pointer-events-none'
                       }`}
                     >
-                      <h2 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
+                      <h2 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight drop-shadow-2xl">
                         {slide.text.split(' ').map((word, wordIndex) => {
                           const isHighlightWord = slide.highlight.includes(word);
                           const wordProgress = Math.max(0, Math.min(1, slideProgress * 2 - (wordIndex * 0.1)));
-                          const isDark = theme === 'dark';
 
                           return (
                             <span
@@ -281,11 +282,12 @@ const Index = () => {
                               className="transition-all duration-700 ease-out inline-block mr-3 md:mr-4"
                               style={{
                                 color: isHighlightWord
-                                  ? isDark ? 'rgb(255, 255, 255)' : 'rgb(17, 24, 39)'
-                                  : isDark
-                                  ? `rgba(156, 163, 175, ${0.2 + (wordProgress * 0.8)})`
-                                  : `rgba(107, 114, 128, ${0.2 + (wordProgress * 0.8)})`,
+                                  ? 'rgb(255, 255, 255)'
+                                  : `rgba(255, 255, 255, ${0.3 + (wordProgress * 0.7)})`,
                                 transform: `translateY(${(1 - wordProgress) * 10}px)`,
+                                textShadow: isHighlightWord
+                                  ? '0 4px 20px rgba(0, 0, 0, 0.3), 0 0 40px rgba(255, 255, 255, 0.2)'
+                                  : '0 2px 10px rgba(0, 0, 0, 0.2)'
                               }}
                             >
                               {word}
@@ -301,12 +303,12 @@ const Index = () => {
 
             {/* Scroll Indicator */}
             <div
-              className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gray-400 dark:text-gray-600 transition-opacity duration-500 ${
+              className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/70 transition-opacity duration-500 z-20 ${
                 scrollProgress > 0.1 ? 'opacity-0' : 'opacity-100 animate-bounce'
               }`}
             >
-              <span className="text-xs uppercase tracking-wider">Scroll</span>
-              <div className="w-px h-8 bg-gradient-to-b from-gray-400 to-transparent" />
+              <span className="text-xs uppercase tracking-wider drop-shadow-lg">Scroll</span>
+              <div className="w-px h-8 bg-gradient-to-b from-white/70 to-transparent" />
             </div>
           </div>
         </div>
