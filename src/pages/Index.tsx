@@ -367,41 +367,117 @@ const Index = () => {
       {/* USP Cards */}
       <section className="py-20 lg:py-32 px-6">
         <div className="container mx-auto max-w-7xl">
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Card 1 */}
-            <div className="bg-gradient-to-br from-[#cef79e] to-[#a7e26e] rounded-2xl p-8 text-gray-900 hover:scale-105 transition-transform">
-              <div className="text-sm mb-4">01.</div>
-              <div className="mb-6">
-                <Clock className="w-12 h-12" />
+          <div className="grid md:grid-cols-3 gap-0">
+            {/* Card 1 - Instant Upload */}
+            <div className="bg-[#D4F4A6] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
+              <div className="text-sm text-gray-700 absolute top-8 right-8">01.</div>
+              <div className="mb-auto pt-8">
+                <svg className="w-20 h-20 mb-12" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <g transform="translate(50, 50)">
+                    <line x1="0" y1="-35" x2="0" y2="-15" />
+                    <line x1="0" y1="-35" x2="10" y2="-25" transform="rotate(0 0 0)" />
+                    <line x1="0" y1="-35" x2="-10" y2="-25" transform="rotate(0 0 0)" />
+
+                    <line x1="0" y1="-35" x2="0" y2="-15" transform="rotate(45 0 0)" />
+                    <line x1="0" y1="-35" x2="10" y2="-25" transform="rotate(45 0 0)" />
+                    <line x1="0" y1="-35" x2="-10" y2="-25" transform="rotate(45 0 0)" />
+
+                    <line x1="0" y1="-35" x2="0" y2="-15" transform="rotate(90 0 0)" />
+                    <line x1="0" y1="-35" x2="10" y2="-25" transform="rotate(90 0 0)" />
+                    <line x1="0" y1="-35" x2="-10" y2="-25" transform="rotate(90 0 0)" />
+
+                    <line x1="0" y1="-35" x2="0" y2="-15" transform="rotate(135 0 0)" />
+                    <line x1="0" y1="-35" x2="10" y2="-25" transform="rotate(135 0 0)" />
+                    <line x1="0" y1="-35" x2="-10" y2="-25" transform="rotate(135 0 0)" />
+
+                    <line x1="0" y1="-35" x2="0" y2="-15" transform="rotate(180 0 0)" />
+                    <line x1="0" y1="-35" x2="10" y2="-25" transform="rotate(180 0 0)" />
+                    <line x1="0" y1="-35" x2="-10" y2="-25" transform="rotate(180 0 0)" />
+
+                    <line x1="0" y1="-35" x2="0" y2="-15" transform="rotate(225 0 0)" />
+                    <line x1="0" y1="-35" x2="10" y2="-25" transform="rotate(225 0 0)" />
+                    <line x1="0" y1="-35" x2="-10" y2="-25" transform="rotate(225 0 0)" />
+
+                    <line x1="0" y1="-35" x2="0" y2="-15" transform="rotate(270 0 0)" />
+                    <line x1="0" y1="-35" x2="10" y2="-25" transform="rotate(270 0 0)" />
+                    <line x1="0" y1="-35" x2="-10" y2="-25" transform="rotate(270 0 0)" />
+
+                    <line x1="0" y1="-35" x2="0" y2="-15" transform="rotate(315 0 0)" />
+                    <line x1="0" y1="-35" x2="10" y2="-25" transform="rotate(315 0 0)" />
+                    <line x1="0" y1="-35" x2="-10" y2="-25" transform="rotate(315 0 0)" />
+                  </g>
+                </svg>
               </div>
-              <h3 className="text-2xl font-bold mb-3">Instant Upload</h3>
-              <p className="text-gray-800">
-                From upload to display in minutes. No waiting, no agencies, no complicated processes.
-              </p>
+              <div>
+                <h3 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-900">Instant Upload</h3>
+                <p className="text-gray-700 text-lg leading-relaxed">
+                  From upload to display in minutes. No waiting, no agencies, no complicated processes.
+                </p>
+              </div>
             </div>
 
-            {/* Card 2 */}
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 text-white hover:scale-105 transition-transform">
-              <div className="text-sm mb-4 text-gray-400">02.</div>
-              <div className="mb-6">
-                <DollarSign className="w-12 h-12" />
+            {/* Card 2 - Affordable Pricing */}
+            <div className="bg-[#2C3E3F] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
+              <div className="text-sm text-gray-400 absolute top-8 right-8">02.</div>
+              <div className="mb-auto pt-8">
+                <svg className="w-20 h-20 mb-12" viewBox="0 0 100 100" fill="none" stroke="white" strokeWidth="1.5">
+                  <g transform="translate(50, 50)">
+                    <polygon points="0,-30 26,-15 26,15 0,30 -26,15 -26,-15" fill="none" />
+                    <polygon points="0,-24 20,-12 20,12 0,24 -20,12 -20,-12" fill="none" />
+                    <polygon points="0,-18 14,-9 14,9 0,18 -14,9 -14,-9" fill="none" />
+                    <polygon points="0,-12 8,-6 8,6 0,12 -8,6 -8,-6" fill="none" />
+                    <polygon points="0,-6 4,-3 4,3 0,6 -4,3 -4,-3" fill="none" />
+                  </g>
+                </svg>
               </div>
-              <h3 className="text-2xl font-bold mb-3">Affordable Pricing</h3>
-              <p className="text-gray-300">
-                Starting at just $22. The most accessible Times Square billboard rates available.
-              </p>
+              <div>
+                <h3 className="text-3xl md:text-4xl font-semibold mb-4 text-white">Affordable Pricing</h3>
+                <p className="text-gray-300 text-lg leading-relaxed">
+                  Starting at just $22. The most accessible Times Square billboard rates available.
+                </p>
+              </div>
             </div>
 
-            {/* Card 3 */}
-            <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 text-gray-900 dark:text-white hover:scale-105 transition-transform">
-              <div className="text-sm mb-4 text-gray-500 dark:text-gray-400">03.</div>
-              <div className="mb-6">
-                <Globe className="w-12 h-12" />
+            {/* Card 3 - Global Reach */}
+            <div className="bg-[#E5E5E5] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
+              <div className="text-sm text-gray-600 absolute top-8 right-8">03.</div>
+              <div className="mb-auto pt-8">
+                <svg className="w-20 h-20 mb-12" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <g transform="translate(50, 50)">
+                    <polygon points="0,-28 28,-14 28,14 0,28 -28,14 -28,-14" fill="none" />
+                    <polygon points="0,-22 22,-11 22,11 0,22 -22,11 -22,-11" fill="none" />
+                    <polygon points="0,-16 16,-8 16,8 0,16 -16,8 -16,-8" fill="none" />
+                    <polygon points="0,-10 10,-5 10,5 0,10 -10,5 -10,-5" fill="none" />
+
+                    <line x1="-28" y1="-14" x2="-22" y2="-11" />
+                    <line x1="-28" y1="14" x2="-22" y2="11" />
+                    <line x1="28" y1="-14" x2="22" y2="-11" />
+                    <line x1="28" y1="14" x2="22" y2="11" />
+                    <line x1="0" y1="-28" x2="0" y2="-22" />
+                    <line x1="0" y1="28" x2="0" y2="22" />
+
+                    <line x1="-22" y1="-11" x2="-16" y2="-8" />
+                    <line x1="-22" y1="11" x2="-16" y2="8" />
+                    <line x1="22" y1="-11" x2="16" y2="-8" />
+                    <line x1="22" y1="11" x2="16" y2="8" />
+                    <line x1="0" y1="-22" x2="0" y2="-16" />
+                    <line x1="0" y1="22" x2="0" y2="16" />
+
+                    <line x1="-16" y1="-8" x2="-10" y2="-5" />
+                    <line x1="-16" y1="8" x2="-10" y2="5" />
+                    <line x1="16" y1="-8" x2="10" y2="-5" />
+                    <line x1="16" y1="8" x2="10" y2="5" />
+                    <line x1="0" y1="-16" x2="0" y2="-10" />
+                    <line x1="0" y1="16" x2="0" y2="10" />
+                  </g>
+                </svg>
               </div>
-              <h3 className="text-2xl font-bold mb-3">Global Reach</h3>
-              <p className="text-gray-700 dark:text-gray-300">
-                Reach millions of daily visitors from around the world in the heart of Times Square.
-              </p>
+              <div>
+                <h3 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-900">Global Reach</h3>
+                <p className="text-gray-700 text-lg leading-relaxed">
+                  Reach millions of daily visitors from around the world in the heart of Times Square.
+                </p>
+              </div>
             </div>
           </div>
         </div>
