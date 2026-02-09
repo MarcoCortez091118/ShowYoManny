@@ -321,31 +321,82 @@ const Index = () => {
       {/* How It Works */}
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-            How Does ShowYoNy Work?
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
+            How Does Times Square Billboard Advertising Work?
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {howItWorksSteps.map((step, idx) => {
-              const colors = [
-                { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/30' },
-                { bg: 'bg-secondary/10', text: 'text-secondary', border: 'border-secondary/30' },
-                { bg: 'bg-accent/10', text: 'text-accent', border: 'border-accent/30' }
-              ];
-              const color = colors[idx % 3];
-              return (
-                <Card key={idx} className={`bg-card/80 backdrop-blur border ${color.border} hover:border-opacity-60 transition-all hover:scale-105`}>
-                  <CardContent className="pt-6">
-                    <div className={`mx-auto w-16 h-16 ${color.bg} rounded-full flex items-center justify-center mb-4`}>
-                      <step.icon className={`w-8 h-8 ${color.text}`} />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 text-center">Step {idx + 1}: {step.title}</h3>
-                    <p className="text-muted-foreground text-center">{step.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
+
+          <div className="relative max-w-4xl mx-auto">
+            {/* Timeline line - hidden on mobile */}
+            <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-secondary to-accent transform -translate-x-1/2 hidden md:block" />
+
+            {/* Step 1 */}
+            <div className="relative mb-12 md:mb-20">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1 md:text-right">
+                  <div className="bg-card/80 backdrop-blur border border-primary/30 rounded-xl p-6 hover:scale-105 transition-all">
+                    <h3 className="text-2xl font-bold mb-3 text-primary">Step 1: Upload Your Content</h3>
+                    <p className="text-muted-foreground mb-2">
+                      Upload an image or video (2048 × 2432 px). Perfect for advertising campaigns, brand awareness, or announcements.
+                    </p>
+                  </div>
+                </div>
+                <div className="relative flex-shrink-0 z-10">
+                  <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center shadow-lg shadow-primary/50 ring-4 ring-background">
+                    <Camera className="w-10 h-10 text-white" />
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary/20 rounded-full animate-ping" />
+                </div>
+                <div className="flex-1 hidden md:block" />
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="relative mb-12 md:mb-20">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1 hidden md:block" />
+                <div className="relative flex-shrink-0 z-10">
+                  <div className="w-20 h-20 bg-gradient-to-br from-secondary to-secondary/70 rounded-full flex items-center justify-center shadow-lg shadow-secondary/50 ring-4 ring-background">
+                    <Shield className="w-10 h-10 text-white" />
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-secondary/20 rounded-full animate-ping" style={{ animationDelay: '0.3s' }} />
+                </div>
+                <div className="flex-1 md:text-left">
+                  <div className="bg-card/80 backdrop-blur border border-secondary/30 rounded-xl p-6 hover:scale-105 transition-all">
+                    <h3 className="text-2xl font-bold mb-3 text-secondary">Step 2: AI Content Review</h3>
+                    <p className="text-muted-foreground">
+                      Our system automatically checks your content for safety and compliance.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="relative">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1 md:text-right">
+                  <div className="bg-card/80 backdrop-blur border border-accent/30 rounded-xl p-6 hover:scale-105 transition-all">
+                    <h3 className="text-2xl font-bold mb-3 text-accent">Step 3: Go Live in Times Square</h3>
+                    <p className="text-muted-foreground mb-2">
+                      Once approved, your ad appears on a real digital billboard in Times Square.
+                    </p>
+                    <p className="text-sm text-muted-foreground italic">
+                      Preview provided before publication.
+                    </p>
+                  </div>
+                </div>
+                <div className="relative flex-shrink-0 z-10">
+                  <div className="w-20 h-20 bg-gradient-to-br from-accent to-accent/70 rounded-full flex items-center justify-center shadow-lg shadow-accent/50 ring-4 ring-background">
+                    <Eye className="w-10 h-10 text-white" />
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-accent/20 rounded-full animate-ping" style={{ animationDelay: '0.6s' }} />
+                </div>
+                <div className="flex-1 hidden md:block" />
+              </div>
+            </div>
           </div>
-          <div className="flex gap-4 justify-center pt-8">
+
+          <div className="flex gap-4 justify-center pt-12">
             <Button
               size="lg"
               onClick={() => navigate('/upload')}
