@@ -17,34 +17,34 @@ const Header = () => {
           </span>
         </div>
 
-        <nav className="flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-full px-2 py-2 border border-border/50 shadow-lg">
+        <nav className="flex items-center bg-background/90 backdrop-blur-md rounded-full pl-6 pr-2 py-2 border border-border/50 shadow-lg">
           <a
             href="#features"
-            className="px-5 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-full hover:bg-accent/10"
+            className="px-4 py-1.5 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors"
           >
             FEATURES
           </a>
           <a
             href="#pricing"
-            className="px-5 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-full hover:bg-accent/10"
+            className="px-4 py-1.5 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors"
           >
             PRICING
           </a>
           <button
             onClick={() => navigate("/business-plans")}
-            className="px-5 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-full hover:bg-accent/10"
+            className="px-4 py-1.5 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors"
           >
             BUSINESS
           </button>
           <a
             href="#kiosk"
-            className="px-5 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-full hover:bg-accent/10"
+            className="px-4 py-1.5 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors"
           >
             KIOSK DEMO
           </a>
           <Button
             onClick={() => navigate("/content-upload")}
-            className="ml-2 px-6 py-2 text-sm font-bold bg-foreground text-background hover:bg-foreground/90 rounded-full shadow-md transition-all hover:shadow-lg"
+            className="ml-2 px-6 py-2.5 text-sm font-bold bg-foreground text-background hover:bg-foreground/90 rounded-full shadow-sm transition-all"
           >
             GET STARTED
           </Button>
