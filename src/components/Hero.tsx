@@ -6,10 +6,10 @@ import WarpShaderHero from "@/components/ui/wrap-shader";
 const Hero = () => {
   const navigate = useNavigate();
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gray-900">
       <WarpShaderHero />
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-8 w-full">
+      <div className="relative z-20 min-h-screen flex items-center justify-center px-8 w-full">
         <div className="max-w-4xl w-full text-center space-y-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white">
             <Zap className="h-4 w-4" />
