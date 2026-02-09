@@ -386,7 +386,7 @@ const Index = () => {
       <section className="w-full">
         <div className="grid md:grid-cols-3 gap-0">
             {/* Card 1 - Instant Upload */}
-            <div className="bg-[#D4F4A6] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
+            <div className="bg-[#ffd23f] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
               <div className="text-sm text-gray-700 absolute top-8 right-8">01.</div>
               <div className="mb-auto pt-8">
                 <svg className="w-20 h-20 mb-12" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -434,10 +434,10 @@ const Index = () => {
             </div>
 
             {/* Card 2 - Affordable Pricing */}
-            <div className="bg-[#2C3E3F] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
-              <div className="text-sm text-gray-400 absolute top-8 right-8">02.</div>
+            <div className="bg-[#05c7cc] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
+              <div className="text-sm text-gray-700 absolute top-8 right-8">02.</div>
               <div className="mb-auto pt-8">
-                <svg className="w-20 h-20 mb-12" viewBox="0 0 100 100" fill="none" stroke="white" strokeWidth="1.5">
+                <svg className="w-20 h-20 mb-12" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <g transform="translate(50, 50)">
                     <polygon points="0,-30 26,-15 26,15 0,30 -26,15 -26,-15" fill="none" />
                     <polygon points="0,-24 20,-12 20,12 0,24 -20,12 -20,-12" fill="none" />
@@ -448,18 +448,18 @@ const Index = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-3xl md:text-4xl font-semibold mb-4 text-white">Affordable Pricing</h3>
-                <p className="text-gray-300 text-lg leading-relaxed">
+                <h3 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-900">Affordable Pricing</h3>
+                <p className="text-gray-700 text-lg leading-relaxed">
                   Starting at just $22. The most accessible Times Square billboard rates available.
                 </p>
               </div>
             </div>
 
             {/* Card 3 - Global Reach */}
-            <div className="bg-[#E5E5E5] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
-              <div className="text-sm text-gray-600 absolute top-8 right-8">03.</div>
+            <div className="bg-[#06335b] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
+              <div className="text-sm text-gray-300 absolute top-8 right-8">03.</div>
               <div className="mb-auto pt-8">
-                <svg className="w-20 h-20 mb-12" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg className="w-20 h-20 mb-12" viewBox="0 0 100 100" fill="none" stroke="white" strokeWidth="1.5">
                   <g transform="translate(50, 50)">
                     <polygon points="0,-28 28,-14 28,14 0,28 -28,14 -28,-14" fill="none" />
                     <polygon points="0,-22 22,-11 22,11 0,22 -22,11 -22,-11" fill="none" />
@@ -490,8 +490,8 @@ const Index = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-900">Global Reach</h3>
-                <p className="text-gray-700 text-lg leading-relaxed">
+                <h3 className="text-3xl md:text-4xl font-semibold mb-4 text-white">Global Reach</h3>
+                <p className="text-gray-200 text-lg leading-relaxed">
                   Reach millions of daily visitors from around the world in the heart of Times Square.
                 </p>
               </div>
@@ -584,7 +584,7 @@ const Index = () => {
                       <Button
                         onClick={() => navigate('/upload')}
                         size="sm"
-                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                        className="w-full bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white text-xs"
                       >
                         Get Started
                       </Button>
@@ -616,7 +616,7 @@ const Index = () => {
                       <Button
                         onClick={() => navigate('/upload')}
                         size="sm"
-                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                        className="w-full bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white text-xs"
                       >
                         Get Started
                       </Button>
@@ -648,7 +648,7 @@ const Index = () => {
                       <Button
                         onClick={() => navigate('/upload')}
                         size="sm"
-                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                        className="w-full bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white text-xs"
                       >
                         Get Started
                       </Button>
@@ -689,7 +689,7 @@ const Index = () => {
                       <Button
                         onClick={() => navigate('/upload')}
                         size="sm"
-                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                        className="w-full bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white text-xs"
                       >
                         Get Started
                       </Button>
@@ -721,7 +721,7 @@ const Index = () => {
                       <Button
                         onClick={() => navigate('/upload')}
                         size="sm"
-                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                        className="w-full bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white text-xs"
                       >
                         Get Started
                       </Button>
@@ -753,7 +753,7 @@ const Index = () => {
                       <Button
                         onClick={() => navigate('/upload')}
                         size="sm"
-                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                        className="w-full bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white text-xs"
                       >
                         Get Started
                       </Button>
@@ -839,7 +839,7 @@ const Index = () => {
             <Button
               size="lg"
               onClick={() => navigate('/upload')}
-              className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 text-lg px-8"
+              className="bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white text-lg px-8"
             >
               Get Started Now
               <ArrowRight className="ml-2 h-5 w-5" />
