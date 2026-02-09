@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
 import { Camera, Video, Zap, Eye, Shield, MessageCircle, Send, Mail, Phone, Moon, Sun, ArrowRight, Clock, DollarSign, Globe } from "lucide-react";
 import showYoLogo from "@/assets/showyo-logo-color.png";
@@ -841,6 +842,216 @@ const Index = () => {
               className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 text-lg px-8"
             >
               Get Started Now
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQs Section */}
+      <section className="py-20 lg:py-32 px-6 bg-white dark:bg-gray-950">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+              Frequently Asked Questions About Times Square Billboard Advertising
+            </h2>
+          </div>
+
+          <Accordion type="single" collapsible className="w-full space-y-2">
+            <AccordionItem value="item-1" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                How much does it cost to advertise on a Times Square billboard?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
+                <p>
+                  The cost to advertise on a Times Square billboard with ShowYoNy starts at <strong>$22</strong>.
+                  Each ad is displayed for 10 seconds, shown 3 times within 24 hours, on a real digital billboard located at 1604 Broadway, New York.
+                </p>
+                <p>
+                  This makes ShowYoNy one of the most affordable ways to advertise in Times Square.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-2" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                Is this a real Times Square billboard?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
+                <p>
+                  Yes. Your content is displayed on a <strong>real digital billboard in Times Square</strong>, not a simulation or virtual screen.
+                  The exact location is <strong>1604 Broadway, Times Square, NYC</strong>, one of the most visited advertising locations in the world.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-3" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                How long does my Times Square billboard ad appear?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
+                <p>
+                  Each ad appears for <strong>10 seconds per display</strong>, and is shown <strong>3 times within a 24-hour period</strong>.
+                </p>
+                <p>
+                  This format is ideal for brand awareness, product launches, viral content, and announcements.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-4" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                What types of content can I display on a Times Square billboard?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="mb-3">You can advertise:</p>
+                <ul className="list-disc list-inside space-y-1 mb-3 ml-2">
+                  <li>Business promotions</li>
+                  <li>Brand campaigns</li>
+                  <li>Product launches</li>
+                  <li>Music releases</li>
+                  <li>Events</li>
+                  <li>Personal messages</li>
+                </ul>
+                <p>
+                  Accepted formats are <strong>PNG images</strong> and <strong>MP4 videos</strong> (Full HD or 4K).
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-5" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                Can businesses advertise in Times Square using ShowYoNy?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="mb-3">Absolutely. ShowYoNy is designed for:</p>
+                <ul className="list-disc list-inside space-y-1 mb-3 ml-2">
+                  <li>Small businesses</li>
+                  <li>Startups</li>
+                  <li>Entrepreneurs</li>
+                  <li>Agencies</li>
+                  <li>Established brands</li>
+                </ul>
+                <p>
+                  We also offer <strong>custom Times Square advertising packages</strong> for businesses that need recurring or long-term exposure.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-6" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                Is this the cheapest way to advertise in Times Square?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
+                <p>
+                  ShowYoNy offers one of the lowest Times Square billboard advertising prices available.
+                </p>
+                <p>
+                  Traditional Times Square billboards can cost thousands of dollars per day, while ShowYoNy allows you to appear on a digital billboard starting at just <strong>$22</strong>.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-7" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                Do I need to be in New York to advertise in Times Square?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
+                <p>
+                  <strong>No.</strong> You can advertise in Times Square from anywhere in the world.
+                </p>
+                <p>
+                  Simply upload your content online, get it approved, and your ad will go live on the billboard.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-8" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                How does the approval process work?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
+                <p>
+                  All content goes through <strong>automatic AI moderation</strong> to ensure it complies with advertising and safety policies.
+                </p>
+                <p>
+                  Once approved, your content is scheduled and displayed on the Times Square digital screen.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-9" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                Can I preview my Times Square billboard ad before it goes live?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p>
+                  Yes. You will receive a <strong>digital preview</strong> of how your content will look on the billboard before final publication.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-10" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                Can I book multiple days or recurring Times Square billboard ads?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="mb-3">Yes. In addition to single-day options, we offer:</p>
+                <ul className="list-disc list-inside space-y-1 mb-3 ml-2">
+                  <li>Daily packages</li>
+                  <li>Weekly packages</li>
+                  <li>Monthly packages</li>
+                  <li>Semi-annual and annual campaigns</li>
+                </ul>
+                <p>
+                  Contact us to create a custom Times Square billboard advertising plan.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-11" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                What makes digital billboard advertising in Times Square effective?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="mb-3">
+                  Times Square receives <strong>millions of visitors every week</strong>, making it one of the most powerful locations for outdoor advertising.
+                </p>
+                <p className="mb-2">Digital billboard ads are:</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Highly visible</li>
+                  <li>Perfect for social media sharing</li>
+                  <li>Ideal for global brand exposure</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-12" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
+              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+                How do I book a Times Square billboard ad?
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="mb-3">Booking is simple:</p>
+                <ol className="list-decimal list-inside space-y-1 mb-4 ml-2">
+                  <li>Upload your image or video</li>
+                  <li>Complete the payment</li>
+                  <li>Get approved</li>
+                  <li>See your ad live in Times Square</li>
+                </ol>
+                <p>
+                  You can book your Times Square billboard ad online in minutes.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          <div className="text-center mt-12">
+            <Button
+              size="lg"
+              onClick={() => navigate('/upload')}
+              className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 text-lg px-8"
+            >
+              Start Your Campaign Now
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
