@@ -365,9 +365,8 @@ const Index = () => {
       </section>
 
       {/* USP Cards */}
-      <section className="py-20 lg:py-32 px-6">
-        <div className="container mx-auto max-w-7xl">
-          <div className="grid md:grid-cols-3 gap-0">
+      <section className="w-full">
+        <div className="grid md:grid-cols-3 gap-0">
             {/* Card 1 - Instant Upload */}
             <div className="bg-[#D4F4A6] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
               <div className="text-sm text-gray-700 absolute top-8 right-8">01.</div>
@@ -479,7 +478,6 @@ const Index = () => {
                 </p>
               </div>
             </div>
-          </div>
         </div>
       </section>
 
