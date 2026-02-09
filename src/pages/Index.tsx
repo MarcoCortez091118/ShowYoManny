@@ -482,7 +482,7 @@ const Index = () => {
       </section>
 
       {/* Marquee Text */}
-      <section className="bg-[#E8E8E8] py-16 md:py-24 lg:py-32 overflow-hidden relative">
+      <section className="bg-[#f3f3f3] py-16 md:py-24 lg:py-32 overflow-hidden relative">
         <div className="absolute top-8 left-8 md:left-16">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-[#D4F4A6]" />
