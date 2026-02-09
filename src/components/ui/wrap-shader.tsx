@@ -16,7 +16,7 @@ export function WrapShader({ color1 = "#f10a94", color2 = "#00d4ff", speed = 1.5
       softness={1}
       distortion={0.25}
       swirl={0.8}
-      swirlIterations={10}
+      swirlIterations={5}
       shape="checks"
       shapeScale={0.1}
       scale={1}

@@ -28,39 +28,48 @@ const Index = () => {
   const lastScrollY = useRef(0);
 
   useEffect(() => {
+    let ticking = false;
+
     const handleScroll = () => {
-      if (scrollerRef.current) {
-        const element = scrollerRef.current;
-        const rect = element.getBoundingClientRect();
-        const elementHeight = element.offsetHeight;
-        const viewportHeight = window.innerHeight;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          if (scrollerRef.current) {
+            const element = scrollerRef.current;
+            const rect = element.getBoundingClientRect();
+            const elementHeight = element.offsetHeight;
+            const viewportHeight = window.innerHeight;
 
-        // If we're at the very top of the page, always show slide 0
-        if (window.scrollY < 10) {
-          setScrollProgress(0);
-          setCurrentSlide(0);
-          return;
-        }
+            // If we're at the very top of the page, always show slide 0
+            if (window.scrollY < 10) {
+              setScrollProgress(0);
+              setCurrentSlide(0);
+              ticking = false;
+              return;
+            }
 
-        // Calculate scroll progress when element is in view
-        if (rect.top < viewportHeight && rect.bottom > 0) {
-          // Progress from 0 to 1 as we scroll through the element
-          const scrolled = Math.max(0, viewportHeight - rect.top);
-          const totalScrollDistance = elementHeight + viewportHeight;
-          const progress = Math.max(0, Math.min(1, scrolled / totalScrollDistance));
+            // Calculate scroll progress when element is in view
+            if (rect.top < viewportHeight && rect.bottom > 0) {
+              // Progress from 0 to 1 as we scroll through the element
+              const scrolled = Math.max(0, viewportHeight - rect.top);
+              const totalScrollDistance = elementHeight + viewportHeight;
+              const progress = Math.max(0, Math.min(1, scrolled / totalScrollDistance));
 
-          setScrollProgress(progress);
+              setScrollProgress(progress);
 
-          // Determine current slide (0, 1, 2, or 3) - 4 slides total
-          const slideIndex = Math.min(3, Math.floor(progress * 4));
-          setCurrentSlide(slideIndex);
-        }
+              // Determine current slide (0, 1, 2, or 3) - 4 slides total
+              const slideIndex = Math.min(3, Math.floor(progress * 4));
+              setCurrentSlide(slideIndex);
+            }
+          }
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
     handleScroll();
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
@@ -75,21 +84,29 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
+    let ticking = false;
+
     const handleHeaderScroll = () => {
-      const currentScrollY = window.scrollY;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
 
-      if (currentScrollY < 10) {
-        setShowHeader(true);
-      } else if (currentScrollY > lastScrollY.current) {
-        setShowHeader(false);
-      } else {
-        setShowHeader(true);
+          if (currentScrollY < 10) {
+            setShowHeader(true);
+          } else if (currentScrollY > lastScrollY.current) {
+            setShowHeader(false);
+          } else {
+            setShowHeader(true);
+          }
+
+          lastScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
       }
-
-      lastScrollY.current = currentScrollY;
     };
 
-    window.addEventListener('scroll', handleHeaderScroll);
+    window.addEventListener('scroll', handleHeaderScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleHeaderScroll);
   }, []);
 
@@ -505,7 +522,7 @@ const Index = () => {
         <div className="container mx-auto max-w-7xl">
           <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start">
             {/* Left Column - Image */}
-            <div className="order-2 lg:order-1 sticky top-24">
+            <div className="order-2 lg:order-1">
               <img
                 src="https://instagram.fpbc2-2.fna.fbcdn.net/v/t39.30808-6/608425265_122140637702962233_4738224972353000105_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=103&ig_cache_key=Mzc5OTk0NzA3NzYxNTc5NzQ3OQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjk2MHgxMjAwLnNkci5DMyJ9&_nc_ohc=QksMm53zfikQ7kNvwH2B249&_nc_oc=AdlGEpAFw3tsdeGqd9GteK5cLx6bkcxaeN4IO-7BKRHdQCDYeh5IguDc1A7Lt8bRAQUVWcp2ayptw__UZ-1iAih9&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=instagram.fpbc2-2.fna&_nc_gid=XU6vzKDGA8ondtOrUTJGgg&oh=00_AfuUBW8crXYBnyCD4BmZCALEPRN71Uc-5qQLdl3XC2JLLA&oe=699013AA"
                 alt="Times Square Billboard"
