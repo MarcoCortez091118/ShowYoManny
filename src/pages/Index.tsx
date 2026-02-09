@@ -33,10 +33,17 @@ const Index = () => {
         const elementHeight = element.offsetHeight;
         const viewportHeight = window.innerHeight;
 
+        // If we're at the very top of the page, always show slide 0
+        if (window.scrollY < 10) {
+          setScrollProgress(0);
+          setCurrentSlide(0);
+          return;
+        }
+
         // Calculate scroll progress when element is in view
         if (rect.top < viewportHeight && rect.bottom > 0) {
           // Progress from 0 to 1 as we scroll through the element
-          const scrolled = viewportHeight - rect.top;
+          const scrolled = Math.max(0, viewportHeight - rect.top);
           const totalScrollDistance = elementHeight + viewportHeight;
           const progress = Math.max(0, Math.min(1, scrolled / totalScrollDistance));
 
