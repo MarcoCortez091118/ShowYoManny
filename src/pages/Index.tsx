@@ -152,7 +152,7 @@ const Index = () => {
 
         <div className="container mx-auto max-w-5xl relative z-10">
           <div className="text-center space-y-6">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] leading-tight">
               Times Square Billboard Advertising from $22 – Show Your Content on a Digital Billboard
             </h1>
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] max-w-4xl mx-auto">
