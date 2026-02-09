@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
-import { Camera, Video, Sparkles, Zap, Eye, Shield, MessageCircle, Send, Mail, Phone } from "lucide-react";
+import { Camera, Video, Sparkles, Zap, Eye, Shield, MessageCircle, Send, Mail, Phone, Users, Briefcase, Link as LinkIcon } from "lucide-react";
 import showYoLogo from "@/assets/showyo-logo-color.png";
 import { planService } from "@/domain/services/planService";
 import { toast } from "sonner";
@@ -150,33 +150,91 @@ const Index = () => {
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-transparent" />
 
-        <div className="container mx-auto max-w-5xl relative z-10">
-          <div className="text-center space-y-6">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] leading-tight">
-              Times Square Billboard Advertising from $22 – Show Your Content on a Digital Billboard
-            </h1>
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] max-w-4xl mx-auto">
-              Advertise in Times Square, New York for 10 Seconds on a High-Impact Digital Billboard
-            </h2>
-            <p className="text-lg md:text-xl lg:text-2xl text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] max-w-3xl mx-auto leading-relaxed">
-              Upload your image or video and get featured on a real digital billboard at 1604 Broadway, Times Square, NYC. Affordable, fast, secure, and AI-moderated.
-            </p>
-            <div className="flex gap-4 justify-center pt-6">
-              <Button
-                size="lg"
-                onClick={() => navigate('/upload')}
-                className="bg-[#f10a94] hover:bg-[#f10a94]/90 text-white font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(241,10,148,0.5)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(241,10,148,0.7)]"
-              >
-                Start Now
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => navigate('/business-plans')}
-                className="border-2 border-[#00d4ff] bg-[#00d4ff]/10 text-white hover:bg-[#00d4ff]/20 font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(0,212,255,0.3)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(0,212,255,0.5)]"
-              >
-                Business Plans
-              </Button>
+        <div className="container mx-auto max-w-7xl relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-6">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] leading-tight">
+                Times Square Billboard Advertising from $22 – Show Your Content on a Digital Billboard
+              </h1>
+              <p className="text-lg md:text-xl text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] leading-relaxed">
+                Upload your image or video and get featured on a real digital billboard at 1604 Broadway, Times Square, NYC. Affordable, fast, secure, and AI-moderated.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <Button
+                  size="lg"
+                  onClick={() => navigate('/upload')}
+                  className="bg-[#f10a94] hover:bg-[#f10a94]/90 text-white font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(241,10,148,0.5)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(241,10,148,0.7)]"
+                >
+                  Start Now
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => navigate('/business-plans')}
+                  className="border-2 border-[#00d4ff] bg-[#00d4ff]/10 text-white hover:bg-[#00d4ff]/20 font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(0,212,255,0.3)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(0,212,255,0.5)]"
+                >
+                  Business Plans
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-8 pt-4">
+                <div className="flex items-center gap-3">
+                  <Users className="h-6 w-6 text-white/70" />
+                  <div>
+                    <div className="text-2xl font-bold text-white">15.2K</div>
+                    <div className="text-sm text-white/70">Active customers</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Briefcase className="h-6 w-6 text-white/70" />
+                  <div>
+                    <div className="text-2xl font-bold text-white">4.5K</div>
+                    <div className="text-sm text-white/70">Displays</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <LinkIcon className="h-6 w-6 text-white/70" />
+                  <div>
+                    <div className="text-xl font-bold text-white">Resources</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative hidden lg:block">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl transform translate-y-8">
+                    <img
+                      src="https://images.pexels.com/photos/3184298/pexels-photo-3184298.jpeg?auto=compress&cs=tinysrgb&w=600"
+                      alt="Billboard display"
+                      className="w-full h-64 object-cover"
+                    />
+                  </div>
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                    <img
+                      src="https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=600"
+                      alt="Digital content"
+                      className="w-full h-64 object-cover"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                    <img
+                      src="https://images.pexels.com/photos/3184287/pexels-photo-3184287.jpeg?auto=compress&cs=tinysrgb&w=600"
+                      alt="Times Square"
+                      className="w-full h-64 object-cover"
+                    />
+                  </div>
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl transform translate-y-8">
+                    <img
+                      src="https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=600"
+                      alt="Advertising"
+                      className="w-full h-64 object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
