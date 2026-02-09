@@ -172,10 +172,10 @@ const Index = () => {
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => navigate('/kiosk')}
+                onClick={() => navigate('/business-plans')}
                 className="border-2 border-[#00d4ff] bg-[#00d4ff]/10 text-white hover:bg-[#00d4ff]/20 font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(0,212,255,0.3)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(0,212,255,0.5)]"
               >
-                Watch Live
+                Business Plans
               </Button>
             </div>
           </div>
