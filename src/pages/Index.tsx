@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
 import { Camera, Video, Zap, Eye, Shield, MessageCircle, Send, Mail, Phone, Moon, Sun, ArrowRight, Clock, DollarSign, Globe } from "lucide-react";
-import showYoLogo from "@/assets/showyo-logo-color.png";
+const showYoLogo = "https://green-dragonfly-496875.hostingersite.com/wp-content/uploads/2026/02/Diseno-sin-titulo5.png";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import WarpShaderHero from "@/components/ui/wrap-shader";
