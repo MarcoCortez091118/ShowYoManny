@@ -523,7 +523,7 @@ const Index = () => {
         <div className="container mx-auto max-w-7xl">
           <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start">
             {/* Left Column - Image */}
-            <div className="order-2 lg:order-1">
+            <div className="order-2 lg:order-1 lg:sticky lg:top-32 self-start">
               <img
                 src="https://instagram.fpbc2-2.fna.fbcdn.net/v/t39.30808-6/608425265_122140637702962233_4738224972353000105_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=103&ig_cache_key=Mzc5OTk0NzA3NzYxNTc5NzQ3OQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjk2MHgxMjAwLnNkci5DMyJ9&_nc_ohc=QksMm53zfikQ7kNvwH2B249&_nc_oc=AdlGEpAFw3tsdeGqd9GteK5cLx6bkcxaeN4IO-7BKRHdQCDYeh5IguDc1A7Lt8bRAQUVWcp2ayptw__UZ-1iAih9&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=instagram.fpbc2-2.fna&_nc_gid=XU6vzKDGA8ondtOrUTJGgg&oh=00_AfuUBW8crXYBnyCD4BmZCALEPRN71Uc-5qQLdl3XC2JLLA&oe=699013AA"
                 alt="Times Square Billboard"
