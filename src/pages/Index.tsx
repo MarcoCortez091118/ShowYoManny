@@ -482,12 +482,18 @@ const Index = () => {
       </section>
 
       {/* Marquee Text */}
-      <section className="bg-gray-900 dark:bg-gray-950 py-8 overflow-hidden">
+      <section className="bg-[#E8E8E8] py-16 md:py-24 lg:py-32 overflow-hidden relative">
+        <div className="absolute top-8 left-8 md:left-16">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-[#D4F4A6]" />
+            <span className="text-xs uppercase tracking-wider text-gray-600">THE SHOWYO PLATFORM</span>
+          </div>
+        </div>
         <div className="flex whitespace-nowrap animate-marquee">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center">
             {Array(10).fill(null).map((_, i) => (
-              <span key={i} className="text-2xl md:text-3xl font-bold text-white/20">
-                Display on Times Square —
+              <span key={i} className="text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-gray-900 px-8">
+                ShowYoNy – Affordable Times Square Billboard Advertising from $22
               </span>
             ))}
           </div>
