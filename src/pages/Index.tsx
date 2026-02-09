@@ -190,7 +190,7 @@ const Index = () => {
               </Button>
               <Button
                 onClick={() => navigate('/upload')}
-                className="ml-2 px-6 py-2.5 text-sm font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 rounded-full shadow-sm transition-all"
+                className="ml-2 px-6 py-2.5 text-sm font-bold bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white rounded-full shadow-sm transition-all"
               >
                 GET STARTED
               </Button>
@@ -372,7 +372,7 @@ const Index = () => {
               <Button
                 size="lg"
                 onClick={() => navigate('/upload')}
-                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 mt-6"
+                className="bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white mt-6"
               >
                 Start Your Campaign
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -1049,7 +1049,7 @@ const Index = () => {
             <Button
               size="lg"
               onClick={() => navigate('/upload')}
-              className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 text-lg px-8"
+              className="bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white text-lg px-8"
             >
               Start Your Campaign Now
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -1119,7 +1119,7 @@ const Index = () => {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900"
+                    className="w-full bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white disabled:opacity-50"
                   >
                     {isSubmitting ? "Sending..." : (
                       <>
