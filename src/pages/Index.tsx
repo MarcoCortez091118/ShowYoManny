@@ -1,14 +1,12 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
-import { Camera, Video, Sparkles, Zap, Eye, Shield, MessageCircle, Send, Mail, Phone, Users, Briefcase, Link as LinkIcon, Moon, Sun } from "lucide-react";
+import { Camera, Video, Zap, Eye, Shield, MessageCircle, Send, Mail, Phone, Moon, Sun, ArrowRight, Clock, DollarSign, Globe } from "lucide-react";
 import showYoLogo from "@/assets/showyo-logo-color.png";
-import { planService } from "@/domain/services/planService";
 import { toast } from "sonner";
-import { WrapShader } from "@/components/ui/wrap-shader";
 import { useTheme } from "@/contexts/ThemeContext";
 
 const Index = () => {
@@ -21,10 +19,25 @@ const Index = () => {
     message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setIsMounted(true);
+    const handleScroll = () => {
+      if (scrollerRef.current) {
+        const element = scrollerRef.current;
+        const rect = element.getBoundingClientRect();
+        const scrollableHeight = element.scrollHeight - window.innerHeight;
+        const scrolled = -rect.top;
+        const progress = Math.max(0, Math.min(1, scrolled / scrollableHeight));
+        setScrollProgress(progress);
+        setCurrentStep(Math.floor(progress * 3));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
@@ -54,534 +67,426 @@ const Index = () => {
   };
 
   const handleWhatsAppClick = () => {
-    const whatsappUrl = "https://wa.me/19297421127";
-    window.open(whatsappUrl, "_blank");
+    window.open("https://wa.me/19297421127", "_blank");
   };
 
-  const pricingOptions = useMemo(() => {
-    return planService.getAllPlans().map((plan) => {
-      const Icon = plan.type === "photo" ? Camera : Video;
-      const highlightIcon = plan.includesBorder ? Sparkles : Icon;
-
-      const baseCost = plan.price - 2;
-      const platformFee = 2;
-
-      const features = [
-        `${plan.displayDurationSeconds} seconds display`,
-        "Displayed 3 times in 24 hours",
-        ...(plan.includesBorder ? ["Custom border"] : []),
-        plan.includesLogo ? "ShowYo logo overlay" : "No logo overlay",
-        `$${baseCost} + $${platformFee} platform fee`,
-      ];
-
-      return {
-        id: plan.id,
-        title: plan.title,
-        price: plan.price,
-        baseCost,
-        platformFee,
-        icon: plan.includesBorder ? highlightIcon : Icon,
-        features,
-        popular: Boolean(plan.isPopular),
-      };
-    });
-  }, []);
-
-  const howItWorksSteps = [
+  const scrollSteps = [
     {
-      icon: Camera,
-      title: "Upload Your Content",
-      description: "Image (2048 × 2432 px) or MP4 video. Promote your brand, event, product, or personal message."
+      title: "Affordable Times Square advertising for everyone",
+      description: "Whether you're promoting a brand, product, event, or personal message, ShowYo makes Times Square billboard advertising accessible without agencies or contracts."
     },
     {
-      icon: Shield,
-      title: "AI Review",
-      description: "We validate that your content is safe and complies with our policies."
+      title: "From upload to display in minutes",
+      description: "Our automated platform handles everything: AI content moderation, scheduling, and live broadcasting on one of the world's most iconic digital billboards."
     },
     {
-      icon: Eye,
-      title: "See It Live",
-      description: "Once approved, you'll see it displayed on our LED screen in Times Square. A digital preview is provided before final publication."
-    },
-  ];
-
-  const whyAdvertiseFeatures = [
-    "One of the lowest Times Square billboard costs available",
-    "Ideal for viral marketing, launches, and brand visibility",
-    "Used by artists, influencers, startups, and businesses",
-    "Flexible packages: daily, weekly, monthly, and annual",
-    "No need to be in New York"
+      title: "Real impact, real visibility",
+      description: "Your content displayed 3 times every 8 hours on a premium digital billboard at 1604 Broadway, reaching millions of daily visitors in the heart of Times Square."
+    }
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background text-foreground">
-      {/* Navigation */}
-      <nav className="border-b border-border bg-white/90 dark:bg-navy/90 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <img src={showYoLogo} alt="ShowYo" className="h-10 w-auto" />
-          </div>
-          <div className="flex gap-4 items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="text-gray-700 dark:text-accent hover:text-accent/80"
-            >
-              {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-            </Button>
-            <Button variant="ghost" onClick={() => navigate('/business-plans')} className="text-gray-700 dark:text-accent hover:text-accent/80">
-              Business Plans
-            </Button>
+    <div className="min-h-screen bg-white dark:bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-gray-200 dark:border-border bg-white/95 dark:bg-navy/95 backdrop-blur-sm">
+        <div className="container mx-auto px-6 lg:px-12 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <img src={showYoLogo} alt="ShowYo" className="h-8 w-auto" />
+            </div>
+            <nav className="hidden md:flex items-center gap-8">
+              <button
+                onClick={() => navigate('/business-plans')}
+                className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                Business Plans
+              </button>
+              <button
+                onClick={() => navigate('/kiosk')}
+                className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                Watch Live
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="text-gray-700 dark:text-gray-300"
+              >
+                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              </Button>
+              <Button
+                onClick={() => navigate('/upload')}
+                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 text-sm px-6"
+              >
+                Get Started
+              </Button>
+            </nav>
+            <div className="md:hidden flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+              >
+                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
         </div>
-      </nav>
+      </header>
 
-      {/* Hero Section */}
-      <section className="relative py-20 px-4 overflow-hidden min-h-[600px] flex items-center">
-        {isMounted && (
-          <div className="absolute inset-0 pointer-events-none">
-            <WrapShader
-              color1="#f10a94"
-              color2="#00d4ff"
-              speed={1.5}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                width: '100%',
-                height: '100%',
-                opacity: 0.8
-              }}
-            />
+      {/* Hero XL */}
+      <section className="relative min-h-screen flex flex-col" ref={scrollerRef}>
+        {/* Hero Main */}
+        <div className="relative flex-1 flex items-center justify-center px-6 py-20 lg:py-32 overflow-hidden">
+          {/* Background Video/Animation */}
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-100 via-white to-gray-50 dark:from-gray-900 dark:via-background dark:to-gray-900">
+            <div className="absolute inset-0 opacity-30 dark:opacity-20">
+              <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+            </div>
           </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-transparent" />
 
-        <div className="container mx-auto max-w-7xl relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] leading-tight">
-                Times Square Billboard Advertising from $22 – Show Your Content on a Digital Billboard
-              </h1>
-              <p className="text-lg md:text-xl text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] leading-relaxed">
-                Upload your image or video and get featured on a real digital billboard at 1604 Broadway, Times Square, NYC. Affordable, fast, secure, and AI-moderated.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Button
-                  size="lg"
-                  onClick={() => navigate('/upload')}
-                  className="bg-[#f10a94] hover:bg-[#f10a94]/90 text-white font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(241,10,148,0.5)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(241,10,148,0.7)]"
-                >
-                  Start Now
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => navigate('/business-plans')}
-                  className="border-2 border-[#00d4ff] bg-[#00d4ff]/10 text-white hover:bg-[#00d4ff]/20 font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(0,212,255,0.3)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(0,212,255,0.5)]"
-                >
-                  Business Plans
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-8 pt-4">
-                <div className="flex items-center gap-3">
-                  <Users className="h-6 w-6 text-white/70" />
-                  <div>
-                    <div className="text-2xl font-bold text-white">15.2K</div>
-                    <div className="text-sm text-white/70">Active customers</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Briefcase className="h-6 w-6 text-white/70" />
-                  <div>
-                    <div className="text-2xl font-bold text-white">4.5K</div>
-                    <div className="text-sm text-white/70">Displays</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <LinkIcon className="h-6 w-6 text-white/70" />
-                  <div>
-                    <div className="text-xl font-bold text-white">Resources</div>
-                  </div>
-                </div>
-              </div>
+          <div className="relative z-10 container mx-auto max-w-5xl text-center">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 dark:text-white mb-8 leading-tight">
+              Display your content on Times Square's iconic billboard
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed">
+              Upload your image or video and broadcast it on a real digital billboard at 1604 Broadway, NYC. Affordable, fast, and accessible to everyone.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                size="lg"
+                onClick={() => navigate('/upload')}
+                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 text-lg px-8 py-6 h-auto group"
+              >
+                Start Now
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate('/business-plans')}
+                className="text-lg px-8 py-6 h-auto border-2"
+              >
+                Business Plans
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Scroller Section */}
+        <div className="bg-white dark:bg-background border-t border-gray-200 dark:border-border">
+          <div className="container mx-auto px-6 lg:px-12 py-8">
+            <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-6">
+              What we do
             </div>
 
-            <div className="relative hidden lg:block">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl transform translate-y-8">
-                    <img
-                      src="https://images.pexels.com/photos/3184298/pexels-photo-3184298.jpeg?auto=compress&cs=tinysrgb&w=600"
-                      alt="Billboard display"
-                      className="w-full h-64 object-cover"
-                    />
+            <div className="relative">
+              {/* Progress Bar */}
+              <div className="absolute left-0 top-0 h-1 bg-gray-200 dark:bg-gray-800 w-full">
+                <div
+                  className="h-full bg-gradient-to-r from-primary via-secondary to-accent transition-all duration-300"
+                  style={{ width: `${scrollProgress * 100}%` }}
+                />
+              </div>
+
+              <div className="pt-8 grid md:grid-cols-3 gap-8">
+                {scrollSteps.map((step, idx) => (
+                  <div
+                    key={idx}
+                    className={`transition-all duration-500 ${
+                      currentStep >= idx ? 'opacity-100' : 'opacity-40'
+                    }`}
+                  >
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                      0{idx + 1} / 03
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                      {step.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                      {step.description}
+                    </p>
                   </div>
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                    <img
-                      src="https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=600"
-                      alt="Digital content"
-                      className="w-full h-64 object-cover"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                    <img
-                      src="https://images.pexels.com/photos/3184287/pexels-photo-3184287.jpeg?auto=compress&cs=tinysrgb&w=600"
-                      alt="Times Square"
-                      className="w-full h-64 object-cover"
-                    />
-                  </div>
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl transform translate-y-8">
-                    <img
-                      src="https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=600"
-                      alt="Advertising"
-                      className="w-full h-64 object-cover"
-                    />
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* What is ShowYoNy */}
-      <section className="py-16 px-4 bg-gradient-to-b from-transparent via-gray-50 dark:via-navy/30 to-transparent">
+      {/* Platform Section */}
+      <section className="bg-gray-50 dark:bg-gray-900 py-20 lg:py-32 px-6">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6 text-gray-900 dark:text-white">
-            What Is ShowYoNy?
-          </h2>
-          <p className="text-lg md:text-xl text-gray-600 dark:text-muted-foreground text-center max-w-4xl mx-auto mb-4">
-            ShowYoNy is an affordable Times Square billboard advertising platform that allows individuals and businesses to display their content on one of the most iconic digital billboards in the world.
-          </p>
-          <p className="text-lg md:text-xl text-gray-600 dark:text-muted-foreground text-center max-w-4xl mx-auto mb-12">
-            Whether you're promoting a brand, product, event, music release, startup, or personal message, ShowYoNy makes Times Square advertising accessible to everyone — without agencies or long-term contracts.
-          </p>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Billboard Location */}
-            <div className="bg-white/80 dark:bg-card/80 backdrop-blur border border-primary/30 rounded-xl p-6 shadow-sm">
-              <h3 className="text-2xl font-bold mb-4 text-primary">Billboard Location</h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-semibold text-gray-600 dark:text-muted-foreground mb-1">Digital Billboard Location:</p>
-                  <p className="text-base text-gray-900 dark:text-white">1604 Broadway, Times Square, New York, NY</p>
-                </div>
-                <div>
-                  <a
-                    href="https://maps.app.goo.gl/m42zsQFYZtMfa7SJ9"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors underline"
-                  >
-                    View on Google Maps
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                </div>
+          <div className="grid lg:grid-cols-[200px_1fr] gap-12 lg:gap-16">
+            <aside>
+              <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 sticky top-32">
+                The ShowYo Platform
               </div>
+            </aside>
+
+            <div className="space-y-8">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
+                Making Times Square advertising{" "}
+                <span className="text-gray-400 dark:text-gray-600">accessible to everyone.</span>
+              </h2>
+
+              <div className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-3xl">
+                <p className="mb-4">
+                  Our platform combines automated content moderation, secure payment processing, and real-time billboard scheduling to deliver your message to millions of daily visitors in the world's most iconic intersection.
+                </p>
+                <p>
+                  From individual creators to global brands, ShowYo democratizes premium outdoor advertising without agencies, contracts, or excessive costs.
+                </p>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={() => navigate('/upload')}
+                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 mt-6"
+              >
+                Start Your Campaign
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* USP Cards */}
+      <section className="py-20 lg:py-32 px-6">
+        <div className="container mx-auto max-w-7xl">
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Card 1 */}
+            <div className="bg-gradient-to-br from-[#cef79e] to-[#a7e26e] rounded-2xl p-8 text-gray-900 hover:scale-105 transition-transform">
+              <div className="text-sm mb-4">01.</div>
+              <div className="mb-6">
+                <Clock className="w-12 h-12" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3">Instant Upload</h3>
+              <p className="text-gray-800">
+                From upload to display in minutes. No waiting, no agencies, no complicated processes.
+              </p>
             </div>
 
-            {/* Ad Specifications */}
-            <div className="bg-white/80 dark:bg-card/80 backdrop-blur border border-secondary/30 rounded-xl p-6 shadow-sm">
-              <h3 className="text-2xl font-bold mb-4 text-secondary">Ad Specifications</h3>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0" />
-                  <div>
-                    <span className="font-semibold">Ad Length:</span> 10 seconds
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0" />
-                  <div>
-                    <span className="font-semibold">Views:</span> 3 times every 8 hours (first view after payment)
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0" />
-                  <div>
-                    <span className="font-semibold">Formats:</span> PNG, MP4 (Full HD / 4K)
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0" />
-                  <div>
-                    <span className="font-semibold">Moderation:</span> Automated review with AI
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0" />
-                  <div>
-                    <span className="font-semibold">Availability:</span> Worldwide
-                  </div>
-                </li>
-              </ul>
+            {/* Card 2 */}
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 text-white hover:scale-105 transition-transform">
+              <div className="text-sm mb-4 text-gray-400">02.</div>
+              <div className="mb-6">
+                <DollarSign className="w-12 h-12" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3">Affordable Pricing</h3>
+              <p className="text-gray-300">
+                Starting at just $22. The most accessible Times Square billboard rates available.
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 text-gray-900 dark:text-white hover:scale-105 transition-transform">
+              <div className="text-sm mb-4 text-gray-500 dark:text-gray-400">03.</div>
+              <div className="mb-6">
+                <Globe className="w-12 h-12" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3">Global Reach</h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                Reach millions of daily visitors from around the world in the heart of Times Square.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Marquee Text */}
+      <section className="bg-gray-900 dark:bg-gray-950 py-8 overflow-hidden">
+        <div className="flex whitespace-nowrap animate-marquee">
+          <div className="flex items-center gap-8">
+            {Array(10).fill(null).map((_, i) => (
+              <span key={i} className="text-2xl md:text-3xl font-bold text-white/20">
+                Display on Times Square —
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section className="py-20 lg:py-32 px-6">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <div className="order-2 lg:order-1">
+              <img
+                src="https://images.pexels.com/photos/3184287/pexels-photo-3184287.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                alt="Times Square Billboard"
+                className="rounded-2xl shadow-2xl w-full"
+              />
+            </div>
+
+            <div className="order-1 lg:order-2 space-y-6">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
+                Democratizing premium outdoor advertising for the digital age.
+              </h2>
+
+              <div className="grid md:grid-cols-2 gap-6 text-gray-600 dark:text-gray-400">
+                <div>
+                  <p className="leading-relaxed">
+                    ShowYo was built to make Times Square billboard advertising accessible to creators, entrepreneurs, and businesses of all sizes.
+                  </p>
+                </div>
+                <div>
+                  <p className="leading-relaxed">
+                    Our automated platform handles content moderation, payment processing, and scheduling—eliminating traditional barriers and putting the power of iconic advertising in your hands.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate('/business-plans')}
+                className="border-2 mt-4"
+              >
+                Explore Business Solutions
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="py-16 px-4">
+      <section className="bg-gray-100 dark:bg-gray-900 rounded-[3rem] py-20 lg:py-32 px-6 mx-6 lg:mx-12">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
-            How Does Times Square Billboard Advertising Work?
-          </h2>
-
-          <div className="relative max-w-4xl mx-auto">
-            {/* Timeline line - hidden on mobile */}
-            <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-secondary to-accent transform -translate-x-1/2 hidden md:block" />
-
-            {/* Step 1 */}
-            <div className="relative mb-12 md:mb-20">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-1 md:text-right">
-                  <div className="bg-card/80 backdrop-blur border border-primary/30 rounded-xl p-6 hover:scale-105 transition-all">
-                    <h3 className="text-2xl font-bold mb-3 text-primary">Step 1: Upload Your Content</h3>
-                    <p className="text-muted-foreground mb-2">
-                      Upload an image or video (2048 × 2432 px). Perfect for advertising campaigns, brand awareness, or announcements.
-                    </p>
-                  </div>
-                </div>
-                <div className="relative flex-shrink-0 z-10">
-                  <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center shadow-lg shadow-primary/50 ring-4 ring-background">
-                    <Camera className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary/20 rounded-full animate-ping" />
-                </div>
-                <div className="flex-1 hidden md:block" />
-              </div>
-            </div>
-
-            {/* Step 2 */}
-            <div className="relative mb-12 md:mb-20">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-1 hidden md:block" />
-                <div className="relative flex-shrink-0 z-10">
-                  <div className="w-20 h-20 bg-gradient-to-br from-secondary to-secondary/70 rounded-full flex items-center justify-center shadow-lg shadow-secondary/50 ring-4 ring-background">
-                    <Shield className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-secondary/20 rounded-full animate-ping" style={{ animationDelay: '0.3s' }} />
-                </div>
-                <div className="flex-1 md:text-left">
-                  <div className="bg-card/80 backdrop-blur border border-secondary/30 rounded-xl p-6 hover:scale-105 transition-all">
-                    <h3 className="text-2xl font-bold mb-3 text-secondary">Step 2: AI Content Review</h3>
-                    <p className="text-muted-foreground">
-                      Our system automatically checks your content for safety and compliance.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 3 */}
-            <div className="relative">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-1 md:text-right">
-                  <div className="bg-card/80 backdrop-blur border border-accent/30 rounded-xl p-6 hover:scale-105 transition-all">
-                    <h3 className="text-2xl font-bold mb-3 text-accent">Step 3: Go Live in Times Square</h3>
-                    <p className="text-muted-foreground mb-2">
-                      Once approved, your ad appears on a real digital billboard in Times Square.
-                    </p>
-                    <p className="text-sm text-muted-foreground italic">
-                      Preview provided before publication.
-                    </p>
-                  </div>
-                </div>
-                <div className="relative flex-shrink-0 z-10">
-                  <div className="w-20 h-20 bg-gradient-to-br from-accent to-accent/70 rounded-full flex items-center justify-center shadow-lg shadow-accent/50 ring-4 ring-background">
-                    <Eye className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-accent/20 rounded-full animate-ping" style={{ animationDelay: '0.6s' }} />
-                </div>
-                <div className="flex-1 hidden md:block" />
-              </div>
-            </div>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+              How It Works
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-400">
+              Three simple steps to Times Square
+            </p>
           </div>
 
-          <div className="flex gap-4 justify-center pt-12">
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="pt-6">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+                  <Camera className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Upload Content
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Upload your image (2048 × 2432 px) or video. Choose your display package.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="pt-6">
+                <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mb-4">
+                  <Shield className="w-6 h-6 text-secondary" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  AI Review
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Automated content moderation ensures your ad meets platform guidelines.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="pt-6">
+                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4">
+                  <Eye className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Go Live
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Your content displays on our Times Square billboard. Watch it live!
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center mt-12">
             <Button
               size="lg"
               onClick={() => navigate('/upload')}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8 electric-glow"
+              className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 text-lg px-8"
             >
-              Start Now
+              Get Started Now
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate('/kiosk')}
-              className="border-secondary text-secondary hover:bg-secondary/10 font-bold px-8 neon-glow"
-            >
-              Watch Live
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Why Advertise */}
-      <section className="py-16 px-4 bg-gradient-to-b from-transparent via-gray-50 dark:via-navy/30 to-transparent">
-        <div className="container mx-auto max-w-5xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-gray-900 dark:text-white">
-            Why Advertise in Times Square with ShowYoNy?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {whyAdvertiseFeatures.map((feature, idx) => (
-              <div key={idx} className="flex items-start gap-3 bg-white/60 dark:bg-card/60 backdrop-blur border border-accent/20 rounded-lg p-4 shadow-sm">
-                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0" />
-                <p className="text-gray-700 dark:text-muted-foreground">{feature}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Times Square Billboard Pricing
-            </h2>
-            <p className="text-xl text-muted-foreground mb-2">
-              Affordable digital billboard advertising in Times Square — no hidden fees.
-            </p>
-            <p className="text-lg text-muted-foreground">
-              Choose your display option and upload instantly to Times Square
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pricingOptions.map((option) => {
-              const Icon = option.icon;
-              return (
-                <Card
-                  key={option.id}
-                  className={`relative bg-card/80 backdrop-blur border transition-all hover:scale-105 ${
-                    option.popular
-                      ? 'border-primary/50 shadow-lg shadow-primary/20'
-                      : 'border-border hover:border-secondary/40'
-                  }`}
-                >
-                  {option.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-bold electric-glow">
-                      Most Popular
-                    </div>
-                  )}
-                  <CardHeader>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-secondary/10 rounded-lg">
-                        <Icon className="w-6 h-6 text-secondary" />
-                      </div>
-                      <CardTitle className="text-xl">{option.title}</CardTitle>
-                    </div>
-                    <div className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                      ${option.price}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <ul className="space-y-2">
-                      {option.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <div className="w-1.5 h-1.5 bg-accent rounded-full" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground font-bold transition-all"
-                      onClick={() => navigate('/upload', { state: { selectedPlan: option.id } })}
-                    >
-                      Select Plan
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
           </div>
         </div>
       </section>
 
       {/* Contact Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-transparent via-gray-50 dark:via-navy/30 to-transparent">
+      <section className="py-20 lg:py-32 px-6">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
               Get in Touch
             </h2>
-            <p className="text-xl text-gray-600 dark:text-muted-foreground">
-              Have questions or need a custom package? Contact us directly
+            <p className="text-xl text-gray-600 dark:text-gray-400">
+              Ready to showcase your brand? Contact us for custom packages
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Contact Form */}
-            <Card className="bg-white/80 dark:bg-card/80 backdrop-blur border border-primary/30 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+          <div className="grid lg:grid-cols-2 gap-8">
+            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3 mb-6">
                   <Mail className="w-5 h-5 text-primary" />
-                  Send us a Message
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Send us a Message</h3>
+                </div>
                 <form onSubmit={handleContactSubmit} className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Name</label>
                     <Input
                       type="text"
-                      placeholder="Your name"
+                      placeholder="Name"
                       value={contactForm.name}
                       onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
                       required
-                      className="bg-background/50"
+                      className="bg-gray-50 dark:bg-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Email</label>
                     <Input
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder="Email"
                       value={contactForm.email}
                       onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
                       required
-                      className="bg-background/50"
+                      className="bg-gray-50 dark:bg-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Phone (optional)</label>
                     <Input
                       type="tel"
-                      placeholder="+1 (555) 123-4567"
+                      placeholder="Phone (optional)"
                       value={contactForm.phone}
                       onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                      className="bg-background/50"
+                      className="bg-gray-50 dark:bg-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Message</label>
                     <Textarea
-                      placeholder="Tell us about your project or inquiry..."
+                      placeholder="Message"
                       value={contactForm.message}
                       onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
                       required
-                      className="bg-background/50 min-h-[120px]"
+                      className="bg-gray-50 dark:bg-gray-900 min-h-[120px]"
                     />
                   </div>
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold electric-glow"
+                    className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900"
                   >
-                    {isSubmitting ? (
-                      "Sending..."
-                    ) : (
+                    {isSubmitting ? "Sending..." : (
                       <>
                         <Send className="w-4 h-4 mr-2" />
                         Send Message
@@ -592,22 +497,21 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Contact Options */}
             <div className="space-y-6">
-              <Card className="bg-white/80 dark:bg-card/80 backdrop-blur border border-secondary/30 hover:border-secondary/60 transition-all shadow-sm">
+              <Card className="bg-gradient-to-br from-[#25D366]/10 to-[#25D366]/5 border-[#25D366]/20 hover:shadow-lg transition-shadow">
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
-                    <div className="p-3 bg-secondary/10 rounded-lg">
-                      <MessageCircle className="w-6 h-6 text-secondary" />
+                    <div className="p-3 bg-[#25D366]/10 rounded-xl">
+                      <MessageCircle className="w-6 h-6 text-[#25D366]" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">WhatsApp</h3>
-                      <p className="text-gray-600 dark:text-muted-foreground mb-4">
-                        Get instant responses to your questions via WhatsApp
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">WhatsApp</h3>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                        Get instant responses via WhatsApp
                       </p>
                       <Button
                         onClick={handleWhatsAppClick}
-                        className="bg-[#25D366] hover:bg-[#20BA5A] text-white font-bold w-full"
+                        className="bg-[#25D366] hover:bg-[#20BA5A] text-white w-full"
                       >
                         <MessageCircle className="w-4 h-4 mr-2" />
                         Chat on WhatsApp
@@ -617,47 +521,21 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/80 dark:bg-card/80 backdrop-blur border border-accent/30 shadow-sm">
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
-                    <div className="p-3 bg-accent/10 rounded-lg">
+                    <div className="p-3 bg-accent/10 rounded-xl">
                       <Phone className="w-6 h-6 text-accent" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Phone Number</h3>
-                      <p className="text-xl text-accent font-semibold">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Phone</h3>
+                      <p className="text-2xl font-bold text-accent mb-1">
                         +1 (929) 742-1127
                       </p>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Available for calls and text messages
+                      <p className="text-gray-600 dark:text-gray-400 text-sm">
+                        Available for calls and messages
                       </p>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card/80 backdrop-blur border border-primary/30">
-                <CardContent className="pt-6">
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-bold">Why Contact Us?</h3>
-                    <ul className="space-y-2">
-                      <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
-                        Custom packages for businesses
-                      </li>
-                      <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
-                        Volume discounts available
-                      </li>
-                      <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
-                        Technical support and guidance
-                      </li>
-                      <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
-                        Partnership opportunities
-                      </li>
-                    </ul>
                   </div>
                 </CardContent>
               </Card>
@@ -667,11 +545,81 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 px-4 mt-20 bg-navy/50">
-        <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>&copy; 2025 ShowYo. All content moderated for safety and appropriateness.</p>
+      <footer className="bg-gray-900 dark:bg-gray-950 text-white py-16 px-6">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid md:grid-cols-3 gap-12 mb-12">
+            <div>
+              <img src={showYoLogo} alt="ShowYo" className="h-8 w-auto mb-4 brightness-0 invert" />
+              <p className="text-gray-400 text-sm">
+                Making Times Square billboard advertising accessible to everyone.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Navigate</h4>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li>
+                  <button onClick={() => navigate('/upload')} className="hover:text-white transition-colors">
+                    Get Started
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => navigate('/business-plans')} className="hover:text-white transition-colors">
+                    Business Plans
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => navigate('/kiosk')} className="hover:text-white transition-colors">
+                    Watch Live
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Connect</h4>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li>
+                  <a href="mailto:hello@showyo.com" className="hover:text-white transition-colors">
+                    hello@showyo.com
+                  </a>
+                </li>
+                <li>
+                  <a href="tel:+19297421127" className="hover:text-white transition-colors">
+                    +1 (929) 742-1127
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-gray-400 text-sm">
+              © 2025 ShowYo. All rights reserved.
+            </p>
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="text-gray-400 hover:text-white text-sm transition-colors"
+            >
+              Scroll to top
+            </button>
+          </div>
         </div>
       </footer>
+
+      <style>{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        .animate-marquee {
+          animation: marquee 30s linear infinite;
+        }
+      `}</style>
     </div>
   );
 };
