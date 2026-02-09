@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Camera, Video, Sparkles, Zap, Eye, Shield, MessageCircle, Send, Mail, P
 import showYoLogo from "@/assets/showyo-logo-color.png";
 import { planService } from "@/domain/services/planService";
 import { toast } from "sonner";
+import { WrapShader } from "@/components/ui/wrap-shader";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -18,6 +19,11 @@ const Index = () => {
     message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,13 +129,27 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative py-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-navy/20 to-transparent" />
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/15 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/15 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/10 rounded-full blur-[140px] animate-pulse" style={{ animationDelay: '2s' }} />
-        </div>
-        
+        {isMounted && (
+          <div className="absolute inset-0 pointer-events-none">
+            <WrapShader
+              color1="#f10a94"
+              color2="#00d4ff"
+              speed={1.5}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0.6
+              }}
+            />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/20 via-teal-500/20 to-transparent" />
+
         <div className="container mx-auto max-w-5xl relative z-10">
           <div className="text-center space-y-8">
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
