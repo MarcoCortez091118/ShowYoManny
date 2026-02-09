@@ -244,36 +244,75 @@ const Index = () => {
       <section className="py-16 px-4 bg-gradient-to-b from-transparent via-navy/30 to-transparent">
         <div className="container mx-auto max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
-            What is ShowYoNy?
+            What Is ShowYoNy?
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground text-center max-w-4xl mx-auto mb-8">
-            ShowYoNy is the platform that allows anyone—individuals or businesses—to appear on one of the most visible digital billboards in the world. Simply upload your file, and our system will automatically validate it to be broadcasted in Times Square, NYC.
+          <p className="text-lg md:text-xl text-muted-foreground text-center max-w-4xl mx-auto mb-4">
+            ShowYoNy is an affordable Times Square billboard advertising platform that allows individuals and businesses to display their content on one of the most iconic digital billboards in the world.
+          </p>
+          <p className="text-lg md:text-xl text-muted-foreground text-center max-w-4xl mx-auto mb-12">
+            Whether you're promoting a brand, product, event, music release, startup, or personal message, ShowYoNy makes Times Square advertising accessible to everyone — without agencies or long-term contracts.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
-            <div className="bg-card/60 backdrop-blur border border-primary/30 rounded-lg p-4">
-              <p className="text-sm font-semibold text-primary mb-1">Location</p>
-              <p className="text-muted-foreground">1604 Broadway, New York</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Billboard Location */}
+            <div className="bg-card/80 backdrop-blur border border-primary/30 rounded-xl p-6">
+              <h3 className="text-2xl font-bold mb-4 text-primary">Billboard Location</h3>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-muted-foreground mb-1">Digital Billboard Location:</p>
+                  <p className="text-base">1604 Broadway, Times Square, New York, NY</p>
+                </div>
+                <div>
+                  <a
+                    href="https://maps.app.goo.gl/m42zsQFYZtMfa7SJ9"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors underline"
+                  >
+                    View on Google Maps
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
             </div>
-            <div className="bg-card/60 backdrop-blur border border-secondary/30 rounded-lg p-4">
-              <p className="text-sm font-semibold text-secondary mb-1">Ad Duration</p>
-              <p className="text-muted-foreground">10 seconds</p>
-            </div>
-            <div className="bg-card/60 backdrop-blur border border-accent/30 rounded-lg p-4">
-              <p className="text-sm font-semibold text-accent mb-1">Formats</p>
-              <p className="text-muted-foreground">PNG, MP4 (Full HD / 4K)</p>
-            </div>
-            <div className="bg-card/60 backdrop-blur border border-primary/30 rounded-lg p-4">
-              <p className="text-sm font-semibold text-primary mb-1">Moderation</p>
-              <p className="text-muted-foreground">Automatic AI moderation</p>
-            </div>
-            <div className="bg-card/60 backdrop-blur border border-secondary/30 rounded-lg p-4">
-              <p className="text-sm font-semibold text-secondary mb-1">Availability</p>
-              <p className="text-muted-foreground">Available from any country</p>
-            </div>
-            <div className="bg-card/60 backdrop-blur border border-accent/30 rounded-lg p-4">
-              <p className="text-sm font-semibold text-accent mb-1">Status</p>
-              <p className="text-muted-foreground">Live streaming 24/7</p>
+
+            {/* Ad Specifications */}
+            <div className="bg-card/80 backdrop-blur border border-secondary/30 rounded-xl p-6">
+              <h3 className="text-2xl font-bold mb-4 text-secondary">Ad Specifications</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0" />
+                  <div>
+                    <span className="font-semibold">Ad Length:</span> 10 seconds
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0" />
+                  <div>
+                    <span className="font-semibold">Views:</span> 3 times every 8 hours (first view after payment)
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0" />
+                  <div>
+                    <span className="font-semibold">Formats:</span> PNG, MP4 (Full HD / 4K)
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0" />
+                  <div>
+                    <span className="font-semibold">Moderation:</span> Automated review with AI
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0" />
+                  <div>
+                    <span className="font-semibold">Availability:</span> Worldwide
+                  </div>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
