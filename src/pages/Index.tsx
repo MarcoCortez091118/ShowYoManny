@@ -1059,7 +1059,7 @@ const Index = () => {
       </section>
 
       {/* Contact Section */}
-      <section className="py-20 lg:py-32 px-6">
+      <section className="py-20 lg:py-32 px-6 bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
@@ -1070,110 +1070,110 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-8">
-            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <Mail className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Send us a Message</h3>
+          <div className="grid lg:grid-cols-2 gap-8 items-start">
+            {/* Form Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 hover:shadow-2xl transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 bg-[#ff2e63]/10 rounded-lg">
+                  <Mail className="w-5 h-5 text-[#ff2e63]" />
                 </div>
-                <form onSubmit={handleContactSubmit} className="space-y-4">
-                  <div>
-                    <Input
-                      type="text"
-                      placeholder="Name"
-                      value={contactForm.name}
-                      onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                      required
-                      className="bg-gray-50 dark:bg-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <Input
-                      type="email"
-                      placeholder="Email"
-                      value={contactForm.email}
-                      onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                      required
-                      className="bg-gray-50 dark:bg-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <Input
-                      type="tel"
-                      placeholder="Phone (optional)"
-                      value={contactForm.phone}
-                      onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                      className="bg-gray-50 dark:bg-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <Textarea
-                      placeholder="Message"
-                      value={contactForm.message}
-                      onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                      required
-                      className="bg-gray-50 dark:bg-gray-900 min-h-[120px]"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white disabled:opacity-50"
-                  >
-                    {isSubmitting ? "Sending..." : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Send Message
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Send us a Message</h3>
+              </div>
+              <form onSubmit={handleContactSubmit} className="space-y-5">
+                <div>
+                  <Input
+                    type="text"
+                    placeholder="Name"
+                    value={contactForm.name}
+                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                    required
+                    className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-[#ff2e63] focus:ring-[#ff2e63] h-12 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={contactForm.email}
+                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                    required
+                    className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-[#ff2e63] focus:ring-[#ff2e63] h-12 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="tel"
+                    placeholder="Phone (optional)"
+                    value={contactForm.phone}
+                    onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                    className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-[#ff2e63] focus:ring-[#ff2e63] h-12 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Textarea
+                    placeholder="Message"
+                    value={contactForm.message}
+                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                    required
+                    className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-[#ff2e63] focus:ring-[#ff2e63] min-h-[140px] rounded-xl"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white disabled:opacity-50 h-12 rounded-xl font-semibold shadow-lg shadow-[#ff2e63]/20 hover:shadow-xl hover:shadow-[#ff2e63]/30 transition-all duration-300"
+                >
+                  {isSubmitting ? "Sending..." : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Send Message
+                    </>
+                  )}
+                </Button>
+              </form>
+            </div>
 
+            {/* Contact Options */}
             <div className="space-y-6">
-              <Card className="bg-gradient-to-br from-[#25D366]/10 to-[#25D366]/5 border-[#25D366]/20 hover:shadow-lg transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-[#25D366]/10 rounded-xl">
-                      <MessageCircle className="w-6 h-6 text-[#25D366]" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">WhatsApp</h3>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                        Get instant responses via WhatsApp
-                      </p>
-                      <Button
-                        onClick={handleWhatsAppClick}
-                        className="bg-[#25D366] hover:bg-[#20BA5A] text-white w-full"
-                      >
-                        <MessageCircle className="w-4 h-4 mr-2" />
-                        Chat on WhatsApp
-                      </Button>
-                    </div>
+              {/* WhatsApp Card */}
+              <div className="bg-gradient-to-br from-[#25D366]/5 via-[#25D366]/10 to-[#25D366]/5 rounded-2xl shadow-lg border border-[#25D366]/20 p-8 hover:shadow-xl hover:border-[#25D366]/40 transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  <div className="p-3.5 bg-[#25D366]/15 rounded-xl">
+                    <MessageCircle className="w-7 h-7 text-[#25D366]" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">WhatsApp</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-5">
+                      Get instant responses via WhatsApp
+                    </p>
+                    <Button
+                      onClick={handleWhatsAppClick}
+                      className="bg-[#25D366] hover:bg-[#20BA5A] text-white w-full h-12 rounded-xl font-semibold shadow-lg shadow-[#25D366]/20 hover:shadow-xl hover:shadow-[#25D366]/30 transition-all duration-300"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Chat on WhatsApp
+                    </Button>
+                  </div>
+                </div>
+              </div>
 
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-accent/10 rounded-xl">
-                      <Phone className="w-6 h-6 text-accent" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Phone</h3>
-                      <p className="text-2xl font-bold text-accent mb-1">
-                        +1 (929) 742-1127
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm">
-                        Available for calls and messages
-                      </p>
-                    </div>
+              {/* Phone Card */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-8 hover:shadow-xl transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  <div className="p-3.5 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
+                    <Phone className="w-7 h-7 text-amber-600 dark:text-amber-500" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Phone</h3>
+                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-500 mb-2">
+                      +1 (929) 742-1127
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      Available for calls and messages
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
