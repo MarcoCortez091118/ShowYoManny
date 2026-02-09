@@ -503,247 +503,260 @@ const Index = () => {
       {/* Pricing Section */}
       <section className="py-20 lg:py-32 px-6 bg-white dark:bg-background">
         <div className="container mx-auto max-w-7xl">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              Times Square Billboard Pricing
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 mb-6">
-              Affordable digital billboard advertising in Times Square — no hidden fees.
-            </p>
-            <div className="max-w-3xl mx-auto text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
-              <p>
-                Advertise your image or video on a real digital billboard in Times Square starting at just $22.
-                All packages include 10 seconds of display, shown 3 times within 24 hours, on a high-visibility screen at 1604 Broadway, New York.
-              </p>
-              <p className="font-medium">
-                No contracts, no agencies, and no long-term commitments. Upload your content, get approved, and go live.
-              </p>
+          <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start">
+            {/* Left Column - Image */}
+            <div className="order-2 lg:order-1 sticky top-24">
+              <img
+                src="https://instagram.fpbc2-2.fna.fbcdn.net/v/t39.30808-6/608425265_122140637702962233_4738224972353000105_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=103&ig_cache_key=Mzc5OTk0NzA3NzYxNTc5NzQ3OQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjk2MHgxMjAwLnNkci5DMyJ9&_nc_ohc=QksMm53zfikQ7kNvwH2B249&_nc_oc=AdlGEpAFw3tsdeGqd9GteK5cLx6bkcxaeN4IO-7BKRHdQCDYeh5IguDc1A7Lt8bRAQUVWcp2ayptw__UZ-1iAih9&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=instagram.fpbc2-2.fna&_nc_gid=XU6vzKDGA8ondtOrUTJGgg&oh=00_AfuUBW8crXYBnyCD4BmZCALEPRN71Uc-5qQLdl3XC2JLLA&oe=699013AA"
+                alt="Times Square Billboard"
+                className="rounded-2xl shadow-2xl w-full"
+              />
             </div>
-          </div>
 
-          {/* Photo Packages */}
-          <div className="mb-12">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-              <Camera className="w-6 h-6" />
-              Photo Advertising Packages
-            </h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {/* Photo with Logo */}
-              <Card className="bg-white dark:bg-gray-800 border-2 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="text-center mb-4">
-                    <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Photo with Logo</h4>
-                    <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">$22</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">$20 + $2 platform fee</div>
-                  </div>
-                  <ul className="space-y-3 text-gray-600 dark:text-gray-400">
-                    <li className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-primary" />
-                      10 seconds display
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-primary" />
-                      Displayed 3 times in 24 hours
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Camera className="w-4 h-4 text-primary" />
-                      ShowYo logo overlay
-                    </li>
-                  </ul>
-                  <Button
-                    onClick={() => navigate('/upload')}
-                    className="w-full mt-6 bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                  >
-                    Get Started
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* Right Column - Pricing Content */}
+            <div className="order-1 lg:order-2 space-y-8">
+              {/* Header */}
+              <div>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+                  Times Square Billboard Pricing
+                </h2>
+                <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
+                  Affordable digital billboard advertising in Times Square — no hidden fees.
+                </p>
+                <div className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-2 text-sm">
+                  <p>
+                    Advertise your image or video on a real digital billboard in Times Square starting at just $22.
+                    All packages include 10 seconds of display, shown 3 times within 24 hours, on a high-visibility screen at 1604 Broadway, New York.
+                  </p>
+                  <p className="font-medium">
+                    No contracts, no agencies, and no long-term commitments. Upload your content, get approved, and go live.
+                  </p>
+                </div>
+              </div>
 
-              {/* Photo with Border */}
-              <Card className="bg-white dark:bg-gray-800 border-2 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="text-center mb-4">
-                    <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Photo with Border</h4>
-                    <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">$27</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">$25 + $2 platform fee</div>
-                  </div>
-                  <ul className="space-y-3 text-gray-600 dark:text-gray-400">
-                    <li className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-primary" />
-                      10 seconds display
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-primary" />
-                      Displayed 3 times in 24 hours
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Camera className="w-4 h-4 text-primary" />
-                      Custom border
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Camera className="w-4 h-4 text-primary" />
-                      ShowYo logo overlay
-                    </li>
-                  </ul>
-                  <Button
-                    onClick={() => navigate('/upload')}
-                    className="w-full mt-6 bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                  >
-                    Get Started
-                  </Button>
-                </CardContent>
-              </Card>
+              {/* Photo Packages */}
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Camera className="w-5 h-5" />
+                  Photo Advertising Packages
+                </h3>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  {/* Photo with Logo */}
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
+                    <CardContent className="pt-4 pb-4 px-4">
+                      <div className="text-center mb-3">
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Photo with Logo</h4>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">$22</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">$20 + $2 fee</div>
+                      </div>
+                      <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                        <li className="flex items-center gap-1.5">
+                          <Clock className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>10 seconds display</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Zap className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>3 times in 24 hours</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Camera className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>ShowYo logo overlay</span>
+                        </li>
+                      </ul>
+                      <Button
+                        onClick={() => navigate('/upload')}
+                        size="sm"
+                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                      >
+                        Get Started
+                      </Button>
+                    </CardContent>
+                  </Card>
 
-              {/* Clean Photo */}
-              <Card className="bg-white dark:bg-gray-800 border-2 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="text-center mb-4">
-                    <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Clean Photo</h4>
-                    <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">$27</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">$25 + $2 platform fee</div>
-                  </div>
-                  <ul className="space-y-3 text-gray-600 dark:text-gray-400">
-                    <li className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-primary" />
-                      10 seconds display
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-primary" />
-                      Displayed 3 times in 24 hours
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Camera className="w-4 h-4 text-primary" />
-                      No logo overlay
-                    </li>
-                  </ul>
-                  <Button
-                    onClick={() => navigate('/upload')}
-                    className="w-full mt-6 bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                  >
-                    Get Started
-                  </Button>
-                </CardContent>
-              </Card>
+                  {/* Photo with Border */}
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
+                    <CardContent className="pt-4 pb-4 px-4">
+                      <div className="text-center mb-3">
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Photo with Border</h4>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">$27</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">$25 + $2 fee</div>
+                      </div>
+                      <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                        <li className="flex items-center gap-1.5">
+                          <Clock className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>10 seconds display</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Zap className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>3 times in 24 hours</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Camera className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>Custom border + logo</span>
+                        </li>
+                      </ul>
+                      <Button
+                        onClick={() => navigate('/upload')}
+                        size="sm"
+                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                      >
+                        Get Started
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Clean Photo */}
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
+                    <CardContent className="pt-4 pb-4 px-4">
+                      <div className="text-center mb-3">
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Clean Photo</h4>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">$27</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">$25 + $2 fee</div>
+                      </div>
+                      <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                        <li className="flex items-center gap-1.5">
+                          <Clock className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>10 seconds display</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Zap className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>3 times in 24 hours</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Camera className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>No logo overlay</span>
+                        </li>
+                      </ul>
+                      <Button
+                        onClick={() => navigate('/upload')}
+                        size="sm"
+                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                      >
+                        Get Started
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Video Packages */}
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Video className="w-5 h-5" />
+                  Video Advertising Packages
+                </h3>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  {/* Video with Logo */}
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
+                    <CardContent className="pt-4 pb-4 px-4">
+                      <div className="text-center mb-3">
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Video with Logo</h4>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">$32</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">$30 + $2 fee</div>
+                      </div>
+                      <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                        <li className="flex items-center gap-1.5">
+                          <Clock className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>10 seconds display</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Zap className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>3 times in 24 hours</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Video className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>ShowYo logo overlay</span>
+                        </li>
+                      </ul>
+                      <Button
+                        onClick={() => navigate('/upload')}
+                        size="sm"
+                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                      >
+                        Get Started
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Video with Border */}
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
+                    <CardContent className="pt-4 pb-4 px-4">
+                      <div className="text-center mb-3">
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Video with Border</h4>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">$37</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">$35 + $2 fee</div>
+                      </div>
+                      <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                        <li className="flex items-center gap-1.5">
+                          <Clock className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>10 seconds display</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Zap className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>3 times in 24 hours</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Video className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>Custom border + logo</span>
+                        </li>
+                      </ul>
+                      <Button
+                        onClick={() => navigate('/upload')}
+                        size="sm"
+                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                      >
+                        Get Started
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Clean Video */}
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
+                    <CardContent className="pt-4 pb-4 px-4">
+                      <div className="text-center mb-3">
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Clean Video</h4>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">$37</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">$35 + $2 fee</div>
+                      </div>
+                      <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                        <li className="flex items-center gap-1.5">
+                          <Clock className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>10 seconds display</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Zap className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>3 times in 24 hours</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Video className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span>No logo overlay</span>
+                        </li>
+                      </ul>
+                      <Button
+                        onClick={() => navigate('/upload')}
+                        size="sm"
+                        className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs"
+                      >
+                        Get Started
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Business Plans Link */}
+              <div className="pt-4">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => navigate('/business-plans')}
+                  className="border-2 w-full sm:w-auto"
+                >
+                  Need More? Explore Business Solutions
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-
-          {/* Video Packages */}
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-              <Video className="w-6 h-6" />
-              Video Advertising Packages
-            </h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {/* Video with Logo */}
-              <Card className="bg-white dark:bg-gray-800 border-2 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="text-center mb-4">
-                    <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Video with Logo</h4>
-                    <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">$32</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">$30 + $2 platform fee</div>
-                  </div>
-                  <ul className="space-y-3 text-gray-600 dark:text-gray-400">
-                    <li className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-primary" />
-                      10 seconds display
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-primary" />
-                      Displayed 3 times in 24 hours
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Video className="w-4 h-4 text-primary" />
-                      ShowYo logo overlay
-                    </li>
-                  </ul>
-                  <Button
-                    onClick={() => navigate('/upload')}
-                    className="w-full mt-6 bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                  >
-                    Get Started
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Video with Border */}
-              <Card className="bg-white dark:bg-gray-800 border-2 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="text-center mb-4">
-                    <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Video with Border</h4>
-                    <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">$37</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">$35 + $2 platform fee</div>
-                  </div>
-                  <ul className="space-y-3 text-gray-600 dark:text-gray-400">
-                    <li className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-primary" />
-                      10 seconds display
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-primary" />
-                      Displayed 3 times in 24 hours
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Video className="w-4 h-4 text-primary" />
-                      Custom border
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Video className="w-4 h-4 text-primary" />
-                      ShowYo logo overlay
-                    </li>
-                  </ul>
-                  <Button
-                    onClick={() => navigate('/upload')}
-                    className="w-full mt-6 bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                  >
-                    Get Started
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Clean Video */}
-              <Card className="bg-white dark:bg-gray-800 border-2 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="text-center mb-4">
-                    <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Clean Video</h4>
-                    <div className="text-4xl font-bold text-gray-900 dark:text-white mb-1">$37</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">$35 + $2 platform fee</div>
-                  </div>
-                  <ul className="space-y-3 text-gray-600 dark:text-gray-400">
-                    <li className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-primary" />
-                      10 seconds display
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-primary" />
-                      Displayed 3 times in 24 hours
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Video className="w-4 h-4 text-primary" />
-                      No logo overlay
-                    </li>
-                  </ul>
-                  <Button
-                    onClick={() => navigate('/upload')}
-                    className="w-full mt-6 bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                  >
-                    Get Started
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Business Plans Link */}
-          <div className="text-center mt-12">
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate('/business-plans')}
-              className="border-2"
-            >
-              Need More? Explore Business Solutions
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
           </div>
         </div>
       </section>
