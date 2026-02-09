@@ -8,7 +8,7 @@ import { Camera, Video, Zap, Eye, Shield, MessageCircle, Send, Mail, Phone, Moon
 import showYoLogo from "@/assets/showyo-logo-color.png";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
-import { WrapShader } from "@/components/ui/wrap-shader";
+import WarpShaderHero from "@/components/ui/wrap-shader";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -163,19 +163,9 @@ const Index = () => {
       {/* Hero XL */}
       <section className="relative min-h-screen flex flex-col" ref={scrollerRef}>
         {/* Hero Main */}
-        <div className="relative flex-1 flex items-center justify-center px-6 py-20 lg:py-32 overflow-hidden bg-gray-900">
+        <div className="relative flex-1 flex items-center justify-center px-6 py-20 lg:py-32 overflow-hidden">
           {/* Animated Shader Background */}
-          <div className="absolute inset-0 z-0">
-            <WrapShader
-              style={{
-                height: "100%",
-                width: "100%",
-                position: "absolute",
-                top: 0,
-                left: 0
-              }}
-            />
-          </div>
+          <WarpShaderHero />
 
           <div className="relative z-10 container mx-auto max-w-5xl text-center">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-8 leading-tight drop-shadow-lg">
@@ -207,24 +197,12 @@ const Index = () => {
 
         {/* Scroller Section - Scroll-driven Slider */}
         <div
-          className="relative bg-gray-900"
+          className="relative"
           style={{ height: `${scrollerHeight}px` }}
         >
           <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
             {/* Animated Shader Background */}
-            <div className="absolute inset-0 z-0">
-              <WrapShader
-                speed={1.2}
-                style={{
-                  height: "100%",
-                  width: "100%",
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  opacity: 0.9
-                }}
-              />
-            </div>
+            <WarpShaderHero />
 
             {/* Label - Top Left */}
             <div className="absolute top-8 left-8 lg:left-16 z-20">
