@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Zap, Users, Briefcase, Link as LinkIcon } from "lucide-react";
+import { Zap, Users, Briefcase, Link as LinkIcon, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import WarpShaderHero from "@/components/ui/wrap-shader";
 
@@ -28,14 +28,16 @@ const Hero = () => {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button
                 size="lg"
-                className="px-12 py-6 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full text-white text-lg font-medium hover:bg-white/30 transition-all duration-300 hover:scale-105"
+                className="px-12 py-6 bg-white rounded-full text-black text-lg font-medium hover:scale-105 transition-all duration-300 flex items-center gap-2"
                 onClick={() => navigate('/upload')}
               >
                 Start Now
+                <ArrowRight className="h-5 w-5" />
               </Button>
               <Button
                 size="lg"
-                className="px-12 py-6 bg-white rounded-full text-gray-800 text-lg font-medium hover:scale-105 transition-transform duration-300"
+                variant="outline"
+                className="px-12 py-6 bg-transparent border-2 border-cyan-400 rounded-full text-black text-lg font-medium hover:scale-105 hover:bg-cyan-400/10 transition-all duration-300"
                 onClick={() => navigate('/business-plans')}
               >
                 Business Plans
