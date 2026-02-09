@@ -128,7 +128,7 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative py-20 px-4 overflow-hidden">
+      <section className="relative py-20 px-4 overflow-hidden min-h-[600px] flex items-center">
         {isMounted && (
           <div className="absolute inset-0 pointer-events-none">
             <WrapShader
@@ -143,33 +143,29 @@ const Index = () => {
                 bottom: 0,
                 width: '100%',
                 height: '100%',
-                opacity: 0.6
+                opacity: 0.8
               }}
             />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/20 via-teal-500/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-transparent" />
 
         <div className="container mx-auto max-w-5xl relative z-10">
-          <div className="text-center space-y-8">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-              Your Content in{" "}
-              <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                Times Square, New York
-              </span>
-              {" "}for 10 Seconds
+          <div className="text-center space-y-6">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+              Times Square Billboard Advertising from $22 – Show Your Content on a Digital Billboard
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              Make your image, video, or message appear on the iconic digital screen in Times Square. Upload your content, and we'll display it live on Broadway (1604, New York). Fast, secure, and AI-moderated.
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] max-w-4xl mx-auto">
+              Advertise in Times Square, New York for 10 Seconds on a High-Impact Digital Billboard
+            </h2>
+            <p className="text-lg md:text-xl lg:text-2xl text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] max-w-3xl mx-auto leading-relaxed">
+              Upload your image or video and get featured on a real digital billboard at 1604 Broadway, Times Square, NYC. Affordable, fast, secure, and AI-moderated.
             </p>
-            <p className="text-lg md:text-xl text-accent font-semibold max-w-2xl mx-auto pt-2">
-              Impact the world in just 10 seconds. Ideal for artists, entrepreneurs, brands, and launches.
-            </p>
-            <div className="flex gap-4 justify-center pt-4">
+            <div className="flex gap-4 justify-center pt-6">
               <Button
                 size="lg"
                 onClick={() => navigate('/upload')}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-8 py-6 electric-glow transition-all hover:scale-105"
+                className="bg-[#f10a94] hover:bg-[#f10a94]/90 text-white font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(241,10,148,0.5)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(241,10,148,0.7)]"
               >
                 Start Now
               </Button>
@@ -177,7 +173,7 @@ const Index = () => {
                 size="lg"
                 variant="outline"
                 onClick={() => navigate('/kiosk')}
-                className="border-secondary text-secondary hover:bg-secondary/10 font-bold text-lg px-8 py-6 neon-glow transition-all hover:scale-105"
+                className="border-2 border-[#00d4ff] bg-[#00d4ff]/10 text-white hover:bg-[#00d4ff]/20 font-bold text-lg px-8 py-6 shadow-[0_0_20px_rgba(0,212,255,0.3)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(0,212,255,0.5)]"
               >
                 Watch Live
               </Button>
