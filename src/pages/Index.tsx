@@ -259,7 +259,7 @@ const Index = () => {
                     size="lg"
                     variant="outline"
                     onClick={() => navigate('/business-plans')}
-                    className="text-lg px-8 py-6 h-auto border-2 border-white text-white hover:bg-white/10 backdrop-blur-sm shadow-xl"
+                    className="text-lg px-8 py-6 h-auto border-2 border-cyan-400 text-black bg-cyan-400/20 hover:bg-cyan-400/30 backdrop-blur-sm shadow-xl"
                   >
                     Business Plans
                   </Button>
