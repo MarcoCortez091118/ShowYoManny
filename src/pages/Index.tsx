@@ -120,38 +120,38 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-gray-200 dark:border-border bg-white/95 dark:bg-navy/95 backdrop-blur-sm">
-        <div className="container mx-auto px-6 lg:px-12 py-4">
+      <header className="sticky top-0 z-50 backdrop-blur-md">
+        <div className="container mx-auto px-6 lg:px-12 py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <img src={showYoLogo} alt="ShowYo" className="h-8 w-auto" />
             </div>
-            <nav className="hidden md:flex items-center gap-8">
+            <nav className="hidden md:flex items-center gap-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-full px-2 py-2 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
               <button
                 onClick={() => navigate('/business-plans')}
-                className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
               >
-                Business Plans
+                BUSINESS PLANS
               </button>
               <button
                 onClick={() => navigate('/kiosk')}
-                className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
               >
-                Watch Live
+                WATCH LIVE
               </button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                className="text-gray-700 dark:text-gray-300"
+                className="text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
               >
                 {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </Button>
               <Button
                 onClick={() => navigate('/upload')}
-                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 text-sm px-6"
+                className="ml-2 px-6 py-2 text-sm font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 rounded-full shadow-md transition-all hover:shadow-lg"
               >
-                Get Started
+                GET STARTED
               </Button>
             </nav>
             <div className="md:hidden flex items-center gap-2">
