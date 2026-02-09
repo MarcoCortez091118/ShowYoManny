@@ -20,24 +20,48 @@ const Index = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const [scrollerHeight, setScrollerHeight] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
       if (scrollerRef.current) {
         const element = scrollerRef.current;
         const rect = element.getBoundingClientRect();
-        const scrollableHeight = element.scrollHeight - window.innerHeight;
-        const scrolled = -rect.top;
-        const progress = Math.max(0, Math.min(1, scrolled / scrollableHeight));
-        setScrollProgress(progress);
-        setCurrentStep(Math.floor(progress * 3));
+        const elementHeight = element.offsetHeight;
+        const viewportHeight = window.innerHeight;
+
+        // Calculate scroll progress when element is in view
+        if (rect.top < viewportHeight && rect.bottom > 0) {
+          // Progress from 0 to 1 as we scroll through the element
+          const scrolled = viewportHeight - rect.top;
+          const totalScrollDistance = elementHeight + viewportHeight;
+          const progress = Math.max(0, Math.min(1, scrolled / totalScrollDistance));
+
+          setScrollProgress(progress);
+
+          // Determine current slide (0, 1, or 2)
+          const slideIndex = Math.min(2, Math.floor(progress * 3));
+          setCurrentSlide(slideIndex);
+        }
       }
     };
 
+    handleScroll();
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (scrollerRef.current) {
+      // Set height to 4x viewport to allow smooth scrolling through 3 slides
+      setScrollerHeight(window.innerHeight * 4);
+    }
   }, []);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
@@ -70,18 +94,18 @@ const Index = () => {
     window.open("https://wa.me/19297421127", "_blank");
   };
 
-  const scrollSteps = [
+  const scrollSlides = [
     {
-      title: "Affordable Times Square advertising for everyone",
-      description: "Whether you're promoting a brand, product, event, or personal message, ShowYo makes Times Square billboard advertising accessible without agencies or contracts."
+      text: "Affordable Times Square advertising for everyone",
+      highlight: "Affordable Times Square advertising"
     },
     {
-      title: "From upload to display in minutes",
-      description: "Our automated platform handles everything: AI content moderation, scheduling, and live broadcasting on one of the world's most iconic digital billboards."
+      text: "From upload to display in minutes with automated moderation",
+      highlight: "From upload to display"
     },
     {
-      title: "Real impact, real visibility",
-      description: "Your content displayed 3 times every 8 hours on a premium digital billboard at 1604 Broadway, reaching millions of daily visitors in the heart of Times Square."
+      text: "Real impact, real visibility in the heart of Times Square",
+      highlight: "Real impact, real visibility"
     }
   ];
 
@@ -175,42 +199,114 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Scroller Section */}
-        <div className="bg-white dark:bg-background border-t border-gray-200 dark:border-border">
-          <div className="container mx-auto px-6 lg:px-12 py-8">
-            <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-6">
-              What we do
+        {/* Scroller Section - Scroll-driven Slider */}
+        <div
+          className="relative bg-gradient-to-br from-gray-100 via-white to-gray-50 dark:from-gray-900 dark:via-background dark:to-gray-900"
+          style={{ height: `${scrollerHeight}px` }}
+        >
+          <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
+            {/* Background Animation */}
+            <div className="absolute inset-0 opacity-30 dark:opacity-20">
+              <div
+                className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"
+                style={{
+                  transform: `translateX(${scrollProgress * 100}px) translateY(${scrollProgress * -50}px)`,
+                  transition: 'transform 0.3s ease-out'
+                }}
+              />
+              <div
+                className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse"
+                style={{
+                  animationDelay: '1s',
+                  transform: `translateX(${scrollProgress * -100}px) translateY(${scrollProgress * 50}px)`,
+                  transition: 'transform 0.3s ease-out'
+                }}
+              />
             </div>
 
-            <div className="relative">
-              {/* Progress Bar */}
-              <div className="absolute left-0 top-0 h-1 bg-gray-200 dark:bg-gray-800 w-full">
-                <div
-                  className="h-full bg-gradient-to-r from-primary via-secondary to-accent transition-all duration-300"
-                  style={{ width: `${scrollProgress * 100}%` }}
-                />
+            {/* Label - Top Left */}
+            <div className="absolute top-8 left-8 lg:left-16">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                <div className="w-2 h-2 bg-primary rounded-sm" />
+                What we do
               </div>
+            </div>
 
-              <div className="pt-8 grid md:grid-cols-3 gap-8">
-                {scrollSteps.map((step, idx) => (
-                  <div
-                    key={idx}
-                    className={`transition-all duration-500 ${
-                      currentStep >= idx ? 'opacity-100' : 'opacity-40'
-                    }`}
-                  >
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                      0{idx + 1} / 03
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                      {step.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                      {step.description}
-                    </p>
-                  </div>
-                ))}
+            {/* Slide Counter - Bottom Left */}
+            <div className="absolute bottom-8 left-8 lg:left-16">
+              <div className="px-4 py-2 rounded-full border border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 backdrop-blur">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  0{currentSlide + 1}
+                </span>
+                <span className="text-sm text-gray-400 dark:text-gray-600 mx-1">/</span>
+                <span className="text-sm text-gray-400 dark:text-gray-600">03</span>
               </div>
+            </div>
+
+            {/* Progress Line */}
+            <div className="absolute left-8 lg:left-16 top-20 bottom-20 w-px bg-gray-200 dark:bg-gray-800">
+              <div
+                className="w-full bg-gradient-to-b from-primary via-secondary to-accent transition-all duration-300 ease-out"
+                style={{ height: `${(scrollProgress % (1/3)) * 300}%` }}
+              />
+            </div>
+
+            {/* Main Content - Center */}
+            <div className="relative z-10 container mx-auto px-8 lg:px-16 max-w-6xl">
+              <div className="text-center">
+                {scrollSlides.map((slide, slideIndex) => {
+                  const isActive = currentSlide === slideIndex;
+                  const slideProgress = Math.max(0, Math.min(1, ((scrollProgress * 3) - slideIndex)));
+
+                  return (
+                    <div
+                      key={slideIndex}
+                      className={`transition-all duration-700 ease-out ${
+                        isActive
+                          ? 'opacity-100 translate-y-0'
+                          : currentSlide < slideIndex
+                          ? 'opacity-0 translate-y-8 absolute inset-0 pointer-events-none'
+                          : 'opacity-0 -translate-y-8 absolute inset-0 pointer-events-none'
+                      }`}
+                    >
+                      <h2 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
+                        {slide.text.split(' ').map((word, wordIndex) => {
+                          const isHighlightWord = slide.highlight.includes(word);
+                          const wordProgress = Math.max(0, Math.min(1, slideProgress * 2 - (wordIndex * 0.1)));
+                          const isDark = theme === 'dark';
+
+                          return (
+                            <span
+                              key={wordIndex}
+                              className="transition-all duration-700 ease-out inline-block mr-3 md:mr-4"
+                              style={{
+                                color: isHighlightWord
+                                  ? isDark ? 'rgb(255, 255, 255)' : 'rgb(17, 24, 39)'
+                                  : isDark
+                                  ? `rgba(156, 163, 175, ${0.2 + (wordProgress * 0.8)})`
+                                  : `rgba(107, 114, 128, ${0.2 + (wordProgress * 0.8)})`,
+                                transform: `translateY(${(1 - wordProgress) * 10}px)`,
+                              }}
+                            >
+                              {word}
+                            </span>
+                          );
+                        })}
+                      </h2>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Scroll Indicator */}
+            <div
+              className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gray-400 dark:text-gray-600 transition-opacity duration-500 ${
+                scrollProgress > 0.1 ? 'opacity-0' : 'opacity-100 animate-bounce'
+              }`}
+            >
+              <span className="text-xs uppercase tracking-wider">Scroll</span>
+              <div className="w-px h-8 bg-gradient-to-b from-gray-400 to-transparent" />
             </div>
           </div>
         </div>
