@@ -449,7 +449,7 @@ const Index = () => {
       {/* Platform Section */}
       <section className="bg-gray-50 dark:bg-gray-900 py-20 lg:py-32 px-6">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid lg:grid-cols-[200px_1fr] gap-12 lg:gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-12 lg:gap-16">
             <aside>
               <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 sticky top-32">
                 The ShowYo Platform
@@ -486,7 +486,7 @@ const Index = () => {
 
       {/* USP Cards */}
       <section className="w-full">
-        <div className="grid md:grid-cols-3 gap-0">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
             {/* Card 1 - Instant Upload */}
             <div className="bg-[#ffd23f] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
               <div className="text-sm text-gray-700 absolute top-8 right-8">01.</div>
@@ -630,7 +630,7 @@ const Index = () => {
       {/* Pricing Section */}
       <section className="py-20 lg:py-32 px-6 bg-white dark:bg-background">
         <div className="container mx-auto max-w-7xl">
-          <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start">
             {/* Left Column - Image */}
             <div className="order-2 lg:order-1 lg:sticky lg:top-32 self-start flex justify-center lg:justify-start">
               <img
@@ -667,7 +667,7 @@ const Index = () => {
                   <Camera className="w-5 h-5" />
                   Photo Advertising Packages
                 </h3>
-                <div className="grid sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {/* Photo with Logo */}
                   <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
                     <CardContent className="pt-4 pb-4 px-4">
@@ -772,7 +772,7 @@ const Index = () => {
                   <Video className="w-5 h-5" />
                   Video Advertising Packages
                 </h3>
-                <div className="grid sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {/* Video with Logo */}
                   <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
                     <CardContent className="pt-4 pb-4 px-4">
@@ -900,7 +900,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg hover:shadow-xl transition-shadow">
               <CardContent className="pt-6">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
@@ -1170,7 +1170,7 @@ const Index = () => {
       {/* Contact Section */}
       <section className="py-20 lg:py-32 px-6 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 dark:from-slate-900 dark:via-black dark:to-slate-900">
         <div className="container mx-auto max-w-7xl">
-          <div className="grid lg:grid-cols-5 gap-12 lg:gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16">
             {/* Left Column - Contact Info */}
             <div className="lg:col-span-2 space-y-12">
               <div>
@@ -1222,7 +1222,7 @@ const Index = () => {
             <div className="lg:col-span-3">
               <form onSubmit={handleContactSubmit} className="space-y-6">
                 {/* Name and Email Row */}
-                <div className="grid sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-xs uppercase tracking-wider text-slate-300 mb-3 font-semibold">
                       NAME*
@@ -1303,7 +1303,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="bg-gray-900 dark:bg-gray-950 text-white py-16 px-6">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-3 gap-12 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
             <div>
               <img src={showYoLogo} alt="ShowYo" className="h-8 w-auto mb-4 brightness-0 invert" />
               <p className="text-gray-400 text-sm">
