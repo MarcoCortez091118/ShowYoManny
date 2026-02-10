@@ -1163,7 +1163,7 @@ const Index = () => {
                 onClick={() => setShowAllFaqs(true)}
                 className="border-2"
               >
-                Ver más preguntas
+                Show More Questions
               </Button>
             </div>
           )}
