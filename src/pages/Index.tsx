@@ -1059,121 +1059,133 @@ const Index = () => {
       </section>
 
       {/* Contact Section */}
-      <section className="py-20 lg:py-32 px-6 bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              Get in Touch
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400">
-              Ready to showcase your brand? Contact us for custom packages
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-8 items-start">
-            {/* Form Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 hover:shadow-2xl transition-all duration-300">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 bg-[#ff2e63]/10 rounded-lg">
-                  <Mail className="w-5 h-5 text-[#ff2e63]" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Send us a Message</h3>
+      <section className="py-20 lg:py-32 px-6 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 dark:from-slate-900 dark:via-black dark:to-slate-900">
+        <div className="container mx-auto max-w-7xl">
+          <div className="grid lg:grid-cols-5 gap-12 lg:gap-16">
+            {/* Left Column - Contact Info */}
+            <div className="lg:col-span-2 space-y-12">
+              <div>
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                  Message us
+                </h2>
+                <p className="text-lg text-slate-300 leading-relaxed">
+                  We'd love to hear from you — send us a message and we'll be in touch soon.
+                </p>
               </div>
-              <form onSubmit={handleContactSubmit} className="space-y-5">
+
+              <div className="space-y-8">
+                {/* WhatsApp Contact */}
                 <div>
-                  <Input
-                    type="text"
-                    placeholder="Name"
-                    value={contactForm.name}
-                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                    required
-                    className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-[#ff2e63] focus:ring-[#ff2e63] h-12 rounded-xl"
-                  />
+                  <h3 className="text-xs uppercase tracking-wider text-slate-400 mb-3 font-semibold">
+                    WHATSAPP
+                  </h3>
+                  <Button
+                    onClick={handleWhatsAppClick}
+                    className="bg-[#25D366] hover:bg-[#20BA5A] text-white h-12 px-6 rounded-lg font-semibold shadow-lg transition-all duration-300 hover:shadow-[#25D366]/20"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Chat on WhatsApp
+                  </Button>
+                  <p className="text-slate-400 text-sm mt-2">
+                    Get instant responses
+                  </p>
                 </div>
+
+                {/* Phone Contact */}
                 <div>
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={contactForm.email}
-                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                    required
-                    className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-[#ff2e63] focus:ring-[#ff2e63] h-12 rounded-xl"
-                  />
+                  <h3 className="text-xs uppercase tracking-wider text-slate-400 mb-3 font-semibold">
+                    PHONE
+                  </h3>
+                  <a
+                    href="tel:+19297421127"
+                    className="text-2xl font-bold text-white hover:text-[#ff2e63] transition-colors duration-300 inline-block"
+                  >
+                    +1 (929) 742-1127
+                  </a>
+                  <p className="text-slate-400 text-sm mt-2">
+                    Available for calls and messages
+                  </p>
                 </div>
+              </div>
+            </div>
+
+            {/* Right Column - Form */}
+            <div className="lg:col-span-3">
+              <form onSubmit={handleContactSubmit} className="space-y-6">
+                {/* Name and Email Row */}
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-slate-300 mb-3 font-semibold">
+                      NAME*
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Your name"
+                      value={contactForm.name}
+                      onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                      required
+                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-[#ff2e63] focus:ring-[#ff2e63] h-14 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-slate-300 mb-3 font-semibold">
+                      EMAIL*
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={contactForm.email}
+                      onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                      required
+                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-[#ff2e63] focus:ring-[#ff2e63] h-14 rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                {/* Phone */}
                 <div>
+                  <label className="block text-xs uppercase tracking-wider text-slate-300 mb-3 font-semibold">
+                    PHONE
+                  </label>
                   <Input
                     type="tel"
-                    placeholder="Phone (optional)"
+                    placeholder="Your phone (optional)"
                     value={contactForm.phone}
                     onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                    className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-[#ff2e63] focus:ring-[#ff2e63] h-12 rounded-xl"
+                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-[#ff2e63] focus:ring-[#ff2e63] h-14 rounded-lg"
                   />
                 </div>
+
+                {/* Message */}
                 <div>
+                  <label className="block text-xs uppercase tracking-wider text-slate-300 mb-3 font-semibold">
+                    MESSAGE*
+                  </label>
                   <Textarea
-                    placeholder="Message"
+                    placeholder="Tell us about your project..."
                     value={contactForm.message}
                     onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
                     required
-                    className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-[#ff2e63] focus:ring-[#ff2e63] min-h-[140px] rounded-xl"
+                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-[#ff2e63] focus:ring-[#ff2e63] min-h-[180px] rounded-lg resize-none"
                   />
                 </div>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white disabled:opacity-50 h-12 rounded-xl font-semibold shadow-lg shadow-[#ff2e63]/20 hover:shadow-xl hover:shadow-[#ff2e63]/30 transition-all duration-300"
-                >
-                  {isSubmitting ? "Sending..." : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Send Message
-                    </>
-                  )}
-                </Button>
+
+                {/* Submit Button */}
+                <div className="flex justify-end pt-4">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-white hover:bg-gray-100 text-slate-900 disabled:opacity-50 h-14 px-8 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group"
+                  >
+                    {isSubmitting ? "Sending..." : (
+                      <>
+                        <span>SUBMIT MESSAGE</span>
+                        <Send className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </Button>
+                </div>
               </form>
-            </div>
-
-            {/* Contact Options */}
-            <div className="space-y-6">
-              {/* WhatsApp Card */}
-              <div className="bg-gradient-to-br from-[#25D366]/5 via-[#25D366]/10 to-[#25D366]/5 rounded-2xl shadow-lg border border-[#25D366]/20 p-8 hover:shadow-xl hover:border-[#25D366]/40 transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="p-3.5 bg-[#25D366]/15 rounded-xl">
-                    <MessageCircle className="w-7 h-7 text-[#25D366]" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">WhatsApp</h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-5">
-                      Get instant responses via WhatsApp
-                    </p>
-                    <Button
-                      onClick={handleWhatsAppClick}
-                      className="bg-[#25D366] hover:bg-[#20BA5A] text-white w-full h-12 rounded-xl font-semibold shadow-lg shadow-[#25D366]/20 hover:shadow-xl hover:shadow-[#25D366]/30 transition-all duration-300"
-                    >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Chat on WhatsApp
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Phone Card */}
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-8 hover:shadow-xl transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="p-3.5 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
-                    <Phone className="w-7 h-7 text-amber-600 dark:text-amber-500" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Phone</h3>
-                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-500 mb-2">
-                      +1 (929) 742-1127
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm">
-                      Available for calls and messages
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
