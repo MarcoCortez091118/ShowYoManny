@@ -159,13 +159,17 @@
     /* Prevent scrolling/zooming on mobile */
     touch-action: manipulation;
     overscroll-behavior: none;
-    overflow-x: hidden;
   }
 
   html {
     /* Ensure proper viewport height on mobile */
     height: -webkit-fill-available;
+  }
+
+  /* Prevent horizontal scroll on main app container */
+  #root {
     overflow-x: hidden;
+    max-width: 100vw;
   }
   
   /* Full screen kiosk styles */
