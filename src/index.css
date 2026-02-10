@@ -159,11 +159,13 @@
     /* Prevent scrolling/zooming on mobile */
     touch-action: manipulation;
     overscroll-behavior: none;
+    overflow-x: hidden;
   }
-  
+
   html {
     /* Ensure proper viewport height on mobile */
     height: -webkit-fill-available;
+    overflow-x: hidden;
   }
   
   /* Full screen kiosk styles */
