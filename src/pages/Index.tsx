@@ -628,7 +628,7 @@ const Index = () => {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20 lg:py-32 px-4 md:px-6 bg-white dark:bg-background">
+      <section className="py-20 lg:py-32 px-6 md:px-8 lg:px-6 bg-white dark:bg-background overflow-hidden">
         <div className="container mx-auto max-w-7xl">
           <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start">
             {/* Left Column - Image */}
@@ -641,21 +641,21 @@ const Index = () => {
             </div>
 
             {/* Right Column - Pricing Content */}
-            <div className="order-1 lg:order-2 space-y-6 md:space-y-8">
+            <div className="order-1 lg:order-2 space-y-6 md:space-y-8 max-w-full">
               {/* Header */}
-              <div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+              <div className="max-w-full">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 leading-tight break-words">
                   Times Square Billboard Pricing
                 </h2>
-                <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-4 break-words">
                   Affordable digital billboard advertising in Times Square — no hidden fees.
                 </p>
-                <div className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-2 text-sm md:text-base">
-                  <p>
+                <div className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-2 text-sm md:text-base max-w-full">
+                  <p className="break-words">
                     Advertise your image or video on a real digital billboard in Times Square starting at just $22.
                     All packages include 10 seconds of display, shown 3 times within 24 hours, on a high-visibility screen at 1604 Broadway, New York.
                   </p>
-                  <p className="font-medium">
+                  <p className="font-medium break-words">
                     No contracts, no agencies, and no long-term commitments. Upload your content, get approved, and go live.
                   </p>
                 </div>
@@ -667,10 +667,10 @@ const Index = () => {
                   <Camera className="w-5 h-5" />
                   Photo Advertising Packages
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                   {/* Photo with Logo */}
-                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
-                    <CardContent className="pt-4 pb-4 px-4">
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow overflow-hidden">
+                    <CardContent className="pt-4 pb-4 px-4 w-full">
                       <div className="text-center mb-3">
                         <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Photo with Logo</h4>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white">$22</div>
@@ -701,8 +701,8 @@ const Index = () => {
                   </Card>
 
                   {/* Photo with Border */}
-                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
-                    <CardContent className="pt-4 pb-4 px-4">
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow overflow-hidden">
+                    <CardContent className="pt-4 pb-4 px-4 w-full">
                       <div className="text-center mb-3">
                         <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Photo with Border</h4>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white">$27</div>
@@ -733,8 +733,8 @@ const Index = () => {
                   </Card>
 
                   {/* Clean Photo */}
-                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
-                    <CardContent className="pt-4 pb-4 px-4">
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow overflow-hidden">
+                    <CardContent className="pt-4 pb-4 px-4 w-full">
                       <div className="text-center mb-3">
                         <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Clean Photo</h4>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white">$27</div>
@@ -772,10 +772,10 @@ const Index = () => {
                   <Video className="w-5 h-5" />
                   Video Advertising Packages
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                   {/* Video with Logo */}
-                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
-                    <CardContent className="pt-4 pb-4 px-4">
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow overflow-hidden">
+                    <CardContent className="pt-4 pb-4 px-4 w-full">
                       <div className="text-center mb-3">
                         <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Video with Logo</h4>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white">$32</div>
@@ -806,8 +806,8 @@ const Index = () => {
                   </Card>
 
                   {/* Video with Border */}
-                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
-                    <CardContent className="pt-4 pb-4 px-4">
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow overflow-hidden">
+                    <CardContent className="pt-4 pb-4 px-4 w-full">
                       <div className="text-center mb-3">
                         <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Video with Border</h4>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white">$37</div>
@@ -838,8 +838,8 @@ const Index = () => {
                   </Card>
 
                   {/* Clean Video */}
-                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
-                    <CardContent className="pt-4 pb-4 px-4">
+                  <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow overflow-hidden">
+                    <CardContent className="pt-4 pb-4 px-4 w-full">
                       <div className="text-center mb-3">
                         <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Clean Video</h4>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white">$37</div>
