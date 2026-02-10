@@ -1227,8 +1227,8 @@ const Index = () => {
               <h4 className="font-semibold mb-4">Connect</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li>
-                  <a href="mailto:hello@showyo.com" className="hover:text-white transition-colors">
-                    hello@showyo.com
+                  <a href="mailto:support@showyony.com" className="hover:text-white transition-colors">
+                    support@showyony.com
                   </a>
                 </li>
                 <li>
@@ -1242,7 +1242,7 @@ const Index = () => {
 
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-400 text-sm">
-              © 2025 ShowYo. All rights reserved.
+              © {new Date().getFullYear()} ShowYo. All rights reserved. Powered By: <a href="https://neuromarket.io" target="_blank" rel="noopener noreferrer" className="text-[#ff2e63] hover:text-[#ff2e63]/80 transition-colors">NeuroMarket</a>
             </p>
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
