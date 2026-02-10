@@ -27,6 +27,11 @@ const Index = () => {
   const [scrollerHeight, setScrollerHeight] = useState(0);
   const [showHeader, setShowHeader] = useState(true);
   const lastScrollY = useRef(0);
+  const [marqueeSpeed, setMarqueeSpeed] = useState(15);
+  const [marqueeDirection, setMarqueeDirection] = useState(1);
+  const marqueeRef = useRef<HTMLDivElement>(null);
+  const lastMarqueeScrollY = useRef(0);
+  const scrollVelocity = useRef(0);
 
   useEffect(() => {
     let ticking = false;
@@ -109,6 +114,48 @@ const Index = () => {
 
     window.addEventListener('scroll', handleHeaderScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleHeaderScroll);
+  }, []);
+
+  useEffect(() => {
+    let ticking = false;
+    let velocityTimeout: NodeJS.Timeout;
+
+    const handleMarqueeScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const delta = currentScrollY - lastMarqueeScrollY.current;
+
+          scrollVelocity.current = delta;
+
+          if (Math.abs(delta) > 1) {
+            if (delta > 0) {
+              setMarqueeDirection(1);
+              setMarqueeSpeed(Math.max(5, 15 - Math.abs(delta) * 0.5));
+            } else {
+              setMarqueeDirection(-1);
+              setMarqueeSpeed(Math.max(5, 15 - Math.abs(delta) * 0.5));
+            }
+          }
+
+          clearTimeout(velocityTimeout);
+          velocityTimeout = setTimeout(() => {
+            setMarqueeSpeed(15);
+            setMarqueeDirection(1);
+          }, 150);
+
+          lastMarqueeScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleMarqueeScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleMarqueeScroll);
+      clearTimeout(velocityTimeout);
+    };
   }, []);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
@@ -507,7 +554,13 @@ const Index = () => {
             <span className="text-xs uppercase tracking-wider text-gray-600">THE SHOWYO PLATFORM</span>
           </div>
         </div>
-        <div className="flex whitespace-nowrap animate-marquee">
+        <div
+          ref={marqueeRef}
+          className="flex whitespace-nowrap"
+          style={{
+            animation: `marquee-${marqueeDirection > 0 ? 'forward' : 'reverse'} ${marqueeSpeed}s linear infinite`
+          }}
+        >
           <div className="flex items-center">
             {Array(10).fill(null).map((_, i) => (
               <span key={i} className="text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-gray-900 px-8">
@@ -1255,7 +1308,7 @@ const Index = () => {
       </footer>
 
       <style>{`
-        @keyframes marquee {
+        @keyframes marquee-forward {
           0% {
             transform: translateX(0);
           }
@@ -1263,8 +1316,13 @@ const Index = () => {
             transform: translateX(-50%);
           }
         }
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
+        @keyframes marquee-reverse {
+          0% {
+            transform: translateX(-50%);
+          }
+          100% {
+            transform: translateX(0);
+          }
         }
       `}</style>
     </div>
