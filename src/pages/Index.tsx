@@ -370,16 +370,16 @@ const Index = () => {
                   <Button
                     size="lg"
                     onClick={() => navigate('/upload')}
-                    className="bg-white text-gray-900 hover:bg-gray-100 text-lg px-8 py-6 h-auto group shadow-xl"
+                    className="bg-white text-gray-900 hover:bg-gray-100 text-base md:text-lg px-6 py-4 md:px-8 md:py-6 h-auto group shadow-xl"
                   >
                     Start Now
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                   <Button
                     size="lg"
                     variant="outline"
                     onClick={() => navigate('/business-plans')}
-                    className="text-lg px-8 py-6 h-auto border-2 border-cyan-400 text-white bg-cyan-400/20 hover:bg-cyan-400/30 backdrop-blur-sm shadow-xl"
+                    className="text-base md:text-lg px-6 py-4 md:px-8 md:py-6 h-auto border-2 border-cyan-400 text-white bg-cyan-400/20 hover:bg-cyan-400/30 backdrop-blur-sm shadow-xl"
                   >
                     Business Plans
                   </Button>
