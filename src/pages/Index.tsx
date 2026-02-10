@@ -1171,10 +1171,10 @@ const Index = () => {
           <div className="text-center mt-12">
             <Button
               size="lg"
-              onClick={() => navigate('/upload')}
+              onClick={() => window.open('https://api.whatsapp.com/send/?phone=19297421127&text&type=phone_number&app_absent=0', '_blank')}
               className="bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white text-lg px-8"
             >
-              Start Your Campaign Now
+              More Information
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
