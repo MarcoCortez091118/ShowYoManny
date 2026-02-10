@@ -212,14 +212,14 @@ const Index = () => {
       <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-sm transition-transform duration-300 ${
         showHeader ? 'translate-y-0' : '-translate-y-full'
       }`}>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-12 py-4 sm:py-6">
-          <div className="flex justify-between items-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl px-4 sm:px-6 py-3 sm:py-4 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
+        <div className="container mx-auto px-6 lg:px-12 py-6">
+          <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <img src={showYoLogo} alt="ShowYo" className="h-6 sm:h-8 w-auto" />
+              <img src={showYoLogo} alt="ShowYo" className="h-8 w-auto" />
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-2">
+            <nav className="hidden md:flex items-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-full pl-6 pr-2 py-2 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
               <button
                 onClick={() => navigate('/business-plans')}
                 className="px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -249,7 +249,7 @@ const Index = () => {
             </nav>
 
             {/* Mobile Menu Button */}
-            <div className="lg:hidden">
+            <div className="md:hidden">
               <Button
                 variant="ghost"
                 size="icon"
@@ -264,7 +264,7 @@ const Index = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 shadow-xl">
             <div className="container mx-auto px-4 py-6 space-y-4">
               <button
                 onClick={() => {
@@ -322,7 +322,7 @@ const Index = () => {
 
           {/* Label - Top Left (only show after first slide) */}
           {currentSlide > 0 && (
-            <div className="absolute top-24 sm:top-8 left-4 sm:left-8 lg:left-16 z-20 transition-opacity duration-500">
+            <div className="absolute top-24 md:top-8 left-4 md:left-8 lg:left-16 z-20 transition-opacity duration-500">
               <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-white/80 backdrop-blur-sm bg-white/10 px-3 py-2 rounded-full border border-white/20">
                 <div className="w-2 h-2 bg-white rounded-sm" />
                 What we do
@@ -331,8 +331,8 @@ const Index = () => {
           )}
 
           {/* Slide Counter - Bottom Left */}
-          <div className="absolute bottom-6 sm:bottom-8 left-4 sm:left-8 lg:left-16 z-20">
-            <div className="px-3 sm:px-4 py-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-md shadow-xl">
+          <div className="absolute bottom-6 md:bottom-8 left-4 md:left-8 lg:left-16 z-20">
+            <div className="px-4 py-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-md shadow-xl">
               <span className="text-sm font-medium text-white">
                 0{currentSlide + 1}
               </span>
@@ -342,7 +342,7 @@ const Index = () => {
           </div>
 
           {/* Progress Line */}
-          <div className="hidden sm:block absolute left-4 sm:left-8 lg:left-16 top-20 bottom-20 w-px bg-white/20 z-20">
+          <div className="absolute left-8 lg:left-16 top-20 bottom-20 w-px bg-white/20 z-20 hidden md:block">
             <div
               className="w-full bg-gradient-to-b from-white via-cyan-200 to-white transition-all duration-300 ease-out shadow-lg"
               style={{ height: `${(scrollProgress % (1/4)) * 400}%` }}
@@ -350,8 +350,8 @@ const Index = () => {
           </div>
 
           {/* Main Content - Center */}
-          <div className="relative z-10 container mx-auto px-5 sm:px-8 lg:px-16 max-w-6xl">
-            <div className="text-center sm:text-center">
+          <div className="relative z-10 container mx-auto px-6 md:px-8 lg:px-16 max-w-6xl">
+            <div className="text-center">
               {/* Slide 0: Hero */}
               <div
                 className={`transition-all duration-700 ease-out ${
@@ -360,17 +360,17 @@ const Index = () => {
                     : 'opacity-0 -translate-y-8 absolute inset-0 pointer-events-none'
                 }`}
               >
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-white mb-6 sm:mb-8 leading-tight drop-shadow-lg px-2">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-white mb-8 leading-tight drop-shadow-lg">
                   Display your content on Times Square's iconic billboard
                 </h1>
-                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-md px-2">
+                <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
                   Upload your image or video and broadcast it on a real digital billboard at 1604 Broadway, NYC. Affordable, fast, and accessible to everyone.
                 </p>
-                <div className="flex flex-col gap-3 sm:gap-4 justify-center px-4 sm:px-0">
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button
                     size="lg"
                     onClick={() => navigate('/upload')}
-                    className="w-full sm:w-auto bg-white text-gray-900 hover:bg-gray-100 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 h-auto group shadow-xl rounded-xl"
+                    className="bg-white text-gray-900 hover:bg-gray-100 text-lg px-8 py-6 h-auto group shadow-xl"
                   >
                     Start Now
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -379,7 +379,7 @@ const Index = () => {
                     size="lg"
                     variant="outline"
                     onClick={() => navigate('/business-plans')}
-                    className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 h-auto border-2 border-cyan-400 text-white bg-cyan-400/20 hover:bg-cyan-400/30 backdrop-blur-sm shadow-xl rounded-xl"
+                    className="text-lg px-8 py-6 h-auto border-2 border-cyan-400 text-white bg-cyan-400/20 hover:bg-cyan-400/30 backdrop-blur-sm shadow-xl"
                   >
                     Business Plans
                   </Button>
@@ -395,7 +395,7 @@ const Index = () => {
                 return (
                   <div
                     key={slideIndex}
-                    className={`transition-all duration-700 ease-out px-2 ${
+                    className={`transition-all duration-700 ease-out ${
                       isActive
                         ? 'opacity-100 translate-y-0'
                         : currentSlide < actualSlideIndex
@@ -403,7 +403,7 @@ const Index = () => {
                         : 'opacity-0 -translate-y-8 absolute inset-0 pointer-events-none'
                     }`}
                   >
-                    <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight drop-shadow-2xl">
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight drop-shadow-2xl">
                       {slide.text.split(' ').map((word, wordIndex) => {
                         const isHighlightWord = slide.highlight.includes(word);
                         const baseProgress = Math.max(0, Math.min(1, slideProgress * 3 - (wordIndex * 0.05)));
@@ -412,7 +412,7 @@ const Index = () => {
                         return (
                           <span
                             key={wordIndex}
-                            className="transition-all duration-700 ease-out inline-block mr-2 sm:mr-3 md:mr-4"
+                            className="transition-all duration-700 ease-out inline-block mr-3 md:mr-4"
                             style={{
                               color: isHighlightWord
                                 ? 'rgb(255, 255, 255)'
@@ -436,7 +436,7 @@ const Index = () => {
 
           {/* Scroll Indicator */}
           <div
-            className={`hidden sm:flex absolute bottom-8 left-1/2 -translate-x-1/2 flex-col items-center gap-2 text-white/70 transition-opacity duration-500 z-20 ${
+            className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/70 transition-opacity duration-500 z-20 ${
               scrollProgress > 0.05 ? 'opacity-0' : 'opacity-100 animate-bounce'
             }`}
           >
