@@ -33,6 +33,7 @@ const Index = () => {
   const lastMarqueeScrollY = useRef(0);
   const scrollVelocity = useRef(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showAllFaqs, setShowAllFaqs] = useState(false);
 
   useEffect(() => {
     let ticking = false;
@@ -968,7 +969,7 @@ const Index = () => {
 
           <Accordion type="single" collapsible className="w-full space-y-2">
             <AccordionItem value="item-1" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 How much does it cost to advertise on a Times Square billboard?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
@@ -983,7 +984,7 @@ const Index = () => {
             </AccordionItem>
 
             <AccordionItem value="item-2" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 Is this a real Times Square billboard?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
@@ -995,7 +996,7 @@ const Index = () => {
             </AccordionItem>
 
             <AccordionItem value="item-3" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 How long does my Times Square billboard ad appear?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
@@ -1009,7 +1010,7 @@ const Index = () => {
             </AccordionItem>
 
             <AccordionItem value="item-4" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 What types of content can I display on a Times Square billboard?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -1029,7 +1030,7 @@ const Index = () => {
             </AccordionItem>
 
             <AccordionItem value="item-5" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 Can businesses advertise in Times Square using ShowYoNy?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -1047,8 +1048,8 @@ const Index = () => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-6" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+            <AccordionItem value="item-6" className={`border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900 ${!showAllFaqs ? 'hidden' : ''}`}>
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 Is this the cheapest way to advertise in Times Square?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
@@ -1061,8 +1062,8 @@ const Index = () => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-7" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+            <AccordionItem value="item-7" className={`border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900 ${!showAllFaqs ? 'hidden' : ''}`}>
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 Do I need to be in New York to advertise in Times Square?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
@@ -1075,8 +1076,8 @@ const Index = () => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-8" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+            <AccordionItem value="item-8" className={`border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900 ${!showAllFaqs ? 'hidden' : ''}`}>
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 How does the approval process work?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-3">
@@ -1089,8 +1090,8 @@ const Index = () => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-9" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+            <AccordionItem value="item-9" className={`border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900 ${!showAllFaqs ? 'hidden' : ''}`}>
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 Can I preview my Times Square billboard ad before it goes live?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -1100,8 +1101,8 @@ const Index = () => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-10" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+            <AccordionItem value="item-10" className={`border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900 ${!showAllFaqs ? 'hidden' : ''}`}>
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 Can I book multiple days or recurring Times Square billboard ads?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -1118,8 +1119,8 @@ const Index = () => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-11" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+            <AccordionItem value="item-11" className={`border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900 ${!showAllFaqs ? 'hidden' : ''}`}>
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 What makes digital billboard advertising in Times Square effective?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -1135,8 +1136,8 @@ const Index = () => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-12" className="border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900">
-              <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
+            <AccordionItem value="item-12" className={`border border-gray-200 dark:border-gray-800 rounded-lg px-6 bg-gray-50 dark:bg-gray-900 ${!showAllFaqs ? 'hidden' : ''}`}>
+              <AccordionTrigger className="text-left text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:no-underline">
                 How do I book a Times Square billboard ad?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -1153,6 +1154,19 @@ const Index = () => {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+
+          {!showAllFaqs && (
+            <div className="text-center mt-8">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setShowAllFaqs(true)}
+                className="border-2"
+              >
+                Ver más preguntas
+              </Button>
+            </div>
+          )}
 
           <div className="text-center mt-12">
             <Button
