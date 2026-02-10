@@ -209,47 +209,16 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-background">
       {/* Header */}
-      <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-sm transition-transform duration-300 ${
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
         showHeader ? 'translate-y-0' : '-translate-y-full'
       }`}>
-        <div className="md:container md:mx-auto px-4 md:px-6 lg:px-12 py-4 md:py-6 bg-white/80 md:bg-transparent dark:bg-gray-900/80 md:dark:bg-transparent backdrop-blur-md md:backdrop-blur-sm rounded-2xl md:rounded-none mx-4 md:mx-auto mt-4 md:mt-0 shadow-lg md:shadow-none">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <img src={showYoLogo} alt="ShowYo" className="h-8 w-auto" />
-            </div>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-full pl-6 pr-2 py-2 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
-              <button
-                onClick={() => navigate('/business-plans')}
-                className="px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                BUSINESS PLANS
-              </button>
-              <button
-                onClick={() => navigate('/kiosk')}
-                className="px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                WATCH LIVE
-              </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                className="h-8 w-8 text-gray-700 dark:text-gray-300 hover:bg-transparent"
-              >
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-              </Button>
-              <Button
-                onClick={() => navigate('/upload')}
-                className="ml-2 px-6 py-2.5 text-sm font-bold bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white rounded-full shadow-sm transition-all"
-              >
-                GET STARTED
-              </Button>
-            </nav>
-
-            {/* Mobile Menu Button */}
-            <div className="md:hidden">
+        {/* Mobile Header Container */}
+        <div className="md:hidden px-4 pt-4">
+          <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl shadow-lg px-4 py-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <img src={showYoLogo} alt="ShowYo" className="h-8 w-auto" />
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
@@ -262,10 +231,51 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Desktop Header Container */}
+        <div className="hidden md:block backdrop-blur-sm">
+          <div className="container mx-auto px-6 lg:px-12 py-6">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <img src={showYoLogo} alt="ShowYo" className="h-8 w-auto" />
+              </div>
+
+              {/* Desktop Navigation */}
+              <nav className="flex items-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-full pl-6 pr-2 py-2 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
+                <button
+                  onClick={() => navigate('/business-plans')}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  BUSINESS PLANS
+                </button>
+                <button
+                  onClick={() => navigate('/kiosk')}
+                  className="px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  WATCH LIVE
+                </button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="h-8 w-8 text-gray-700 dark:text-gray-300 hover:bg-transparent"
+                >
+                  {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                </Button>
+                <Button
+                  onClick={() => navigate('/upload')}
+                  className="ml-2 px-6 py-2.5 text-sm font-bold bg-[#ff2e63] hover:bg-[#ff2e63]/90 text-white rounded-full shadow-sm transition-all"
+                >
+                  GET STARTED
+                </Button>
+              </nav>
+            </div>
+          </div>
+        </div>
+
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 shadow-xl">
-            <div className="container mx-auto px-4 py-6 space-y-4">
+          <div className="md:hidden px-4 pt-2">
+            <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl shadow-xl px-4 py-6 space-y-4">
               <button
                 onClick={() => {
                   navigate('/business-plans');
