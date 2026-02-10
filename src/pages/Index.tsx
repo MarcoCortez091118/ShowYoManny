@@ -248,12 +248,6 @@ const Index = () => {
                 >
                   BUSINESS PLANS
                 </button>
-                <button
-                  onClick={() => navigate('/kiosk')}
-                  className="px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  WATCH LIVE
-                </button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -285,15 +279,6 @@ const Index = () => {
                 className="block w-full text-left px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               >
                 BUSINESS PLANS
-              </button>
-              <button
-                onClick={() => {
-                  navigate('/kiosk');
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                WATCH LIVE
               </button>
               <div className="flex items-center gap-3 px-4 py-3">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Theme:</span>
