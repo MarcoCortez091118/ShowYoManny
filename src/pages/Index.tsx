@@ -1303,53 +1303,57 @@ const Index = () => {
       {/* Footer */}
       <footer className="bg-gray-900 dark:bg-gray-950 text-white py-16 px-6">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
-            <div>
+          <div className="mb-12">
+            {/* Logo Section - Full Width on Mobile */}
+            <div className="mb-8 md:mb-12">
               <img src={showYoLogo} alt="ShowYo" className="h-8 w-auto mb-4 brightness-0 invert" />
               <p className="text-gray-400 text-sm">
                 Making Times Square billboard advertising accessible to everyone.
               </p>
             </div>
 
-            <div>
-              <h4 className="font-semibold mb-4">Navigate</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li>
-                  <button onClick={() => navigate('/upload')} className="hover:text-white transition-colors">
-                    Get Started
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => navigate('/business-plans')} className="hover:text-white transition-colors">
-                    Business Plans
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => navigate('/kiosk')} className="hover:text-white transition-colors">
-                    Watch Live
-                  </button>
-                </li>
-              </ul>
-            </div>
+            {/* Navigate and Connect - 2 Columns on Mobile, Part of 3 Columns on Desktop */}
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-8 md:gap-12">
+              <div>
+                <h4 className="font-semibold mb-4">Navigate</h4>
+                <ul className="space-y-2 text-gray-400 text-sm">
+                  <li>
+                    <button onClick={() => navigate('/upload')} className="hover:text-white transition-colors">
+                      Get Started
+                    </button>
+                  </li>
+                  <li>
+                    <button onClick={() => navigate('/business-plans')} className="hover:text-white transition-colors">
+                      Business Plans
+                    </button>
+                  </li>
+                  <li>
+                    <button onClick={() => navigate('/kiosk')} className="hover:text-white transition-colors">
+                      Watch Live
+                    </button>
+                  </li>
+                </ul>
+              </div>
 
-            <div>
-              <h4 className="font-semibold mb-4">Connect</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li>
-                  <a href="mailto:support@showyony.com" className="hover:text-white transition-colors">
-                    support@showyony.com
-                  </a>
-                </li>
-                <li>
-                  <a href="tel:+19297421127" className="hover:text-white transition-colors">
-                    +1 (929) 742-1127
-                  </a>
-                </li>
-              </ul>
+              <div>
+                <h4 className="font-semibold mb-4">Connect</h4>
+                <ul className="space-y-2 text-gray-400 text-sm">
+                  <li>
+                    <a href="mailto:support@showyony.com" className="hover:text-white transition-colors">
+                      support@showyony.com
+                    </a>
+                  </li>
+                  <li>
+                    <a href="tel:+19297421127" className="hover:text-white transition-colors">
+                      +1 (929) 742-1127
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
             <p className="text-gray-400 text-sm">
               © {new Date().getFullYear()} ShowYo. All rights reserved. Powered By: <a href="https://neuromarket.io" target="_blank" rel="noopener noreferrer" className="text-[#ff2e63] hover:text-[#ff2e63]/80 transition-colors">NeuroMarket</a>
             </p>
