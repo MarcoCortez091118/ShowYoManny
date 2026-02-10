@@ -9,6 +9,8 @@ import { Monitor, Zap, MapPin, Maximize2, Clock, Repeat, DollarSign, Gift, Check
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
+import { PricingSection } from "@/components/ui/pricing-section";
+import type { PricingTier } from "@/components/ui/pricing-card";
 
 interface PackageDetails {
   name: string;
@@ -260,6 +262,22 @@ const BusinessPlans = () => {
     }
   };
 
+  const convertToPricingTiers = (categoryPackages: PackageDetails[]): PricingTier[] => {
+    return categoryPackages.map((pkg, index) => ({
+      name: pkg.name,
+      price: {
+        monthly: pkg.monthlyTotal,
+      },
+      description: pkg.description,
+      features: pkg.features,
+      cta: "Get Started",
+      highlighted: pkg.tier === "platinum",
+      popular: pkg.tier === "gold",
+    }));
+  };
+
+  const pricingFrequencies = ["monthly"];
+
   return (
     <div className="min-h-screen bg-white dark:bg-background">
       <header className="border-b border-border bg-white/90 dark:bg-card/50 backdrop-blur-sm sticky top-0 z-50">
@@ -333,7 +351,7 @@ const BusinessPlans = () => {
         </div>
 
         <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as any)} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-12">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8">
             <TabsTrigger value="monthly">1 Month</TabsTrigger>
             <TabsTrigger value="extended">6M - 1Y</TabsTrigger>
             <TabsTrigger value="weekly">Weekly</TabsTrigger>
@@ -341,85 +359,16 @@ const BusinessPlans = () => {
 
           {Object.entries(packages).map(([category, categoryPackages]) => (
             <TabsContent key={category} value={category} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {categoryPackages.map((pkg) => {
-                  const Icon = pkg.icon;
-                  return (
-                    <Card
-                      key={pkg.name}
-                      className="relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2"
-                    >
-                      <div className={`absolute inset-0 bg-gradient-to-br ${getTierColor(pkg.tier)} opacity-5`} />
-
-                      <CardHeader className="relative">
-                        <div className="flex justify-between items-start mb-2">
-                          <Badge className={`${getTierBadgeColor(pkg.tier)} text-white`}>
-                            {pkg.tier.toUpperCase()}
-                          </Badge>
-                          <Icon className="h-8 w-8 text-primary" />
-                        </div>
-                        <CardTitle className="text-2xl">{pkg.name}</CardTitle>
-                        <CardDescription className="text-base">{pkg.description}</CardDescription>
-                      </CardHeader>
-
-                      <CardContent className="space-y-4 relative">
-                        <div className="space-y-2 pb-4 border-b">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Duration:</span>
-                            <span className="font-semibold">{pkg.duration}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Repeat className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Frequency:</span>
-                            <span className="font-semibold">{pkg.frequency} times/day</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Maximize2 className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Display Time:</span>
-                            <span className="font-semibold">10 seconds</span>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div className="bg-gradient-to-br from-primary/10 to-secondary/10 p-4 rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                              <DollarSign className="h-5 w-5 text-primary" />
-                              <span className="text-sm text-muted-foreground">Investment</span>
-                            </div>
-                            <div className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                              ${pkg.monthlyTotal.toLocaleString()}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              ${pkg.dailyRate.toFixed(2)}/day
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm font-semibold">
-                              <Gift className="h-4 w-4 text-primary" />
-                              Key Benefits
-                            </div>
-                            {pkg.features.map((feature, idx) => (
-                              <div key={idx} className="flex items-start gap-2 text-sm">
-                                <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                <span className="text-muted-foreground">{feature}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <Button
-                          className="w-full mt-4"
-                          variant={pkg.tier === "platinum" ? "default" : "outline"}
-                          onClick={() => navigate("/")}
-                        >
-                          Get Started
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+              <div className="relative flex justify-center items-center w-full">
+                <div className="absolute inset-0 -z-10">
+                  <div className="h-full w-full bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:35px_35px] opacity-30 [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
+                </div>
+                <PricingSection
+                  title={`${category === "monthly" ? "Monthly" : category === "extended" ? "Extended" : "Weekly"} Plans`}
+                  subtitle="Choose the best plan for your Times Square advertising needs"
+                  frequencies={pricingFrequencies}
+                  tiers={convertToPricingTiers(categoryPackages)}
+                />
               </div>
             </TabsContent>
           ))}
