@@ -433,16 +433,6 @@ const Index = () => {
               })}
             </div>
           </div>
-
-          {/* Scroll Indicator */}
-          <div
-            className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/70 transition-opacity duration-500 z-20 ${
-              scrollProgress > 0.05 ? 'opacity-0' : 'opacity-100 animate-bounce'
-            }`}
-          >
-            <span className="text-xs uppercase tracking-wider drop-shadow-lg">Scroll</span>
-            <div className="w-px h-8 bg-gradient-to-b from-white/70 to-transparent" />
-          </div>
         </div>
       </section>
 
