@@ -447,17 +447,17 @@ const Index = () => {
       </section>
 
       {/* Platform Section */}
-      <section className="bg-gray-50 dark:bg-gray-900 py-20 lg:py-32 px-6">
+      <section className="bg-gray-50 dark:bg-gray-900 py-16 md:py-20 lg:py-32 px-4 md:px-6">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid lg:grid-cols-[200px_1fr] gap-12 lg:gap-16">
+          <div className="grid lg:grid-cols-[200px_1fr] gap-8 lg:gap-12 xl:gap-16">
             <aside>
               <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 sticky top-32">
                 The ShowYo Platform
               </div>
             </aside>
 
-            <div className="space-y-8">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
+            <div className="space-y-6 md:space-y-8">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
                 Making Times Square advertising{" "}
                 <span className="text-gray-400 dark:text-gray-600">accessible to everyone.</span>
               </h2>
@@ -488,7 +488,7 @@ const Index = () => {
       <section className="w-full">
         <div className="grid md:grid-cols-3 gap-0">
             {/* Card 1 - Instant Upload */}
-            <div className="bg-[#ffd23f] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
+            <div className="bg-[#ffd23f] p-8 md:p-12 lg:p-16 min-h-[360px] md:min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
               <div className="text-sm text-gray-700 absolute top-8 right-8">01.</div>
               <div className="mb-auto pt-8">
                 <svg className="w-20 h-20 mb-12" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -536,7 +536,7 @@ const Index = () => {
             </div>
 
             {/* Card 2 - Affordable Pricing */}
-            <div className="bg-[#05c7cc] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
+            <div className="bg-[#05c7cc] p-8 md:p-12 lg:p-16 min-h-[360px] md:min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
               <div className="text-sm text-gray-700 absolute top-8 right-8">02.</div>
               <div className="mb-auto pt-8">
                 <svg className="w-20 h-20 mb-12" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -558,7 +558,7 @@ const Index = () => {
             </div>
 
             {/* Card 3 - Global Reach */}
-            <div className="bg-[#06335b] p-12 md:p-16 min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
+            <div className="bg-[#06335b] p-8 md:p-12 lg:p-16 min-h-[360px] md:min-h-[420px] flex flex-col relative group hover:shadow-2xl transition-shadow">
               <div className="text-sm text-gray-300 absolute top-8 right-8">03.</div>
               <div className="mb-auto pt-8">
                 <svg className="w-20 h-20 mb-12" viewBox="0 0 100 100" fill="none" stroke="white" strokeWidth="1.5">
@@ -628,7 +628,7 @@ const Index = () => {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20 lg:py-32 px-6 bg-white dark:bg-background">
+      <section className="py-20 lg:py-32 px-4 md:px-6 bg-white dark:bg-background">
         <div className="container mx-auto max-w-7xl">
           <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start">
             {/* Left Column - Image */}
@@ -641,16 +641,16 @@ const Index = () => {
             </div>
 
             {/* Right Column - Pricing Content */}
-            <div className="order-1 lg:order-2 space-y-8">
+            <div className="order-1 lg:order-2 space-y-6 md:space-y-8">
               {/* Header */}
               <div>
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
                   Times Square Billboard Pricing
                 </h2>
-                <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-4">
                   Affordable digital billboard advertising in Times Square — no hidden fees.
                 </p>
-                <div className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-2 text-sm">
+                <div className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-2 text-sm md:text-base">
                   <p>
                     Advertise your image or video on a real digital billboard in Times Square starting at just $22.
                     All packages include 10 seconds of display, shown 3 times within 24 hours, on a high-visibility screen at 1604 Broadway, New York.
@@ -663,11 +663,11 @@ const Index = () => {
 
               {/* Photo Packages */}
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <h3 className="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <Camera className="w-5 h-5" />
                   Photo Advertising Packages
                 </h3>
-                <div className="grid sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Photo with Logo */}
                   <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
                     <CardContent className="pt-4 pb-4 px-4">
@@ -768,11 +768,11 @@ const Index = () => {
 
               {/* Video Packages */}
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <h3 className="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <Video className="w-5 h-5" />
                   Video Advertising Packages
                 </h3>
-                <div className="grid sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Video with Logo */}
                   <Card className="bg-white dark:bg-gray-800 border hover:shadow-lg transition-shadow">
                     <CardContent className="pt-4 pb-4 px-4">
@@ -889,13 +889,13 @@ const Index = () => {
       </section>
 
       {/* How It Works */}
-      <section className="bg-gray-100 dark:bg-gray-900 rounded-[3rem] py-20 lg:py-32 px-6 mx-6 lg:mx-12">
+      <section className="bg-gray-100 dark:bg-gray-900 rounded-[2rem] md:rounded-[3rem] py-16 md:py-20 lg:py-32 px-4 md:px-6 mx-4 md:mx-6 lg:mx-12">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
               How It Works
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400">
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400">
               Three simple steps to Times Square
             </p>
           </div>
