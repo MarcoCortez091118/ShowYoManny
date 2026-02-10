@@ -632,25 +632,25 @@ const Index = () => {
         <div className="container mx-auto max-w-7xl">
           <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-start">
             {/* Left Column - Image */}
-            <div className="order-2 lg:order-1 lg:sticky lg:top-32 self-start">
+            <div className="order-2 lg:order-1 lg:sticky lg:top-32 self-start flex justify-center lg:justify-start">
               <img
                 src="https://instagram.fpbc2-2.fna.fbcdn.net/v/t39.30808-6/608425265_122140637702962233_4738224972353000105_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=103&ig_cache_key=Mzc5OTk0NzA3NzYxNTc5NzQ3OQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjk2MHgxMjAwLnNkci5DMyJ9&_nc_ohc=QksMm53zfikQ7kNvwH2B249&_nc_oc=AdlGEpAFw3tsdeGqd9GteK5cLx6bkcxaeN4IO-7BKRHdQCDYeh5IguDc1A7Lt8bRAQUVWcp2ayptw__UZ-1iAih9&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=instagram.fpbc2-2.fna&_nc_gid=XU6vzKDGA8ondtOrUTJGgg&oh=00_AfuUBW8crXYBnyCD4BmZCALEPRN71Uc-5qQLdl3XC2JLLA&oe=699013AA"
                 alt="Times Square Billboard"
-                className="rounded-2xl shadow-2xl w-full"
+                className="rounded-2xl shadow-2xl w-full max-w-sm lg:max-w-none"
               />
             </div>
 
             {/* Right Column - Pricing Content */}
             <div className="order-1 lg:order-2 space-y-8">
               {/* Header */}
-              <div>
+              <div className="text-center lg:text-left">
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
                   Times Square Billboard Pricing
                 </h2>
-                <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-4">
                   Affordable digital billboard advertising in Times Square — no hidden fees.
                 </p>
-                <div className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-2 text-sm">
+                <div className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-2 text-sm md:text-base">
                   <p>
                     Advertise your image or video on a real digital billboard in Times Square starting at just $22.
                     All packages include 10 seconds of display, shown 3 times within 24 hours, on a high-visibility screen at 1604 Broadway, New York.
@@ -663,7 +663,7 @@ const Index = () => {
 
               {/* Photo Packages */}
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-center lg:justify-start gap-2">
                   <Camera className="w-5 h-5" />
                   Photo Advertising Packages
                 </h3>
@@ -768,7 +768,7 @@ const Index = () => {
 
               {/* Video Packages */}
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-center lg:justify-start gap-2">
                   <Video className="w-5 h-5" />
                   Video Advertising Packages
                 </h3>
