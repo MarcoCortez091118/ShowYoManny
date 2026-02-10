@@ -128,13 +128,15 @@ const Index = () => {
 
           scrollVelocity.current = delta;
 
-          if (Math.abs(delta) > 1) {
+          if (Math.abs(delta) > 0.5) {
+            const speedAdjustment = Math.min(Math.abs(delta) * 0.1, 3);
+
             if (delta > 0) {
               setMarqueeDirection(1);
-              setMarqueeSpeed(Math.max(5, 15 - Math.abs(delta) * 0.5));
+              setMarqueeSpeed(prev => Math.max(10, prev - speedAdjustment * 0.5));
             } else {
               setMarqueeDirection(-1);
-              setMarqueeSpeed(Math.max(5, 15 - Math.abs(delta) * 0.5));
+              setMarqueeSpeed(prev => Math.max(10, prev - speedAdjustment * 0.5));
             }
           }
 
@@ -142,7 +144,7 @@ const Index = () => {
           velocityTimeout = setTimeout(() => {
             setMarqueeSpeed(15);
             setMarqueeDirection(1);
-          }, 150);
+          }, 300);
 
           lastMarqueeScrollY.current = currentScrollY;
           ticking = false;
@@ -558,7 +560,8 @@ const Index = () => {
           ref={marqueeRef}
           className="flex whitespace-nowrap"
           style={{
-            animation: `marquee-${marqueeDirection > 0 ? 'forward' : 'reverse'} ${marqueeSpeed}s linear infinite`
+            animation: `marquee-${marqueeDirection > 0 ? 'forward' : 'reverse'} ${marqueeSpeed}s linear infinite`,
+            transition: 'animation-duration 0.3s ease-out'
           }}
         >
           <div className="flex items-center">
