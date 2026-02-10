@@ -879,7 +879,7 @@ const Index = () => {
                   onClick={() => navigate('/business-plans')}
                   className="border-2 w-full sm:w-auto"
                 >
-                  Need More? Explore Business Solutions
+                  Explore Business Solutions
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
