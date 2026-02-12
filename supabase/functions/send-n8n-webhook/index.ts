@@ -1,6 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 
-const N8N_WEBHOOK_URL = 'https://n8n.srv991322.hstgr.cloud/webhook-test/stripe-payment-content-slots';
+const N8N_WEBHOOK_URL = 'https://n8n.srv991322.hstgr.cloud/webhook/stripe-payment-content-slots';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
