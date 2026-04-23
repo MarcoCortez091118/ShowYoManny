@@ -26,8 +26,8 @@ const DEFAULT: DisplaySettings = {
   photoDisplayDurationSeconds: 10,
   minVideoDurationSeconds: 5,
   maxVideoDurationSeconds: 10,
-  maxImageFileSizeMB: 25,
-  maxVideoFileSizeMB: 100,
+  maxImageFileSizeMB: 100,
+  maxVideoFileSizeMB: 500,
   recommendedImageFormat: "PNG or high-quality JPEG",
   recommendedVideoFormat: "MP4 (H.264) or MOV",
 };

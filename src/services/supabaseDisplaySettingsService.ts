@@ -36,8 +36,8 @@ class SupabaseDisplaySettingsService {
       photo_display_duration_seconds: 10,
       min_video_duration_seconds: 5,
       max_video_duration_seconds: 10,
-      max_image_file_size_mb: 25,
-      max_video_file_size_mb: 100,
+      max_image_file_size_mb: 100,
+      max_video_file_size_mb: 500,
       recommended_image_format: 'PNG or high-quality JPEG',
       recommended_video_format: 'MP4 (H.264) or MOV',
     };
