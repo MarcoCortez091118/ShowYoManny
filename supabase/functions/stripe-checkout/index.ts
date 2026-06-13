@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
       cancel_url: cancelUrl,
       customer_email: user_email === 'guest@showyo.app' ? undefined : user_email,
       customer_creation: 'always',
+      allow_promotion_codes: true,
       phone_number_collection: {
         enabled: true,
       },
