@@ -1,17 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Monitor } from "lucide-react";
-import { supabaseQueueService, type EnrichedQueueItem } from "@/services/supabaseQueueService";
 import { supabase } from '@/lib/supabase';
 import showYoLogo from "@/assets/showyo-logo-overlay.png";
 import { useDisplaySettings } from "@/hooks/use-display-settings";
 import { supabaseBorderThemeService, type BorderTheme as UploadedBorderTheme } from '@/services/supabaseBorderThemeService';
+import { mediaCacheService } from '@/services/mediaCacheService';
 
 const KioskDisplay = () => {
   const { settings } = useDisplaySettings();
   const SCREEN_WIDTH = settings.screenWidth;
   const SCREEN_HEIGHT = settings.screenHeight;
 
-  const [items, setItems] = useState<EnrichedQueueItem[]>([]);
+  const [items, setItems] = useState<any[]>([]);
+  const [cachedUrls, setCachedUrls] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
@@ -19,23 +20,12 @@ const KioskDisplay = () => {
   const [uploadedBorderThemes, setUploadedBorderThemes] = useState<UploadedBorderTheme[]>([]);
   const autoAdvanceTimer = useRef<NodeJS.Timeout | null>(null);
   const countdownTimer = useRef<NodeJS.Timeout | null>(null);
-  const fetchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
   const isFetching = useRef(false);
   const isProcessingNotifications = useRef(false);
   const lastPlayedAt = useRef<Record<string, number>>({});
+  const lastFetchHash = useRef<string>('');
 
-  const debouncedFetchContent = () => {
-    if (fetchDebounceTimer.current) {
-      clearTimeout(fetchDebounceTimer.current);
-    }
-    fetchDebounceTimer.current = setTimeout(() => {
-      if (!isFetching.current) {
-        fetchContent();
-      }
-    }, 500);
-  };
-
-  const processPendingNotifications = async () => {
+  const processPendingNotifications = useCallback(async () => {
     if (isProcessingNotifications.current) return;
     isProcessingNotifications.current = true;
     try {
@@ -49,20 +39,17 @@ const KioskDisplay = () => {
           'apikey': supabaseKey,
         },
       });
-    } catch (error) {
-      console.error('Error processing pending notifications:', error);
-    } finally {
+    } catch { /* silent */ } finally {
       isProcessingNotifications.current = false;
     }
-  };
+  }, []);
 
-  const isItemReadyToShow = (item: any): boolean => {
+  const isItemReadyToShow = useCallback((item: any, allItems: any[]): boolean => {
     if (!item.timer_loop_enabled) return true;
 
     let intervalMs: number;
     if (item.timer_loop_automatic) {
-      // Auto-calculate: interval = total cycle duration of all items
-      const totalCycleDuration = items.reduce((sum, i) => sum + (i.duration || 10), 0);
+      const totalCycleDuration = allItems.reduce((sum: number, i: any) => sum + (i.duration || 10), 0);
       intervalMs = totalCycleDuration * 1000;
     } else if (item.timer_loop_minutes && item.timer_loop_minutes > 0) {
       intervalMs = item.timer_loop_minutes * 60 * 1000;
@@ -72,48 +59,115 @@ const KioskDisplay = () => {
 
     const lastPlayed = lastPlayedAt.current[item.id];
     if (!lastPlayed) return true;
+    return (Date.now() - lastPlayed) >= intervalMs;
+  }, []);
 
-    const elapsed = Date.now() - lastPlayed;
-    return elapsed >= intervalMs;
-  };
-
-  const getNextPlayableIndex = (startIndex: number, itemsList: any[]): number => {
+  const getNextPlayableIndex = useCallback((startIndex: number, itemsList: any[]): number => {
     if (itemsList.length === 0) return 0;
-
     for (let i = 0; i < itemsList.length; i++) {
-      const candidateIndex = (startIndex + i) % itemsList.length;
-      if (isItemReadyToShow(itemsList[candidateIndex])) {
-        return candidateIndex;
-      }
+      const idx = (startIndex + i) % itemsList.length;
+      if (isItemReadyToShow(itemsList[idx], itemsList)) return idx;
     }
-    // All items have timer restrictions not met - just play the next one anyway
     return startIndex % itemsList.length;
-  };
+  }, [isItemReadyToShow]);
+
+  const computeVisibility = useCallback((item: any): boolean => {
+    const now = new Date();
+    const scheduledStart = item.scheduled_start ? new Date(item.scheduled_start) : null;
+    const scheduledEnd = item.scheduled_end ? new Date(item.scheduled_end) : null;
+    const isAdminContent = item.metadata?.is_admin_content === true;
+    const isPaidContent = item.metadata?.is_user_paid_content === true || item.metadata?.is_user_paid_content === 'true';
+    const isPaymentConfirmed = item.metadata?.payment_status === 'confirmed';
+    const displayStatus = item.metadata?.display_status;
+
+    if (displayStatus === 'pending' && !isAdminContent) return false;
+    if (isPaidContent && !isPaymentConfirmed) return false;
+    if (item.status === 'pending' && !isAdminContent) return false;
+    if (scheduledEnd && now > scheduledEnd) return false;
+    if (scheduledStart && now < scheduledStart) return false;
+    return true;
+  }, []);
+
+  const fetchContent = useCallback(async () => {
+    if (isFetching.current) return;
+    isFetching.current = true;
+
+    try {
+      const result = await supabase
+        .from('queue_items')
+        .select('id, media_url, media_type, title, duration, order_index, status, scheduled_start, scheduled_end, border_id, metadata, timer_loop_enabled, timer_loop_minutes, timer_loop_automatic')
+        .order('order_index', { ascending: true });
+
+      if (result.error) {
+        setIsLoading(false);
+        isFetching.current = false;
+        return;
+      }
+
+      const allItems = result.data || [];
+      const visibleItems = allItems.filter(computeVisibility);
+
+      const newHash = visibleItems.map(i => `${i.id}:${i.order_index}:${i.media_url}`).join('|');
+      if (newHash === lastFetchHash.current && items.length > 0) {
+        isFetching.current = false;
+        return;
+      }
+      lastFetchHash.current = newHash;
+
+      // Pre-cache all media URLs
+      const mediaUrls = visibleItems.map(i => i.media_url).filter(Boolean);
+      await mediaCacheService.preloadItems(mediaUrls);
+
+      // Build cached URL map
+      const urlMap: Record<string, string> = {};
+      for (const item of visibleItems) {
+        if (item.media_url) {
+          urlMap[item.id] = await mediaCacheService.getCachedUrl(item.media_url);
+        }
+      }
+      setCachedUrls(urlMap);
+
+      // Evict media no longer in the queue
+      const activeUrls = new Set(mediaUrls);
+      mediaCacheService.evictAllExcept(activeUrls);
+
+      setItems(prev => {
+        if (visibleItems.length === 0) return [];
+        return visibleItems;
+      });
+
+      setIsLoading(false);
+    } catch {
+      setIsLoading(false);
+    } finally {
+      isFetching.current = false;
+    }
+  }, [computeVisibility, items.length]);
 
   useEffect(() => {
     fetchContent();
     loadBorderThemes();
 
+    // Realtime: only listen to INSERT and DELETE (not UPDATE, which is the most frequent)
     const channel = supabase
-      .channel('queue-changes')
+      .channel('kiosk-queue')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'queue_items',
-        },
-        () => {
-          console.log('KioskDisplay: Queue changed, scheduling refetch...');
-          debouncedFetchContent();
-        }
+        { event: 'INSERT', schema: 'public', table: 'queue_items' },
+        () => fetchContent()
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'queue_items' },
+        () => fetchContent()
       )
       .subscribe();
 
-    const refreshInterval = setInterval(fetchContent, 60000);
+    // Reduced polling: every 5 minutes instead of 60s
+    const refreshInterval = setInterval(fetchContent, 300000);
 
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
       clearInterval(refreshInterval);
       if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
       if (countdownTimer.current) clearInterval(countdownTimer.current);
@@ -124,116 +178,7 @@ const KioskDisplay = () => {
     try {
       const themes = await supabaseBorderThemeService.getActive();
       setUploadedBorderThemes(themes);
-    } catch (error) {
-      console.error('Error loading border themes:', error);
-    }
-  };
-
-  const fetchContent = async () => {
-    if (isFetching.current) {
-      console.log('KioskDisplay: Fetch already in progress, skipping...');
-      return;
-    }
-
-    isFetching.current = true;
-    try {
-      const result = await supabase
-        .from('queue_items')
-        .select('*')
-        .order('order_index', { ascending: true });
-
-      if (result.error) {
-        console.error('Error fetching content:', result.error);
-        setIsLoading(false);
-        isFetching.current = false;
-        return;
-      }
-
-      const allItems = result.data || [];
-      const enrichedItems = allItems.map(item => {
-        const now = new Date();
-        const scheduledStart = item.scheduled_start ? new Date(item.scheduled_start) : null;
-        const scheduledEnd = item.scheduled_end ? new Date(item.scheduled_end) : null;
-
-        let computed_status: 'scheduled' | 'published' | 'expired' | 'active' | 'pending' = 'active';
-        let is_visible = true;
-
-        const isAdminContent = item.metadata?.is_admin_content === true;
-        const isPaidContent = item.metadata?.is_user_paid_content === true ||
-                              item.metadata?.is_user_paid_content === 'true';
-        const isPaymentConfirmed = item.metadata?.payment_status === 'confirmed';
-        const displayStatus = item.metadata?.display_status;
-
-        if (displayStatus === 'pending' && !isAdminContent) {
-          computed_status = 'pending';
-          is_visible = false;
-          console.log(`🚫 KioskDisplay: Hiding pending content (not admin): ${item.title} (ID: ${item.id})`);
-        } else if (isPaidContent && !isPaymentConfirmed) {
-          computed_status = 'pending';
-          is_visible = false;
-          console.log(`🚫 KioskDisplay: Hiding unpaid content: ${item.title} (ID: ${item.id})`);
-        } else if (item.status === 'pending' && !isAdminContent) {
-          computed_status = 'pending';
-          is_visible = false;
-          console.log(`🚫 KioskDisplay: Hiding content with pending status: ${item.title} (ID: ${item.id})`);
-        } else if (scheduledEnd && now > scheduledEnd) {
-          computed_status = 'expired';
-          is_visible = false;
-        } else if (scheduledStart && now < scheduledStart) {
-          computed_status = 'scheduled';
-          is_visible = false;
-        } else if (scheduledStart && now >= scheduledStart) {
-          computed_status = 'published';
-          is_visible = true;
-        } else {
-          computed_status = 'active';
-          is_visible = true;
-        }
-
-        return {
-          ...item,
-          computed_status,
-          is_visible,
-        };
-      });
-
-      const visibleItems = enrichedItems.filter(item => item.is_visible);
-      console.log(`KioskDisplay: Filtered ${allItems.length} total items to ${visibleItems.length} visible items`);
-
-      console.log('KioskDisplay: Loaded', visibleItems.length, 'visible items');
-
-      setItems(prevItems => {
-        if (visibleItems.length === 0) return [];
-
-        const prevIds = prevItems.map(i => i.id).sort().join(',');
-        const newIds = visibleItems.map(i => i.id).sort().join(',');
-        const prevOrders = prevItems.map(i => `${i.id}:${i.order_index}`).join(',');
-        const newOrders = visibleItems.map(i => `${i.id}:${i.order_index}`).join(',');
-
-        if (prevIds !== newIds) {
-          console.log('KioskDisplay: Items changed (different IDs), updating...');
-          if (currentIndex >= visibleItems.length) {
-            setCurrentIndex(0);
-          }
-          return visibleItems;
-        }
-
-        if (prevOrders !== newOrders) {
-          console.log('KioskDisplay: Order changed, updating...');
-          return visibleItems;
-        }
-
-        console.log('KioskDisplay: No significant changes, keeping current items');
-        return prevItems;
-      });
-
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error fetching content:', error);
-      setIsLoading(false);
-    } finally {
-      isFetching.current = false;
-    }
+    } catch { /* silent */ }
   };
 
   useEffect(() => {
@@ -246,10 +191,6 @@ const KioskDisplay = () => {
     if (countdownTimer.current) clearInterval(countdownTimer.current);
 
     const duration = (currentItem.duration || 10) * 1000;
-    console.log(`🎬 KioskDisplay: STARTING PLAYBACK - ${currentItem.title} for ${currentItem.duration}s`);
-    console.log(`🎬 KioskDisplay: Will check for deletion in ${duration}ms`);
-    console.log(`🎬 KioskDisplay: Item ID: ${currentItem.id}`);
-    console.log(`🎬 KioskDisplay: Metadata at start:`, currentItem.metadata);
 
     localStorage.setItem('kiosk-current-index', currentIndex.toString());
     localStorage.setItem('kiosk-current-item-id', currentItem.id);
@@ -267,11 +208,6 @@ const KioskDisplay = () => {
     }, 1000);
 
     autoAdvanceTimer.current = setTimeout(async () => {
-      console.log(`⏰ KioskDisplay: TIMER FIRED - Duration ${currentItem.duration}s completed for ${currentItem.title}`);
-      console.log('📊 KioskDisplay: Item metadata:', JSON.stringify(currentItem.metadata, null, 2));
-      console.log('KioskDisplay: scheduled_start:', currentItem.scheduled_start);
-      console.log('KioskDisplay: scheduled_end:', currentItem.scheduled_end);
-
       const isPaidContent = currentItem.metadata?.is_user_paid_content === true;
       const isImmediateSlot = currentItem.metadata?.slot_type === 'immediate';
       const hasNoSchedule = !currentItem.scheduled_start && !currentItem.scheduled_end;
@@ -280,13 +216,6 @@ const KioskDisplay = () => {
       const playCount = currentItem.metadata?.play_count || 0;
       const newPlayCount = playCount + 1;
 
-      console.log('KioskDisplay: isPaidContent:', isPaidContent);
-      console.log('KioskDisplay: isImmediateSlot:', isImmediateSlot);
-      console.log('KioskDisplay: hasNoSchedule:', hasNoSchedule);
-      console.log('KioskDisplay: autoComplete:', autoComplete);
-      console.log('KioskDisplay: maxPlays:', maxPlays);
-      console.log('KioskDisplay: playCount:', playCount, '-> newPlayCount:', newPlayCount);
-
       const shouldDelete = isPaidContent && (
         isImmediateSlot ||
         hasNoSchedule ||
@@ -294,16 +223,10 @@ const KioskDisplay = () => {
       );
 
       if (shouldDelete) {
-        console.log(`KioskDisplay: ✅ DELETING paid content after playback: ${currentItem.id} (plays: ${newPlayCount}/${maxPlays})`);
-
         const hasBeenPlayed = currentItem.metadata?.has_been_played === true;
-        if (hasBeenPlayed) {
-          console.log('KioskDisplay: Content already marked as played, skipping re-deletion');
-        } else {
+        if (!hasBeenPlayed) {
           try {
-            console.log('KioskDisplay: Incrementing play_count and marking as played...');
-
-            const { error: updateError } = await supabase
+            await supabase
               .from('queue_items')
               .update({
                 metadata: {
@@ -315,62 +238,35 @@ const KioskDisplay = () => {
               })
               .eq('id', currentItem.id);
 
-            if (updateError) {
-              console.error('KioskDisplay: Error marking as played:', updateError);
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            const { error: deleteError } = await supabase
+            await supabase
               .from('queue_items')
               .delete()
               .eq('id', currentItem.id);
 
-            if (deleteError) {
-              console.error('KioskDisplay: Error deleting content:', deleteError);
-            } else {
-              console.log('KioskDisplay: ✅ Successfully deleted paid content from database');
-            }
+            mediaCacheService.evict(currentItem.media_url);
 
             setIsVisible(false);
-
             setTimeout(async () => {
               await fetchContent();
-
               setTimeout(() => {
                 setCurrentIndex(prevIndex => {
                   const newLength = items.length - 1;
-                  if (newLength === 0) return 0;
-
-                  let nextIndex = prevIndex;
-                  if (prevIndex >= newLength) {
-                    nextIndex = 0;
-                  }
-
-                  console.log(`KioskDisplay: After deletion, moving to index ${nextIndex} of ${newLength} items`);
-                  return nextIndex;
+                  if (newLength <= 0) return 0;
+                  return prevIndex >= newLength ? 0 : prevIndex;
                 });
                 setIsVisible(true);
               }, 300);
             }, 500);
-
             return;
-          } catch (error) {
-            console.error('KioskDisplay: Exception deleting played content:', error);
-          }
+          } catch { /* silent */ }
         }
-      } else {
-        console.log('KioskDisplay: Content will NOT be deleted (normal content or scheduled slot)');
       }
 
       setIsVisible(false);
-
       setTimeout(() => {
         const rawNextIndex = (currentIndex + 1) % items.length;
         const nextIndex = getNextPlayableIndex(rawNextIndex, items);
         const isLooping = nextIndex === 0 && currentIndex === items.length - 1;
-
-        console.log(`KioskDisplay: Advancing from ${currentIndex + 1} to ${nextIndex + 1} of ${items.length}${isLooping ? ' (LOOPING BACK TO START)' : ''}`);
 
         if (isLooping) {
           processPendingNotifications();
@@ -385,7 +281,7 @@ const KioskDisplay = () => {
       if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
       if (countdownTimer.current) clearInterval(countdownTimer.current);
     };
-  }, [currentIndex, items]);
+  }, [currentIndex, items, getNextPlayableIndex, processPendingNotifications, fetchContent]);
 
   if (isLoading) {
     return (
@@ -418,27 +314,16 @@ const KioskDisplay = () => {
     );
   }
 
+  const displayUrl = cachedUrls[currentItem.id] || currentItem.media_url || '';
+
   const uploadedBorder = currentItem.border_id && currentItem.border_id !== 'none'
     ? uploadedBorderThemes.find(b => b.id === currentItem.border_id)
     : null;
 
-  const renderBorderOverlay = () => {
-    if (!uploadedBorder) return null;
-
-    return (
-      <div className="absolute inset-0 pointer-events-none z-10">
-        <img
-          src={uploadedBorder.image_url}
-          alt={uploadedBorder.name}
-          className="w-full h-full object-fill"
-          style={{
-            width: `${SCREEN_WIDTH}px`,
-            height: `${SCREEN_HEIGHT}px`,
-          }}
-        />
-      </div>
-    );
-  };
+  const mediaStyle = currentItem.metadata ? {
+    transform: `translate(${(currentItem.metadata.positionX || 50) - 50}%, ${(currentItem.metadata.positionY || 50) - 50}%) scale(${(currentItem.metadata.zoom || 100) / 100}) rotate(${currentItem.metadata.rotation || 0}deg)`,
+    objectFit: (currentItem.metadata.fitMode || 'contain') as any,
+  } : { objectFit: 'contain' as any };
 
   return (
     <div
@@ -452,36 +337,35 @@ const KioskDisplay = () => {
         <div className="relative w-full h-full bg-black">
           {currentItem.media_type === 'video' ? (
             <video
-              key={`${currentItem.id}-${currentIndex}`}
-              src={currentItem.media_url || ''}
+              key={currentItem.id}
+              src={displayUrl}
               autoPlay
               muted
               loop
               playsInline
               className="w-full h-full object-contain"
-              style={{
-                transform: currentItem.metadata
-                  ? `translate(${(currentItem.metadata.positionX || 50) - 50}%, ${(currentItem.metadata.positionY || 50) - 50}%) scale(${(currentItem.metadata.zoom || 100) / 100}) rotate(${currentItem.metadata.rotation || 0}deg)`
-                  : 'none',
-                objectFit: currentItem.metadata?.fitMode || 'contain',
-              }}
+              style={mediaStyle}
             />
           ) : (
             <img
-              key={`${currentItem.id}-${currentIndex}`}
-              src={currentItem.media_url || ''}
+              key={currentItem.id}
+              src={displayUrl}
               alt={currentItem.title || 'Content'}
               className="w-full h-full object-contain"
-              style={{
-                transform: currentItem.metadata
-                  ? `translate(${(currentItem.metadata.positionX || 50) - 50}%, ${(currentItem.metadata.positionY || 50) - 50}%) scale(${(currentItem.metadata.zoom || 100) / 100}) rotate(${currentItem.metadata.rotation || 0}deg)`
-                  : 'none',
-                objectFit: currentItem.metadata?.fitMode || 'contain',
-              }}
+              style={mediaStyle}
             />
           )}
 
-          {renderBorderOverlay()}
+          {uploadedBorder && (
+            <div className="absolute inset-0 pointer-events-none z-10">
+              <img
+                src={uploadedBorder.image_url}
+                alt={uploadedBorder.name}
+                className="w-full h-full object-fill"
+                style={{ width: `${SCREEN_WIDTH}px`, height: `${SCREEN_HEIGHT}px` }}
+              />
+            </div>
+          )}
 
           <div className="absolute top-8 left-8 z-20 bg-black/50 rounded-lg px-4 py-2">
             <div className="text-white text-2xl font-bold">
