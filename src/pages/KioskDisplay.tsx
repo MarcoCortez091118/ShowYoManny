@@ -191,6 +191,18 @@ const KioskDisplay = () => {
     const currentItem = items[currentIndex];
     if (!currentItem) return;
 
+    // If the current item has a timer loop and is NOT ready to show, skip it immediately
+    if (!isItemReadyToShow(currentItem, items)) {
+      const rawNextIndex = (currentIndex + 1) % items.length;
+      const nextIndex = getNextPlayableIndex(rawNextIndex, items);
+      if (nextIndex !== currentIndex) {
+        setCurrentIndex(nextIndex);
+      } else {
+        // All items are on cooldown - show this one as fallback (avoid blank screen)
+      }
+      return;
+    }
+
     if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
     if (countdownTimer.current) clearInterval(countdownTimer.current);
 
@@ -270,9 +282,9 @@ const KioskDisplay = () => {
       setTimeout(() => {
         const rawNextIndex = (currentIndex + 1) % items.length;
         const nextIndex = getNextPlayableIndex(rawNextIndex, items);
-        const isLooping = nextIndex === 0 && currentIndex === items.length - 1;
+        const isLooping = nextIndex <= currentIndex && rawNextIndex !== 0 || (rawNextIndex === 0 && items.length > 0);
 
-        if (isLooping) {
+        if (nextIndex === 0 && currentIndex === items.length - 1) {
           processPendingNotifications();
         }
 
@@ -285,7 +297,7 @@ const KioskDisplay = () => {
       if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
       if (countdownTimer.current) clearInterval(countdownTimer.current);
     };
-  }, [currentIndex, items, getNextPlayableIndex, processPendingNotifications, fetchContent]);
+  }, [currentIndex, items, getNextPlayableIndex, isItemReadyToShow, processPendingNotifications, fetchContent]);
 
   if (isLoading) {
     return (
