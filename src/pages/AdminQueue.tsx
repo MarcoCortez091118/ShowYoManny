@@ -5,15 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, GripVertical, Play, Trash2, Calendar, Clock, CreditCard as Edit, CircleCheck as CheckCircle2, Clock as ClockIcon, Circle as XCircle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { ArrowLeft, GripVertical, Play, Trash2, Calendar, Clock, CreditCard as Edit, CircleCheck as CheckCircle2, Clock as ClockIcon, Circle as XCircle, Upload, Eye, Repeat, Sparkles, Calendar as CalendarIcon } from "lucide-react";
+import { format, startOfToday } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { supabaseQueueService, type EnrichedQueueItem } from "@/services/supabaseQueueService";
+import { supabaseContentService } from "@/services/supabaseContentService";
+import { supabaseBorderThemeService, type BorderTheme as UploadedBorderTheme } from "@/services/supabaseBorderThemeService";
 import { useAuth } from "@/contexts/SimpleAuthContext";
 import { KioskSimulator } from "@/components/KioskSimulator";
+import { AdminMediaEditor, AdminMediaEditorRef } from "@/components/media/AdminMediaEditor";
 import type { Database } from "@/lib/supabase";
 import { supabase } from "@/lib/supabase";
 import {
@@ -191,6 +199,35 @@ const AdminQueue = () => {
   });
   const fetchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
   const isFetchingQueue = useRef(false);
+
+  // Upload state
+  const [activeTab, setActiveTab] = useState<string>("queue");
+  const mediaEditorRef = useRef<AdminMediaEditorRef>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [processedMediaMetadata, setProcessedMediaMetadata] = useState<any>(null);
+  const [borderStyle, setBorderStyle] = useState("none");
+  const [displayDuration, setDisplayDuration] = useState(10);
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledStartDate, setScheduledStartDate] = useState<Date | undefined>();
+  const [scheduledStartTime, setScheduledStartTime] = useState("09:00");
+  const [scheduledEndDate, setScheduledEndDate] = useState<Date | undefined>();
+  const [scheduledEndTime, setScheduledEndTime] = useState("17:00");
+  const [timerLoopEnabled, setTimerLoopEnabled] = useState(false);
+  const [timerLoopMinutes, setTimerLoopMinutes] = useState(30);
+  const [timerLoopAutomatic, setTimerLoopAutomatic] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedBorderThemes, setUploadedBorderThemes] = useState<UploadedBorderTheme[]>([]);
+
+  useEffect(() => {
+    const loadThemes = async () => {
+      try {
+        const themes = await supabaseBorderThemeService.getActive();
+        setUploadedBorderThemes(themes);
+      } catch (e) { console.error('Error loading border themes:', e); }
+    };
+    loadThemes();
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -442,17 +479,91 @@ const AdminQueue = () => {
     );
   }
 
+  const handleAdminUpload = async () => {
+    if (!selectedFile) {
+      toast({ title: "No File Selected", description: "Selecciona un archivo para subir", variant: "destructive" });
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const getScheduledDateTime = (date: Date | undefined, time: string) => {
+        if (!date) return null;
+        const [hours, minutes] = time.split(':').map(Number);
+        const combined = new Date(date);
+        combined.setHours(hours, minutes, 0, 0);
+        return combined.toISOString();
+      };
+
+      const scheduled_start = isScheduled ? getScheduledDateTime(scheduledStartDate, scheduledStartTime) : null;
+      const scheduled_end = isScheduled ? getScheduledDateTime(scheduledEndDate, scheduledEndTime) : null;
+
+      await supabaseContentService.createQueueItem({
+        file: selectedFile,
+        borderStyle,
+        duration: displayDuration,
+        scheduledStart: scheduled_start,
+        scheduledEnd: scheduled_end,
+        timerLoopEnabled,
+        timerLoopMinutes: timerLoopEnabled && !timerLoopAutomatic ? timerLoopMinutes : null,
+        timerLoopAutomatic,
+        metadata: processedMediaMetadata,
+        onProgress: (progress) => setUploadProgress(progress),
+      });
+
+      toast({ title: "Contenido Subido", description: "El archivo se agrego al queue exitosamente" });
+
+      // Reset form
+      setSelectedFile(null);
+      setProcessedMediaMetadata(null);
+      setIsScheduled(false);
+      setScheduledStartDate(undefined);
+      setScheduledStartTime("09:00");
+      setScheduledEndDate(undefined);
+      setScheduledEndTime("17:00");
+      setTimerLoopEnabled(false);
+      setTimerLoopMinutes(30);
+      setTimerLoopAutomatic(false);
+      setBorderStyle("none");
+      setDisplayDuration(10);
+      mediaEditorRef.current?.reset();
+
+      setTimeout(() => { setUploadProgress(0); setIsUploading(false); }, 1000);
+      setActiveTab("queue");
+      fetchQueue();
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({ title: "Upload Failed", description: error instanceof Error ? error.message : "Error al subir contenido", variant: "destructive" });
+      setUploadProgress(0);
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container py-8 px-4 max-w-7xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" onClick={() => navigate('/admin')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
+            Dashboard
           </Button>
+          <h1 className="text-xl font-bold">Contenido & Queue</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="queue">Queue ({items.length})</TabsTrigger>
+            <TabsTrigger value="upload">
+              <Upload className="h-4 w-4 mr-2" />
+              Subir Contenido
+            </TabsTrigger>
+          </TabsList>
+
+          {/* QUEUE TAB */}
+          <TabsContent value="queue">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Queue Management */}
           <Card>
             <CardHeader>
@@ -612,6 +723,191 @@ const AdminQueue = () => {
             <KioskSimulator queueItems={items.filter(item => item.is_visible)} />
           </div>
         </div>
+          </TabsContent>
+
+          {/* UPLOAD TAB */}
+          <TabsContent value="upload">
+            <div className="max-w-4xl space-y-6">
+              <AdminMediaEditor
+                ref={mediaEditorRef}
+                onFileProcessed={(file, metadata) => {
+                  setSelectedFile(file);
+                  setProcessedMediaMetadata(metadata);
+                  if (metadata.duration) setDisplayDuration(Math.round(metadata.duration));
+                }}
+              />
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Configuracion de Contenido</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {selectedFile && processedMediaMetadata && (
+                    <div className="p-4 bg-muted/50 rounded-lg border-2 border-primary/20">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{selectedFile.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {processedMediaMetadata.width}x{processedMediaMetadata.height}px
+                            {processedMediaMetadata.duration && ` - ${processedMediaMetadata.duration.toFixed(1)}s`}
+                            {' - '}{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
+                        <Badge variant="secondary">{selectedFile.type.startsWith('video/') ? 'Video' : 'Imagen'}</Badge>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Border Selection */}
+                  <div>
+                    <Label>Border Style</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                      <button
+                        onClick={() => setBorderStyle("none")}
+                        className={`p-3 rounded-lg border-2 transition-all text-left ${
+                          borderStyle === "none" ? "border-primary bg-primary/10" : "border-muted hover:border-primary/50"
+                        }`}
+                      >
+                        <span className="text-sm font-medium">Sin Borde</span>
+                      </button>
+                      {uploadedBorderThemes.map((theme) => (
+                        <button
+                          key={theme.id}
+                          onClick={() => setBorderStyle(theme.id)}
+                          className={`rounded-lg border-2 transition-all overflow-hidden ${
+                            borderStyle === theme.id ? "border-primary bg-primary/10" : "border-muted hover:border-primary/50"
+                          }`}
+                        >
+                          <img src={theme.image_url} alt={theme.name} className="w-full aspect-[4/3] object-contain bg-gray-100" />
+                          <p className="text-xs font-medium p-2">{theme.name}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Duration */}
+                  <div>
+                    <Label htmlFor="upload-duration">Duracion (segundos)</Label>
+                    <Input
+                      id="upload-duration"
+                      type="number"
+                      min="1"
+                      value={displayDuration}
+                      onChange={(e) => { const v = parseInt(e.target.value); if (v >= 1) setDisplayDuration(v); }}
+                      className="mt-2 max-w-xs"
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* Scheduling */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="upload-schedule" checked={isScheduled} onCheckedChange={setIsScheduled} />
+                      <Label htmlFor="upload-schedule" className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4" />
+                        Programar Contenido
+                      </Label>
+                    </div>
+                    {isScheduled && (
+                      <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                        <div>
+                          <Label className="text-sm">Inicio</Label>
+                          <div className="grid grid-cols-2 gap-3 mt-2">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" className="justify-start text-left font-normal">
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {scheduledStartDate ? format(scheduledStartDate, "PPP") : "Fecha"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <CalendarComponent mode="single" selected={scheduledStartDate} onSelect={setScheduledStartDate} disabled={(d) => d < startOfToday()} initialFocus />
+                              </PopoverContent>
+                            </Popover>
+                            <Input type="time" value={scheduledStartTime} onChange={(e) => setScheduledStartTime(e.target.value)} />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-sm">Fin (Opcional)</Label>
+                          <div className="grid grid-cols-2 gap-3 mt-2">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" className="justify-start text-left font-normal">
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {scheduledEndDate ? format(scheduledEndDate, "PPP") : "Fecha"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <CalendarComponent mode="single" selected={scheduledEndDate} onSelect={setScheduledEndDate} disabled={(d) => d < startOfToday()} initialFocus />
+                              </PopoverContent>
+                            </Popover>
+                            <Input type="time" value={scheduledEndTime} onChange={(e) => setScheduledEndTime(e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Timer Loop */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="upload-timer" checked={timerLoopEnabled} onCheckedChange={setTimerLoopEnabled} />
+                      <Label htmlFor="upload-timer" className="flex items-center gap-2">
+                        <Repeat className="h-4 w-4" />
+                        Timer Loop
+                      </Label>
+                    </div>
+                    {timerLoopEnabled && (
+                      <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Switch id="upload-auto" checked={timerLoopAutomatic} onCheckedChange={(c) => { setTimerLoopAutomatic(c); setTimerLoopMinutes(c ? 0 : 30); }} />
+                          <Label htmlFor="upload-auto">Automatico</Label>
+                        </div>
+                        {!timerLoopAutomatic && (
+                          <div>
+                            <Label>Intervalo (minutos)</Label>
+                            <Input type="number" min="1" max="1440" value={timerLoopMinutes} onChange={(e) => setTimerLoopMinutes(parseInt(e.target.value) || 30)} className="mt-1 max-w-xs" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload Progress */}
+                  {isUploading && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Subiendo...</span>
+                        <span className="font-medium">{uploadProgress}%</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                        <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Submit */}
+                  <Button onClick={handleAdminUpload} disabled={!selectedFile || isUploading} size="lg" className="w-full">
+                    {isUploading ? (
+                      <span className="flex items-center gap-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                        Subiendo...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Upload className="h-4 w-4" />
+                        Subir Contenido
+                      </span>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Delete Confirmation Dialog */}
