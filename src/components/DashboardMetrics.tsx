@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DollarSign, Package, Users, UserPlus, CalendarIcon, TrendingUp } from "lucide-react";
+import { DollarSign, Package, Users, UserPlus, Calendar as CalendarIcon, TrendingUp } from "lucide-react";
 import { format, subDays, subWeeks, subMonths, subYears, startOfDay, endOfDay } from "date-fns";
 import { supabase } from "@/lib/supabase";
 
@@ -85,9 +85,9 @@ export function DashboardMetrics() {
 
       if (ordersError) throw ordersError;
 
-      const totalRevenue = orders?.reduce((sum, order) => sum + (order.amount_total / 100), 0) || 0;
-      const processingRevenue = orders?.filter(o => o.status === 'pending').reduce((sum, order) => sum + (order.amount_total / 100), 0) || 0;
-      const completedRevenue = orders?.filter(o => o.status === 'completed').reduce((sum, order) => sum + (order.amount_total / 100), 0) || 0;
+      const totalRevenue = orders?.reduce((sum, order) => sum + (Number(order.amount_total) / 100), 0) || 0;
+      const completedRevenue = orders?.filter(o => o.status === 'completed' || o.payment_status === 'paid').reduce((sum, order) => sum + (Number(order.amount_total) / 100), 0) || 0;
+      const processingRevenue = orders?.filter(o => o.status === 'pending' || o.payment_status === 'unpaid').reduce((sum, order) => sum + (Number(order.amount_total) / 100), 0) || 0;
 
       const { data: packages, error: packagesError } = await supabase
         .from('queue_items')
@@ -104,16 +104,41 @@ export function DashboardMetrics() {
         return acc;
       }, { photo: 0, video: 0 }) || { photo: 0, video: 0 };
 
-      const { data: customers, error: customersError } = await supabase
-        .from('customers')
-        .select('total_purchases, first_purchase_at, created_at')
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString());
+      // Count unique customers from orders in the period
+      const uniqueCustomerIds = new Set(
+        orders?.map(o => o.customer_id).filter(Boolean) || []
+      );
 
-      if (customersError) throw customersError;
+      // Get all orders for those customers to determine new vs returning
+      let newCustomers = 0;
+      let returningCustomers = 0;
 
-      const newCustomers = customers?.filter(c => c.total_purchases === 1).length || 0;
-      const returningCustomers = customers?.filter(c => c.total_purchases > 1).length || 0;
+      if (uniqueCustomerIds.size > 0) {
+        const { data: allOrdersForCustomers } = await supabase
+          .from('stripe_orders')
+          .select('customer_id, created_at')
+          .in('customer_id', Array.from(uniqueCustomerIds))
+          .order('created_at', { ascending: true });
+
+        if (allOrdersForCustomers) {
+          const customerFirstOrder: Record<string, string> = {};
+          for (const order of allOrdersForCustomers) {
+            if (!order.customer_id) continue;
+            if (!customerFirstOrder[order.customer_id]) {
+              customerFirstOrder[order.customer_id] = order.created_at;
+            }
+          }
+
+          for (const customerId of uniqueCustomerIds) {
+            const firstOrderDate = customerFirstOrder[customerId];
+            if (firstOrderDate && new Date(firstOrderDate) >= startDate) {
+              newCustomers++;
+            } else {
+              returningCustomers++;
+            }
+          }
+        }
+      }
 
       setMetrics({
         totalRevenue,
