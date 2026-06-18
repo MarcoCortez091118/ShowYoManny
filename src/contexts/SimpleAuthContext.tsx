@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService, User } from '@/services/authService';
 import { supabase } from '@/lib/supabase';
 import { createLogger } from '@/services/logger';
@@ -27,69 +27,70 @@ export const useAuth = () => {
 export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    let mounted = true;
 
-    logger.info('Initializing auth context');
-
-    const initializeAuth = async () => {
-      setLoading(true);
+    const resolveUser = async (supabaseUserId: string, email: string): Promise<User> => {
       try {
-        const currentUser = await authService.getCurrentSession();
-        if (currentUser) {
-          logger.info('Existing session found', { userId: currentUser.id });
-          setUser(currentUser);
-        } else {
-          logger.debug('No existing session');
-          setUser(null);
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, email, roles')
+          .eq('id', supabaseUserId)
+          .maybeSingle();
+
+        if (userData) {
+          return {
+            id: userData.id,
+            email: userData.email,
+            roles: userData.roles || ['user'],
+          };
         }
-      } catch (error) {
-        logger.error('Error initializing auth', { error });
-        setUser(null);
-      } finally {
-        setLoading(false);
+      } catch (e) {
+        logger.error('Error fetching user data', { error: e });
       }
+      return { id: supabaseUserId, email, roles: ['user'] };
     };
 
-    initializeAuth();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      logger.debug('Auth state changed', { event });
+      logger.debug('Auth state changed', { event, hasSession: !!session });
 
-      if (event === 'SIGNED_OUT') {
+      if (!mounted) return;
+
+      if (event === 'SIGNED_OUT' || !session) {
         setUser(null);
+        setLoading(false);
         return;
       }
 
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session?.user) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id, email, roles')
-            .eq('id', session.user.id)
-            .maybeSingle();
+      if (session?.user) {
+        const resolvedUser = await resolveUser(session.user.id, session.user.email!);
+        if (mounted) {
+          setUser(resolvedUser);
+          setLoading(false);
+        }
+      }
+    });
 
-          if (userData) {
-            setUser({
-              id: userData.id,
-              email: userData.email,
-              roles: userData.roles || ['user'],
-            });
-          } else {
-            setUser({
-              id: session.user.id,
-              email: session.user.email!,
-              roles: ['user'],
-            });
-          }
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
+
+      if (session?.user) {
+        const resolvedUser = await resolveUser(session.user.id, session.user.email!);
+        if (mounted) {
+          setUser(resolvedUser);
+          setLoading(false);
+        }
+      } else {
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
         }
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -101,11 +102,9 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const result = await authService.signIn(email, password);
 
       if (result.success && result.user) {
-        logger.info('Sign in successful, updating context', { userId: result.user.id });
         setUser(result.user);
         return { success: true };
       } else {
-        logger.warn('Sign in failed', { error: result.error });
         return { success: false, error: result.error };
       }
     } catch (error: any) {
@@ -115,12 +114,9 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const signOut = async () => {
-    logger.info('Sign out requested');
-
     try {
       await authService.signOut();
       setUser(null);
-      logger.info('Sign out successful');
     } catch (error) {
       logger.error('Error during sign out', { error });
       setUser(null);
@@ -128,12 +124,9 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const clearSessions = async () => {
-    logger.info('Clear sessions requested');
-
     try {
       await authService.clearAllSessions();
       setUser(null);
-      logger.info('Sessions cleared');
     } catch (error) {
       logger.error('Error clearing sessions', { error });
     }
