@@ -30,87 +30,56 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     let mounted = true;
-    let resolved = false;
 
-    const finish = (resolvedUser: User | null) => {
-      if (!mounted || resolved) return;
-      resolved = true;
-      setUser(resolvedUser);
-      setLoading(false);
-    };
-
-    const resolveUser = async (userId: string, email: string): Promise<User> => {
-      try {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('id, email, roles')
-          .eq('id', userId)
-          .maybeSingle();
-
-        if (userData) {
-          return {
-            id: userData.id,
-            email: userData.email,
-            roles: userData.roles || ['user'],
-          };
-        }
-      } catch (e) {
-        logger.error('Error fetching user data', { error: e });
-      }
-      return { id: userId, email, roles: ['user'] };
-    };
-
-    // Safety timeout - never stay loading more than 5 seconds
-    const timeout = setTimeout(() => {
-      if (!resolved && mounted) {
-        logger.warn('Auth initialization timed out, proceeding without session');
-        finish(null);
-      }
-    }, 5000);
-
-    // Primary: use getSession to check initial state
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      if (error) {
-        logger.error('getSession error', { error: error.message });
-        finish(null);
-        return;
-      }
-
-      if (session?.user) {
-        const resolvedUser = await resolveUser(session.user.id, session.user.email!);
-        finish(resolvedUser);
-      } else {
-        finish(null);
-      }
-    }).catch(() => {
-      finish(null);
-    });
-
-    // Secondary: listen for future auth changes (sign in, sign out, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
 
-      // Skip initial session event since getSession handles it
-      if (event === 'INITIAL_SESSION') return;
-
-      if (event === 'SIGNED_OUT' || !session) {
+      if (!session) {
         setUser(null);
         setLoading(false);
         return;
       }
 
-      if (session?.user) {
-        const resolvedUser = await resolveUser(session.user.id, session.user.email!);
-        if (mounted) {
-          setUser(resolvedUser);
-          setLoading(false);
+      // Use setTimeout to avoid blocking the auth state change callback
+      // This prevents the deadlock where signInWithPassword waits for this callback
+      setTimeout(async () => {
+        if (!mounted) return;
+        try {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id, email, roles')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (!mounted) return;
+
+          if (userData) {
+            setUser({
+              id: userData.id,
+              email: userData.email,
+              roles: userData.roles || ['user'],
+            });
+          } else {
+            setUser({
+              id: session.user.id,
+              email: session.user.email!,
+              roles: ['user'],
+            });
+          }
+        } catch {
+          if (!mounted) return;
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            roles: ['user'],
+          });
         }
-      }
+        if (mounted) setLoading(false);
+      }, 0);
     });
 
     return () => {
       mounted = false;
-      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);
