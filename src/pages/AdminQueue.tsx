@@ -176,7 +176,7 @@ const AdminQueue = () => {
   const { toast } = useToast();
   const { loading, isAdmin, user } = useAuth();
   const [items, setItems] = useState<QueueItem[]>([]);
-  const [isFetching, setIsFetching] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<QueueItem | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -420,7 +420,7 @@ const AdminQueue = () => {
     }
   };
 
-  if (loading || isFetching) {
+  if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 

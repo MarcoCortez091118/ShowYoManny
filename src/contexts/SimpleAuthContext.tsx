@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { authService, User } from '@/services/authService';
+import { supabase } from '@/lib/supabase';
 import { createLogger } from '@/services/logger';
 
 const logger = createLogger('AuthContext');
@@ -26,33 +27,72 @@ export const useAuth = () => {
 export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     logger.info('Initializing auth context');
-    initializeAuth();
-  }, []);
 
-  const initializeAuth = async () => {
-    logger.debug('Checking for existing session');
-    setLoading(true);
-
-    try {
-      const currentUser = await authService.getCurrentSession();
-      if (currentUser) {
-        logger.info('Existing session found', { userId: currentUser.id });
-        setUser(currentUser);
-      } else {
-        logger.debug('No existing session');
+    const initializeAuth = async () => {
+      setLoading(true);
+      try {
+        const currentUser = await authService.getCurrentSession();
+        if (currentUser) {
+          logger.info('Existing session found', { userId: currentUser.id });
+          setUser(currentUser);
+        } else {
+          logger.debug('No existing session');
+          setUser(null);
+        }
+      } catch (error) {
+        logger.error('Error initializing auth', { error });
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      logger.error('Error initializing auth', { error });
-      setUser(null);
-    } finally {
-      setLoading(false);
-      logger.debug('Auth initialization complete');
-    }
-  };
+    };
+
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      logger.debug('Auth state changed', { event });
+
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        return;
+      }
+
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id, email, roles')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (userData) {
+            setUser({
+              id: userData.id,
+              email: userData.email,
+              roles: userData.roles || ['user'],
+            });
+          } else {
+            setUser({
+              id: session.user.id,
+              email: session.user.email!,
+              roles: ['user'],
+            });
+          }
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     logger.info('Sign in requested', { email });

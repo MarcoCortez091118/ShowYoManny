@@ -20,7 +20,7 @@ const AdminHistory = () => {
   const navigate = useNavigate();
   const { loading, isAdmin, user } = useAuth();
   const [history, setHistory] = useState<ContentHistory[]>([]);
-  const [isFetching, setIsFetching] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ContentHistory | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -95,7 +95,7 @@ const AdminHistory = () => {
     return `${minutes}m remaining`;
   };
 
-  if (loading || isFetching) {
+  if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 

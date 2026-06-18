@@ -94,9 +94,9 @@ const AdminDashboard = () => {
   const [pendingOrders, setPendingOrders] = useState<QueueItem[]>([]);
   const [contentHistory, setContentHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isQueueLoading, setIsQueueLoading] = useState(true);
-  const [isPendingLoading, setIsPendingLoading] = useState(true);
-  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+  const [isQueueLoading, setIsQueueLoading] = useState(false);
+  const [isPendingLoading, setIsPendingLoading] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [borderStyle, setBorderStyle] = useState("none");
   const [displayDuration, setDisplayDuration] = useState(10);
