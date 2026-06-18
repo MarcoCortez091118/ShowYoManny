@@ -30,13 +30,21 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     let mounted = true;
+    let resolved = false;
 
-    const resolveUser = async (supabaseUserId: string, email: string): Promise<User> => {
+    const finish = (resolvedUser: User | null) => {
+      if (!mounted || resolved) return;
+      resolved = true;
+      setUser(resolvedUser);
+      setLoading(false);
+    };
+
+    const resolveUser = async (userId: string, email: string): Promise<User> => {
       try {
         const { data: userData } = await supabase
           .from('users')
           .select('id, email, roles')
-          .eq('id', supabaseUserId)
+          .eq('id', userId)
           .maybeSingle();
 
         if (userData) {
@@ -49,13 +57,41 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       } catch (e) {
         logger.error('Error fetching user data', { error: e });
       }
-      return { id: supabaseUserId, email, roles: ['user'] };
+      return { id: userId, email, roles: ['user'] };
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      logger.debug('Auth state changed', { event, hasSession: !!session });
+    // Safety timeout - never stay loading more than 5 seconds
+    const timeout = setTimeout(() => {
+      if (!resolved && mounted) {
+        logger.warn('Auth initialization timed out, proceeding without session');
+        finish(null);
+      }
+    }, 5000);
 
+    // Primary: use getSession to check initial state
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      if (error) {
+        logger.error('getSession error', { error: error.message });
+        finish(null);
+        return;
+      }
+
+      if (session?.user) {
+        const resolvedUser = await resolveUser(session.user.id, session.user.email!);
+        finish(resolvedUser);
+      } else {
+        finish(null);
+      }
+    }).catch(() => {
+      finish(null);
+    });
+
+    // Secondary: listen for future auth changes (sign in, sign out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
+
+      // Skip initial session event since getSession handles it
+      if (event === 'INITIAL_SESSION') return;
 
       if (event === 'SIGNED_OUT' || !session) {
         setUser(null);
@@ -72,32 +108,14 @@ export const SimpleAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-
-      if (session?.user) {
-        const resolvedUser = await resolveUser(session.user.id, session.user.email!);
-        if (mounted) {
-          setUser(resolvedUser);
-          setLoading(false);
-        }
-      } else {
-        if (mounted) {
-          setUser(null);
-          setLoading(false);
-        }
-      }
-    });
-
     return () => {
       mounted = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    logger.info('Sign in requested', { email });
-
     try {
       const result = await authService.signIn(email, password);
 
