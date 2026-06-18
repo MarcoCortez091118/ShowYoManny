@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -181,6 +181,7 @@ const SortableItem = ({
 
 const AdminQueue = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { loading, isAdmin, user } = useAuth();
   const [items, setItems] = useState<QueueItem[]>([]);
@@ -201,7 +202,7 @@ const AdminQueue = () => {
   const isFetchingQueue = useRef(false);
 
   // Upload state
-  const [activeTab, setActiveTab] = useState<string>("queue");
+  const [activeTab, setActiveTab] = useState<string>(searchParams.get("tab") || "queue");
   const mediaEditorRef = useRef<AdminMediaEditorRef>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processedMediaMetadata, setProcessedMediaMetadata] = useState<any>(null);

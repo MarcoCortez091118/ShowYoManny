@@ -150,6 +150,7 @@ const AdminDashboard = () => {
 
   const navItems = [
     { label: 'Dashboard', icon: BarChart3, path: '/admin', active: true },
+    { label: 'Contenido', icon: Upload, path: '/admin/queue?tab=upload' },
     { label: 'Queue', icon: Play, path: '/admin/queue' },
     { label: 'Borders', icon: Sparkles, path: '/admin/borders' },
     { label: 'Historial', icon: Clock, path: '/admin/history' },
