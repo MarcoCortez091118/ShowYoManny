@@ -22,6 +22,7 @@ const KioskDisplay = () => {
   const fetchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
   const isFetching = useRef(false);
   const isProcessingNotifications = useRef(false);
+  const lastPlayedAt = useRef<Record<string, number>>({});
 
   const debouncedFetchContent = () => {
     if (fetchDebounceTimer.current) {
@@ -53,6 +54,40 @@ const KioskDisplay = () => {
     } finally {
       isProcessingNotifications.current = false;
     }
+  };
+
+  const isItemReadyToShow = (item: any): boolean => {
+    if (!item.timer_loop_enabled) return true;
+
+    let intervalMs: number;
+    if (item.timer_loop_automatic) {
+      // Auto-calculate: interval = total cycle duration of all items
+      const totalCycleDuration = items.reduce((sum, i) => sum + (i.duration || 10), 0);
+      intervalMs = totalCycleDuration * 1000;
+    } else if (item.timer_loop_minutes && item.timer_loop_minutes > 0) {
+      intervalMs = item.timer_loop_minutes * 60 * 1000;
+    } else {
+      return true;
+    }
+
+    const lastPlayed = lastPlayedAt.current[item.id];
+    if (!lastPlayed) return true;
+
+    const elapsed = Date.now() - lastPlayed;
+    return elapsed >= intervalMs;
+  };
+
+  const getNextPlayableIndex = (startIndex: number, itemsList: any[]): number => {
+    if (itemsList.length === 0) return 0;
+
+    for (let i = 0; i < itemsList.length; i++) {
+      const candidateIndex = (startIndex + i) % itemsList.length;
+      if (isItemReadyToShow(itemsList[candidateIndex])) {
+        return candidateIndex;
+      }
+    }
+    // All items have timer restrictions not met - just play the next one anyway
+    return startIndex % itemsList.length;
   };
 
   useEffect(() => {
@@ -220,6 +255,8 @@ const KioskDisplay = () => {
     localStorage.setItem('kiosk-current-item-id', currentItem.id);
     localStorage.setItem('kiosk-total-items', items.length.toString());
 
+    lastPlayedAt.current[currentItem.id] = Date.now();
+
     setTimeRemaining(currentItem.duration || 10);
     countdownTimer.current = setInterval(() => {
       setTimeRemaining(prev => {
@@ -329,7 +366,8 @@ const KioskDisplay = () => {
       setIsVisible(false);
 
       setTimeout(() => {
-        const nextIndex = (currentIndex + 1) % items.length;
+        const rawNextIndex = (currentIndex + 1) % items.length;
+        const nextIndex = getNextPlayableIndex(rawNextIndex, items);
         const isLooping = nextIndex === 0 && currentIndex === items.length - 1;
 
         console.log(`KioskDisplay: Advancing from ${currentIndex + 1} to ${nextIndex + 1} of ${items.length}${isLooping ? ' (LOOPING BACK TO START)' : ''}`);

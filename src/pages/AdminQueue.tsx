@@ -131,6 +131,12 @@ const SortableItem = ({
               <Play className="w-3 h-3" />
               {item.duration}s • {item.media_type}
             </span>
+            {item.timer_loop_enabled && (
+              <span className="flex items-center gap-1 whitespace-nowrap text-primary">
+                <Clock className="w-3 h-3" />
+                {item.timer_loop_automatic ? 'Auto' : `${item.timer_loop_minutes}min`}
+              </span>
+            )}
             {item.scheduled_start && (
               <span className="flex items-center gap-1 whitespace-nowrap">
                 <Calendar className="w-3 h-3" />
@@ -179,6 +185,9 @@ const AdminQueue = () => {
     scheduled_start: '',
     scheduled_end: '',
     duration: 0,
+    timer_loop_enabled: false,
+    timer_loop_minutes: 0,
+    timer_loop_automatic: false,
   });
   const fetchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
   const isFetchingQueue = useRef(false);
@@ -366,6 +375,9 @@ const AdminQueue = () => {
       scheduled_start: formatDatetimeLocal(item.scheduled_start),
       scheduled_end: formatDatetimeLocal(item.scheduled_end),
       duration: item.duration || 0,
+      timer_loop_enabled: item.timer_loop_enabled || false,
+      timer_loop_minutes: item.timer_loop_minutes || 0,
+      timer_loop_automatic: item.timer_loop_automatic || false,
     });
     setEditDialogOpen(true);
   };
@@ -383,6 +395,11 @@ const AdminQueue = () => {
         scheduled_start: parseLocalDatetime(editFormData.scheduled_start),
         scheduled_end: parseLocalDatetime(editFormData.scheduled_end),
         duration: editFormData.duration,
+        timer_loop_enabled: editFormData.timer_loop_enabled,
+        timer_loop_minutes: editFormData.timer_loop_enabled && !editFormData.timer_loop_automatic
+          ? editFormData.timer_loop_minutes
+          : null,
+        timer_loop_automatic: editFormData.timer_loop_automatic,
       });
 
       toast({
@@ -630,7 +647,7 @@ const AdminQueue = () => {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="duration">Duración (segundos)</Label>
+              <Label htmlFor="duration">Duracion (segundos)</Label>
               <Input
                 id="duration"
                 type="number"
@@ -640,6 +657,67 @@ const AdminQueue = () => {
               />
             </div>
             <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="edit-timer-loop"
+                  checked={editFormData.timer_loop_enabled}
+                  onChange={(e) => setEditFormData({
+                    ...editFormData,
+                    timer_loop_enabled: e.target.checked,
+                    timer_loop_minutes: e.target.checked ? (editFormData.timer_loop_minutes || 30) : 0,
+                  })}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="edit-timer-loop" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Repetir cada X minutos
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground pl-6">
+                Define cada cuantos minutos se muestra este contenido en el kiosk
+              </p>
+            </div>
+            {editFormData.timer_loop_enabled && (
+              <div className="space-y-3 pl-6 border-l-2 border-primary/20">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="edit-timer-automatic"
+                    checked={editFormData.timer_loop_automatic}
+                    onChange={(e) => setEditFormData({
+                      ...editFormData,
+                      timer_loop_automatic: e.target.checked,
+                      timer_loop_minutes: e.target.checked ? 0 : 30,
+                    })}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="edit-timer-automatic">Calculo automatico</Label>
+                </div>
+                {!editFormData.timer_loop_automatic && (
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-timer-minutes">Intervalo (minutos)</Label>
+                    <Input
+                      id="edit-timer-minutes"
+                      type="number"
+                      min="1"
+                      max="1440"
+                      value={editFormData.timer_loop_minutes}
+                      onChange={(e) => setEditFormData({ ...editFormData, timer_loop_minutes: parseInt(e.target.value) || 0 })}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      El contenido se mostrara cada {editFormData.timer_loop_minutes || '?'} minutos
+                    </p>
+                  </div>
+                )}
+                {editFormData.timer_loop_automatic && (
+                  <p className="text-xs text-muted-foreground">
+                    El intervalo se calcula segun la duracion total de la cola
+                  </p>
+                )}
+              </div>
+            )}
+            <div className="space-y-2">
               <Label htmlFor="scheduled_start">Fecha y Hora de Inicio (Opcional)</Label>
               <Input
                 id="scheduled_start"
@@ -648,7 +726,7 @@ const AdminQueue = () => {
                 onChange={(e) => setEditFormData({ ...editFormData, scheduled_start: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
-                Deja vacío para publicar inmediatamente
+                Deja vacio para publicar inmediatamente
               </p>
             </div>
             <div className="space-y-2">
@@ -660,7 +738,7 @@ const AdminQueue = () => {
                 onChange={(e) => setEditFormData({ ...editFormData, scheduled_end: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
-                Deja vacío para que no expire
+                Deja vacio para que no expire
               </p>
             </div>
           </div>
