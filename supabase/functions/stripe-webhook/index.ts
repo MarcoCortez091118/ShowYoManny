@@ -322,25 +322,39 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
       });
 
       EdgeRuntime.waitUntil(
-        sendToN8nWebhook({
-          customerEmail: customerEmail || '',
-          customerName: customerName,
-          amountCents: amountCents,
-          planId: planId || originalItem.metadata?.plan_id || 'admin',
-          mediaType: originalItem.media_type,
-          mediaUrl: originalItem.media_url,
-          fileName: originalItem.file_name,
-          duration: originalItem.duration || 10,
-          slots: [{
-            slotNumber: 1,
-            slotType: 'immediate',
-            scheduledStart: null,
-            scheduledEnd: null,
-            status: 'active',
-            durationSeconds: originalItem.duration || 10,
-          }],
-          paymentDate: now.toISOString(),
-        })
+        (async () => {
+          const positionData = await calculateQueuePositionAndTiming(originalItem.order_index || 0);
+          const webhookData = {
+            customerEmail: customerEmail || '',
+            customerName: customerName,
+            amountCents: amountCents,
+            planId: planId || originalItem.metadata?.plan_id || 'admin',
+            mediaType: originalItem.media_type,
+            mediaUrl: originalItem.media_url,
+            fileName: originalItem.file_name,
+            duration: originalItem.duration || 10,
+            slots: [{
+              slotNumber: 1,
+              slotType: 'immediate' as const,
+              scheduledStart: null,
+              scheduledEnd: null,
+              status: 'active',
+              durationSeconds: originalItem.duration || 10,
+            }],
+            paymentDate: now.toISOString(),
+            queuePosition: positionData.queuePosition,
+            totalItemsInQueue: positionData.totalItemsInQueue,
+            estimatedWaitSeconds: positionData.estimatedWaitSeconds,
+            estimatedDisplayTime: positionData.estimatedDisplayTime,
+            displayDurationSeconds: originalItem.duration || 10,
+          };
+
+          if (positionData.shouldDelayNotification) {
+            await scheduleDelayedN8nNotification(positionData.delaySeconds, webhookData);
+          } else {
+            await sendToN8nWebhook(webhookData);
+          }
+        })()
       );
       return;
     }
@@ -501,25 +515,39 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
     });
 
     EdgeRuntime.waitUntil(
-      sendToN8nWebhook({
-        customerEmail: customerEmail || '',
-        customerName: customerName,
-        amountCents: amountCents,
-        planId: planId || originalItem.metadata?.plan_id || 'unknown',
-        mediaType: originalItem.media_type,
-        mediaUrl: originalItem.media_url,
-        fileName: originalItem.file_name,
-        duration: originalItem.duration || 10,
-        slots: itemsToCreate.map((item, index) => ({
-          slotNumber: index + 1,
-          slotType: item.metadata.slot_type,
-          scheduledStart: item.scheduled_start,
-          scheduledEnd: item.scheduled_end,
-          status: item.status,
-          durationSeconds: item.duration || 10,
-        })),
-        paymentDate: now.toISOString(),
-      })
+      (async () => {
+        const positionData = await calculateQueuePositionAndTiming(maxOrderIndex + 1);
+        const webhookData = {
+          customerEmail: customerEmail || '',
+          customerName: customerName,
+          amountCents: amountCents,
+          planId: planId || originalItem.metadata?.plan_id || 'unknown',
+          mediaType: originalItem.media_type,
+          mediaUrl: originalItem.media_url,
+          fileName: originalItem.file_name,
+          duration: originalItem.duration || 10,
+          slots: itemsToCreate.map((item, index) => ({
+            slotNumber: index + 1,
+            slotType: item.metadata.slot_type,
+            scheduledStart: item.scheduled_start,
+            scheduledEnd: item.scheduled_end,
+            status: item.status,
+            durationSeconds: item.duration || 10,
+          })),
+          paymentDate: now.toISOString(),
+          queuePosition: positionData.queuePosition,
+          totalItemsInQueue: positionData.totalItemsInQueue,
+          estimatedWaitSeconds: positionData.estimatedWaitSeconds,
+          estimatedDisplayTime: positionData.estimatedDisplayTime,
+          displayDurationSeconds: originalItem.duration || 10,
+        };
+
+        if (positionData.shouldDelayNotification) {
+          await scheduleDelayedN8nNotification(positionData.delaySeconds, webhookData);
+        } else {
+          await sendToN8nWebhook(webhookData);
+        }
+      })()
     );
   } catch (error) {
     console.error('Error in activateQueueItemAfterPayment:', error);
@@ -738,6 +766,102 @@ async function createOrUpdateCustomer(data: {
   }
 }
 
+async function calculateQueuePositionAndTiming(newItemOrderIndex: number): Promise<{
+  queuePosition: number;
+  currentlyPlayingIndex: number;
+  totalItemsInQueue: number;
+  estimatedWaitSeconds: number;
+  estimatedDisplayTime: string;
+  shouldDelayNotification: boolean;
+  delaySeconds: number;
+}> {
+  const { data: allVisibleItems, error } = await supabase
+    .from('queue_items')
+    .select('id, order_index, duration, status, scheduled_start, scheduled_end, metadata')
+    .order('order_index', { ascending: true });
+
+  if (error || !allVisibleItems) {
+    console.error('Error fetching queue for position calculation:', error);
+    return {
+      queuePosition: 1,
+      currentlyPlayingIndex: 0,
+      totalItemsInQueue: 1,
+      estimatedWaitSeconds: 0,
+      estimatedDisplayTime: new Date().toISOString(),
+      shouldDelayNotification: false,
+      delaySeconds: 0,
+    };
+  }
+
+  const now = new Date();
+  const activeItems = allVisibleItems.filter(item => {
+    const isAdminContent = item.metadata?.is_admin_content === true;
+    const isPaidContent = item.metadata?.is_user_paid_content === true;
+    const isPaymentConfirmed = item.metadata?.payment_status === 'confirmed';
+    const displayStatus = item.metadata?.display_status;
+    const scheduledStart = item.scheduled_start ? new Date(item.scheduled_start) : null;
+    const scheduledEnd = item.scheduled_end ? new Date(item.scheduled_end) : null;
+
+    if (displayStatus === 'pending' && !isAdminContent) return false;
+    if (isPaidContent && !isPaymentConfirmed) return false;
+    if (item.status === 'pending' && !isAdminContent) return false;
+    if (scheduledEnd && now > scheduledEnd) return false;
+    if (scheduledStart && now < scheduledStart) return false;
+
+    return true;
+  });
+
+  const totalItems = activeItems.length;
+  const newItemPosition = activeItems.findIndex(item => item.order_index >= newItemOrderIndex);
+  const queuePosition = newItemPosition === -1 ? totalItems : newItemPosition + 1;
+
+  // Estimate currently playing index based on elapsed time in current cycle
+  // We use a heuristic: items play in order, each for their duration
+  const totalCycleDuration = activeItems.reduce((sum, item) => sum + (item.duration || 10), 0);
+
+  // Calculate time remaining until the new item plays in the NEXT full cycle
+  // Items before the new item in the queue
+  const itemsBeforeNew = activeItems.slice(0, queuePosition - 1);
+  const timeToReachInCurrentCycle = itemsBeforeNew.reduce((sum, item) => sum + (item.duration || 10), 0);
+
+  // If the new item is at the end of the queue and content is currently playing earlier items,
+  // we need to wait for the remaining items in the current cycle to finish, then the full next cycle
+  // until just before the new item plays
+  const currentlyPlayingIndex = 0; // We can't know exactly, so assume worst case
+  const itemsAfterCurrent = activeItems.slice(currentlyPlayingIndex, queuePosition - 1);
+  const estimatedWaitSeconds = itemsAfterCurrent.reduce((sum, item) => sum + (item.duration || 10), 0);
+
+  // If queue position > 1 and there are items playing before this one,
+  // delay the notification until the current cycle completes and the item is about to play
+  const shouldDelayNotification = queuePosition > 1;
+
+  // Delay = time for remaining items in current cycle to play + time from start of next cycle to reach this item
+  // Simplified: wait for all items before this one to finish
+  const delaySeconds = shouldDelayNotification ? estimatedWaitSeconds : 0;
+
+  const estimatedDisplayTime = new Date(now.getTime() + (delaySeconds * 1000)).toISOString();
+
+  console.info(`Queue position calculation:`, {
+    queuePosition,
+    totalItemsInQueue: totalItems,
+    estimatedWaitSeconds,
+    estimatedDisplayTime,
+    shouldDelayNotification,
+    delaySeconds,
+    totalCycleDuration,
+  });
+
+  return {
+    queuePosition,
+    currentlyPlayingIndex,
+    totalItemsInQueue: totalItems,
+    estimatedWaitSeconds,
+    estimatedDisplayTime,
+    shouldDelayNotification,
+    delaySeconds,
+  };
+}
+
 async function sendToN8nWebhook(data: {
   customerEmail: string;
   customerName?: string;
@@ -756,6 +880,11 @@ async function sendToN8nWebhook(data: {
     durationSeconds: number;
   }>;
   paymentDate: string;
+  queuePosition?: number;
+  totalItemsInQueue?: number;
+  estimatedWaitSeconds?: number;
+  estimatedDisplayTime?: string;
+  displayDurationSeconds?: number;
 }) {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -787,6 +916,11 @@ async function sendToN8nWebhook(data: {
       })),
       payment_date: data.paymentDate,
       content_activated: true,
+      queue_position: data.queuePosition,
+      total_items_in_queue: data.totalItemsInQueue,
+      estimated_wait_seconds: data.estimatedWaitSeconds,
+      estimated_display_time: data.estimatedDisplayTime,
+      display_duration_seconds: data.displayDurationSeconds,
     };
 
     console.info('Sending data to n8n webhook:', JSON.stringify(payload, null, 2));
@@ -811,4 +945,29 @@ async function sendToN8nWebhook(data: {
   } catch (error) {
     console.error('Error sending n8n webhook:', error);
   }
+}
+
+async function scheduleDelayedN8nNotification(delaySeconds: number, data: Parameters<typeof sendToN8nWebhook>[0]) {
+  console.info(`Scheduling delayed n8n notification in ${delaySeconds}s for ${data.customerEmail}`);
+
+  // Store the pending notification in the database so it can be sent later
+  const sendAt = new Date(Date.now() + delaySeconds * 1000).toISOString();
+
+  const { error } = await supabase
+    .from('pending_notifications')
+    .insert({
+      send_at: sendAt,
+      payload: data,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+    });
+
+  if (error) {
+    // If table doesn't exist or insert fails, send immediately as fallback
+    console.warn('Could not schedule delayed notification, sending immediately:', error.message);
+    await sendToN8nWebhook(data);
+    return;
+  }
+
+  console.info(`Notification scheduled for ${sendAt}`);
 }

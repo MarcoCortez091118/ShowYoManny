@@ -29,6 +29,11 @@ interface WebhookPayload {
   }>;
   payment_date: string;
   content_activated: boolean;
+  queue_position?: number;
+  total_items_in_queue?: number;
+  estimated_wait_seconds?: number;
+  estimated_display_time?: string;
+  display_duration_seconds?: number;
 }
 
 Deno.serve(async (req: Request) => {

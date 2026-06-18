@@ -21,6 +21,7 @@ const KioskDisplay = () => {
   const countdownTimer = useRef<NodeJS.Timeout | null>(null);
   const fetchDebounceTimer = useRef<NodeJS.Timeout | null>(null);
   const isFetching = useRef(false);
+  const isProcessingNotifications = useRef(false);
 
   const debouncedFetchContent = () => {
     if (fetchDebounceTimer.current) {
@@ -31,6 +32,27 @@ const KioskDisplay = () => {
         fetchContent();
       }
     }, 500);
+  };
+
+  const processPendingNotifications = async () => {
+    if (isProcessingNotifications.current) return;
+    isProcessingNotifications.current = true;
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      await fetch(`${supabaseUrl}/functions/v1/process-pending-notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': supabaseKey,
+        },
+      });
+    } catch (error) {
+      console.error('Error processing pending notifications:', error);
+    } finally {
+      isProcessingNotifications.current = false;
+    }
   };
 
   useEffect(() => {
@@ -311,6 +333,10 @@ const KioskDisplay = () => {
         const isLooping = nextIndex === 0 && currentIndex === items.length - 1;
 
         console.log(`KioskDisplay: Advancing from ${currentIndex + 1} to ${nextIndex + 1} of ${items.length}${isLooping ? ' (LOOPING BACK TO START)' : ''}`);
+
+        if (isLooping) {
+          processPendingNotifications();
+        }
 
         setCurrentIndex(nextIndex);
         setIsVisible(true);
