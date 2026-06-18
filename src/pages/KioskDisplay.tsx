@@ -148,12 +148,16 @@ const KioskDisplay = () => {
     fetchContent();
     loadBorderThemes();
 
-    // Realtime: only listen to INSERT and DELETE (not UPDATE, which is the most frequent)
     const channel = supabase
       .channel('kiosk-queue')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'queue_items' },
+        () => fetchContent()
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'queue_items' },
         () => fetchContent()
       )
       .on(
