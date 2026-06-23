@@ -269,6 +269,12 @@ const BusinessPlans = () => {
     }
   };
 
+  const getPriceLabel = (duration: string) => {
+    if (duration === "1 Week") return "Per week";
+    if (duration === "6 Months - 1 Year") return "Per month (6M-1Y contract)";
+    return "Per month";
+  };
+
   const convertToPricingTiers = (categoryPackages: PackageDetails[]): PricingTier[] => {
     return categoryPackages.map((pkg) => ({
       name: pkg.name,
@@ -281,6 +287,7 @@ const BusinessPlans = () => {
       highlighted: pkg.tier === "platinum",
       popular: pkg.tier === "gold",
       href: getWhatsAppUrl(pkg.name, pkg.duration, pkg.monthlyTotal),
+      priceLabel: getPriceLabel(pkg.duration),
     }));
   };
 

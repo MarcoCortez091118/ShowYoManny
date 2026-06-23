@@ -18,6 +18,7 @@ export interface PricingTier {
   highlighted?: boolean
   popular?: boolean
   href?: string
+  priceLabel?: string
 }
 
 interface PricingCardProps {
@@ -65,7 +66,7 @@ export function PricingCard({ tier, paymentFrequency }: PricingCardProps) {
               className="text-4xl font-medium"
             />
             <p className="-mt-2 text-xs text-muted-foreground">
-              Per month/user
+              {tier.priceLabel || "Per month/user"}
             </p>
           </>
         ) : (
