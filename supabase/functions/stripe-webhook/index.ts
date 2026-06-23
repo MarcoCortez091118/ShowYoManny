@@ -895,32 +895,39 @@ async function sendToN8nWebhook(data: {
       return;
     }
 
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const seqStr = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
+    const eventId = `evt_showyo_${dateStr}_${seqStr}`;
+
     const payload = {
+      event_id: eventId,
+      event_type: 'payment.content_slots.activated',
       customer_email: data.customerEmail,
-      customer_name: data.customerName,
+      customer_name: data.customerName || null,
       payment_status: data.amountCents > 0 ? 'paid' : 'not_paid',
+      content_activated: true,
       amount_cents: data.amountCents,
       amount_dollars: data.amountCents / 100,
       currency: 'usd',
       plan_id: data.planId,
       media_type: data.mediaType,
       media_url: data.mediaUrl,
-      file_name: data.fileName,
+      file_name: data.fileName || null,
       slots: data.slots.map(slot => ({
         slot_number: slot.slotNumber,
         slot_type: slot.slotType,
-        scheduled_start: slot.scheduledStart,
-        scheduled_end: slot.scheduledEnd,
+        scheduled_start: slot.scheduledStart || null,
+        scheduled_end: slot.scheduledEnd || null,
         status: slot.status,
         duration_seconds: slot.durationSeconds,
       })),
       payment_date: data.paymentDate,
-      content_activated: true,
-      queue_position: data.queuePosition,
-      total_items_in_queue: data.totalItemsInQueue,
-      estimated_wait_seconds: data.estimatedWaitSeconds,
-      estimated_display_time: data.estimatedDisplayTime,
-      display_duration_seconds: data.displayDurationSeconds,
+      queue_position: data.queuePosition || null,
+      total_items_in_queue: data.totalItemsInQueue || null,
+      estimated_display_time: data.estimatedDisplayTime || null,
+      estimated_wait_seconds: data.estimatedWaitSeconds || null,
+      display_duration_seconds: data.displayDurationSeconds || data.duration,
     };
 
     console.info('Sending data to n8n webhook:', JSON.stringify(payload, null, 2));
@@ -950,20 +957,53 @@ async function sendToN8nWebhook(data: {
 async function scheduleDelayedN8nNotification(delaySeconds: number, data: Parameters<typeof sendToN8nWebhook>[0]) {
   console.info(`Scheduling delayed n8n notification in ${delaySeconds}s for ${data.customerEmail}`);
 
-  // Store the pending notification in the database so it can be sent later
   const sendAt = new Date(Date.now() + delaySeconds * 1000).toISOString();
+
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const seqStr = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
+  const eventId = `evt_showyo_${dateStr}_${seqStr}`;
+
+  const formattedPayload = {
+    event_id: eventId,
+    event_type: 'payment.content_slots.activated',
+    customer_email: data.customerEmail,
+    customer_name: data.customerName || null,
+    payment_status: data.amountCents > 0 ? 'paid' : 'not_paid',
+    content_activated: true,
+    amount_cents: data.amountCents,
+    amount_dollars: data.amountCents / 100,
+    currency: 'usd',
+    plan_id: data.planId,
+    media_type: data.mediaType,
+    media_url: data.mediaUrl,
+    file_name: data.fileName || null,
+    slots: data.slots.map(slot => ({
+      slot_number: slot.slotNumber,
+      slot_type: slot.slotType,
+      scheduled_start: slot.scheduledStart || null,
+      scheduled_end: slot.scheduledEnd || null,
+      status: slot.status,
+      duration_seconds: slot.durationSeconds,
+    })),
+    payment_date: data.paymentDate,
+    queue_position: data.queuePosition || null,
+    total_items_in_queue: data.totalItemsInQueue || null,
+    estimated_display_time: data.estimatedDisplayTime || null,
+    estimated_wait_seconds: data.estimatedWaitSeconds || null,
+    display_duration_seconds: data.displayDurationSeconds || data.duration,
+  };
 
   const { error } = await supabase
     .from('pending_notifications')
     .insert({
       send_at: sendAt,
-      payload: data,
+      payload: formattedPayload,
       status: 'pending',
       created_at: new Date().toISOString(),
     });
 
   if (error) {
-    // If table doesn't exist or insert fails, send immediately as fallback
     console.warn('Could not schedule delayed notification, sending immediately:', error.message);
     await sendToN8nWebhook(data);
     return;
