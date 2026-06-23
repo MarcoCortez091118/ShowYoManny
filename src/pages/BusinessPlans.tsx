@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Monitor, Zap, MapPin, Maximize2, Clock, Repeat, DollarSign, Gift, CheckCircle2, Crown, Star, TrendingUp, ArrowLeft, MessageCircle, Send, Mail, Phone, Moon, Sun } from "lucide-react";
+import { Monitor, Zap, MapPin, Maximize2, Clock, Repeat, DollarSign, Gift, CircleCheck as CheckCircle2, Crown, Star, TrendingUp, ArrowLeft, MessageCircle, Send, Mail, Phone, Moon, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -67,6 +67,13 @@ const BusinessPlans = () => {
     window.open(whatsappUrl, "_blank");
   };
 
+  const getWhatsAppUrl = (packageName: string, duration: string, price: number) => {
+    const message = encodeURIComponent(
+      `Hi! I'm interested in the ShowYo ${packageName} (${duration}) at $${price.toLocaleString()}/month. Could you please provide more information about this package?`
+    );
+    return `https://wa.me/19297421127?text=${message}`;
+  };
+
   const packages: Record<string, PackageDetails[]> = {
     monthly: [
       {
@@ -74,8 +81,8 @@ const BusinessPlans = () => {
         tier: "bronze",
         duration: "1 Month",
         frequency: 40,
-        dailyRate: 69,
-        monthlyTotal: 2070,
+        dailyRate: 96.67,
+        monthlyTotal: 2900,
         description: "Perfect for small businesses starting their Times Square journey",
         icon: Star,
         features: [
@@ -91,8 +98,8 @@ const BusinessPlans = () => {
         tier: "silver",
         duration: "1 Month",
         frequency: 90,
-        dailyRate: 135,
-        monthlyTotal: 4050,
+        dailyRate: 186.67,
+        monthlyTotal: 5600,
         description: "Enhanced exposure for growing brands",
         icon: TrendingUp,
         features: [
@@ -108,8 +115,8 @@ const BusinessPlans = () => {
         tier: "gold",
         duration: "1 Month",
         frequency: 105,
-        dailyRate: 500,
-        monthlyTotal: 15000,
+        dailyRate: 366.67,
+        monthlyTotal: 11000,
         description: "Premium package for maximum visibility",
         icon: Crown,
         features: [
@@ -125,8 +132,8 @@ const BusinessPlans = () => {
         tier: "platinum",
         duration: "1 Month",
         frequency: 300,
-        dailyRate: 1000,
-        monthlyTotal: 30000,
+        dailyRate: 700,
+        monthlyTotal: 21000,
         description: "Ultimate exposure in the heart of Times Square",
         icon: Zap,
         features: [
@@ -144,8 +151,8 @@ const BusinessPlans = () => {
         tier: "gold",
         duration: "6 Months - 1 Year",
         frequency: 105,
-        dailyRate: 366.66,
-        monthlyTotal: 11000,
+        dailyRate: 333.33,
+        monthlyTotal: 10000,
         description: "Long-term premium exposure with significant savings",
         icon: Crown,
         features: [
@@ -161,8 +168,8 @@ const BusinessPlans = () => {
         tier: "platinum",
         duration: "6 Months - 1 Year",
         frequency: 300,
-        dailyRate: 833.33,
-        monthlyTotal: 25000,
+        dailyRate: 666.67,
+        monthlyTotal: 20000,
         description: "Maximum long-term impact with best value",
         icon: Zap,
         features: [
@@ -180,8 +187,8 @@ const BusinessPlans = () => {
         tier: "bronze",
         duration: "1 Week",
         frequency: 48,
-        dailyRate: 71.43,
-        monthlyTotal: 500,
+        dailyRate: 107.14,
+        monthlyTotal: 750,
         description: "Display every 30 minutes",
         icon: Star,
         features: [
@@ -196,8 +203,8 @@ const BusinessPlans = () => {
         tier: "silver",
         duration: "1 Week",
         frequency: 96,
-        dailyRate: 142.86,
-        monthlyTotal: 1000,
+        dailyRate: 207.14,
+        monthlyTotal: 1450,
         description: "Display every 15 minutes",
         icon: TrendingUp,
         features: [
@@ -212,8 +219,8 @@ const BusinessPlans = () => {
         tier: "gold",
         duration: "1 Week",
         frequency: 180,
-        dailyRate: 214.29,
-        monthlyTotal: 1500,
+        dailyRate: 371.43,
+        monthlyTotal: 2600,
         description: "Display every 8 minutes",
         icon: Crown,
         features: [
@@ -228,8 +235,8 @@ const BusinessPlans = () => {
         tier: "platinum",
         duration: "1 Week",
         frequency: 360,
-        dailyRate: 285.71,
-        monthlyTotal: 2000,
+        dailyRate: 814.29,
+        monthlyTotal: 5700,
         description: "Display every 4 minutes",
         icon: Zap,
         features: [
@@ -263,16 +270,17 @@ const BusinessPlans = () => {
   };
 
   const convertToPricingTiers = (categoryPackages: PackageDetails[]): PricingTier[] => {
-    return categoryPackages.map((pkg, index) => ({
+    return categoryPackages.map((pkg) => ({
       name: pkg.name,
       price: {
         monthly: pkg.monthlyTotal,
       },
       description: pkg.description,
       features: pkg.features,
-      cta: "Get Started",
+      cta: "Request Info via WhatsApp",
       highlighted: pkg.tier === "platinum",
       popular: pkg.tier === "gold",
+      href: getWhatsAppUrl(pkg.name, pkg.duration, pkg.monthlyTotal),
     }));
   };
 

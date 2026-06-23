@@ -17,6 +17,7 @@ export interface PricingTier {
   cta: string
   highlighted?: boolean
   popular?: boolean
+  href?: string
 }
 
 interface PricingCardProps {
@@ -93,6 +94,7 @@ export function PricingCard({ tier, paymentFrequency }: PricingCardProps) {
       <Button
         variant={isHighlighted ? "secondary" : "default"}
         className="w-full"
+        onClick={tier.href ? () => window.open(tier.href, "_blank") : undefined}
       >
         {tier.cta}
         <ArrowRight className="ml-2 h-4 w-4" />
