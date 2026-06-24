@@ -168,7 +168,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
           session.customer_details?.name || undefined,
           customer,
           amount_total || 0,
-          metadata.plan_id
+          metadata.plan_id,
+          {
+            checkoutSessionId: id,
+            paymentIntentId: typeof payment_intent === 'string' ? payment_intent : payment_intent?.id,
+            currency: currency || 'usd',
+          }
         );
       } else {
         console.warn('No order_id in metadata - payment without content upload');
@@ -243,7 +248,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   await syncCustomerFromStripe(customer);
 }
 
-async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?: string, customerName?: string, customerId?: string, amountCents: number = 0, planId?: string) {
+async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?: string, customerName?: string, customerId?: string, amountCents: number = 0, planId?: string, stripeContext?: { checkoutSessionId?: string; paymentIntentId?: string; currency?: string }) {
   try {
     console.info(`Starting activation for queue item: ${queueItemId}`);
     await logAudit('webhook_processed', customerEmail, queueItemId, 'queue_item', {
@@ -328,11 +333,16 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
             customerEmail: customerEmail || '',
             customerName: customerName,
             amountCents: amountCents,
+            currency: stripeContext?.currency || 'usd',
             planId: planId || originalItem.metadata?.plan_id || 'admin',
             mediaType: originalItem.media_type,
             mediaUrl: originalItem.media_url,
             fileName: originalItem.file_name,
             duration: originalItem.duration || 10,
+            checkoutSessionId: stripeContext?.checkoutSessionId,
+            paymentIntentId: stripeContext?.paymentIntentId,
+            orderId: queueItemId,
+            contentId: originalItem.id,
             slots: [{
               slotNumber: 1,
               slotType: 'immediate' as const,
@@ -521,11 +531,16 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
           customerEmail: customerEmail || '',
           customerName: customerName,
           amountCents: amountCents,
+          currency: stripeContext?.currency || 'usd',
           planId: planId || originalItem.metadata?.plan_id || 'unknown',
           mediaType: originalItem.media_type,
           mediaUrl: originalItem.media_url,
           fileName: originalItem.file_name,
           duration: originalItem.duration || 10,
+          checkoutSessionId: stripeContext?.checkoutSessionId,
+          paymentIntentId: stripeContext?.paymentIntentId,
+          orderId: queueItemId,
+          contentId: originalItem.id,
           slots: itemsToCreate.map((item, index) => ({
             slotNumber: index + 1,
             slotType: item.metadata.slot_type,
@@ -866,11 +881,16 @@ async function sendToN8nWebhook(data: {
   customerEmail: string;
   customerName?: string;
   amountCents: number;
+  currency?: string;
   planId: string;
   mediaType: string;
   mediaUrl: string;
   fileName?: string;
   duration: number;
+  checkoutSessionId?: string;
+  paymentIntentId?: string;
+  orderId?: string;
+  contentId?: string;
   slots: Array<{
     slotNumber: number;
     slotType: string;
@@ -903,13 +923,22 @@ async function sendToN8nWebhook(data: {
     const payload = {
       event_id: eventId,
       event_type: 'payment.content_slots.activated',
+      source: 'supabase',
+
+      stripe_event_id: null,
+      checkout_session_id: data.checkoutSessionId || null,
+      payment_intent_id: data.paymentIntentId || null,
+
+      order_id: data.orderId || null,
+      content_id: data.contentId || null,
+
       customer_email: data.customerEmail,
       customer_name: data.customerName || null,
       payment_status: data.amountCents > 0 ? 'paid' : 'not_paid',
       content_activated: true,
       amount_cents: data.amountCents,
-      amount_dollars: data.amountCents / 100,
-      currency: 'usd',
+      amount_dollars: Number((data.amountCents / 100).toFixed(2)),
+      currency: String(data.currency ?? 'usd').toLowerCase(),
       plan_id: data.planId,
       media_type: data.mediaType,
       media_url: data.mediaUrl,
@@ -930,7 +959,13 @@ async function sendToN8nWebhook(data: {
       display_duration_seconds: data.displayDurationSeconds || data.duration,
     };
 
-    console.info('Sending data to n8n webhook:', JSON.stringify(payload, null, 2));
+    console.info('Sending data to n8n webhook:', {
+      event_id: payload.event_id,
+      order_id: payload.order_id,
+      customer_email: payload.customer_email,
+      plan_id: payload.plan_id,
+      slots_count: payload.slots.length,
+    });
 
     const response = await fetch(`${supabaseUrl}/functions/v1/send-n8n-webhook`, {
       method: 'POST',
@@ -967,13 +1002,22 @@ async function scheduleDelayedN8nNotification(delaySeconds: number, data: Parame
   const formattedPayload = {
     event_id: eventId,
     event_type: 'payment.content_slots.activated',
+    source: 'supabase',
+
+    stripe_event_id: null,
+    checkout_session_id: data.checkoutSessionId || null,
+    payment_intent_id: data.paymentIntentId || null,
+
+    order_id: data.orderId || null,
+    content_id: data.contentId || null,
+
     customer_email: data.customerEmail,
     customer_name: data.customerName || null,
     payment_status: data.amountCents > 0 ? 'paid' : 'not_paid',
     content_activated: true,
     amount_cents: data.amountCents,
-    amount_dollars: data.amountCents / 100,
-    currency: 'usd',
+    amount_dollars: Number((data.amountCents / 100).toFixed(2)),
+    currency: String(data.currency ?? 'usd').toLowerCase(),
     plan_id: data.planId,
     media_type: data.mediaType,
     media_url: data.mediaUrl,
