@@ -377,107 +377,73 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
       .maybeSingle();
 
     const maxOrderIndex = maxOrderData?.order_index ?? 0;
-    console.info(`Current max order_index: ${maxOrderIndex}, will add items starting at ${maxOrderIndex + 1}`);
+    console.info(`Current max order_index: ${maxOrderIndex}, will add item at ${maxOrderIndex + 1}`);
 
-    const eightHours = 8 * 60 * 60 * 1000;
-    const contentDurationMs = (originalItem.duration || 10) * 1000;
+    const totalPlays = 3;
+    const intervalMinutes = 480; // 8 hours between plays = 3 plays in 24h
+    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    const itemsToCreate = [
-      {
-        user_id: originalItem.user_id,
-        kiosk_id: originalItem.kiosk_id,
-        media_url: originalItem.media_url,
-        media_type: originalItem.media_type,
-        thumbnail_url: originalItem.thumbnail_url,
-        title: originalItem.title,
-        duration: originalItem.duration,
-        border_id: originalItem.border_id,
-        file_name: originalItem.file_name,
-        order_index: maxOrderIndex + 1,
-        status: 'active',
-        published_at: now.toISOString(),
-        scheduled_start: null,
-        scheduled_end: null,
-        auto_delete_on_expire: false,
-        metadata: {
-          ...(originalItem.metadata || {}),
-          customer_email: customerEmail,
-          customer_name: customerName,
-          stripe_customer_id: customerId,
-          payment_date: now.toISOString(),
-          payment_status: 'confirmed',
-          display_status: 'published',
-          original_queue_item_id: queueItemId,
-          auto_scheduled_slot: 1,
-          slot_type: 'immediate',
-          is_user_paid_content: true,
-          is_admin_content: false,
-        },
+    const newItem = {
+      user_id: originalItem.user_id,
+      kiosk_id: originalItem.kiosk_id,
+      media_url: originalItem.media_url,
+      media_type: originalItem.media_type,
+      thumbnail_url: originalItem.thumbnail_url,
+      title: originalItem.title,
+      duration: originalItem.duration,
+      border_id: originalItem.border_id,
+      file_name: originalItem.file_name,
+      order_index: maxOrderIndex + 1,
+      status: 'active',
+      published_at: now.toISOString(),
+      scheduled_start: null,
+      scheduled_end: expiresAt.toISOString(),
+      auto_delete_on_expire: true,
+      timer_loop_enabled: true,
+      timer_loop_minutes: intervalMinutes,
+      timer_loop_automatic: false,
+      metadata: {
+        ...(originalItem.metadata || {}),
+        customer_email: customerEmail,
+        customer_name: customerName,
+        stripe_customer_id: customerId,
+        payment_date: now.toISOString(),
+        payment_status: 'confirmed',
+        display_status: 'published',
+        original_queue_item_id: queueItemId,
+        slot_type: 'recurring',
+        is_user_paid_content: true,
+        is_admin_content: false,
+        max_plays: totalPlays,
+        play_count: 0,
+        auto_complete_after_play: true,
+        expires_at: expiresAt.toISOString(),
       },
-      {
-        user_id: originalItem.user_id,
-        kiosk_id: originalItem.kiosk_id,
-        media_url: originalItem.media_url,
-        media_type: originalItem.media_type,
-        thumbnail_url: originalItem.thumbnail_url,
-        title: originalItem.title,
-        duration: originalItem.duration,
-        border_id: originalItem.border_id,
-        file_name: originalItem.file_name,
-        order_index: maxOrderIndex + 2,
-        status: 'active',
-        published_at: new Date(now.getTime() + eightHours).toISOString(),
-        scheduled_start: new Date(now.getTime() + eightHours).toISOString(),
-        scheduled_end: new Date(now.getTime() + eightHours + contentDurationMs).toISOString(),
-        auto_delete_on_expire: true,
-        metadata: {
-          ...(originalItem.metadata || {}),
-          customer_email: customerEmail,
-          customer_name: customerName,
-          stripe_customer_id: customerId,
-          payment_date: now.toISOString(),
-          payment_status: 'confirmed',
-          display_status: 'published',
-          original_queue_item_id: queueItemId,
-          auto_scheduled_slot: 2,
-          slot_type: 'scheduled',
-          is_user_paid_content: true,
-          is_admin_content: false,
-        },
-      },
-      {
-        user_id: originalItem.user_id,
-        kiosk_id: originalItem.kiosk_id,
-        media_url: originalItem.media_url,
-        media_type: originalItem.media_type,
-        thumbnail_url: originalItem.thumbnail_url,
-        title: originalItem.title,
-        duration: originalItem.duration,
-        border_id: originalItem.border_id,
-        file_name: originalItem.file_name,
-        order_index: maxOrderIndex + 3,
-        status: 'active',
-        published_at: new Date(now.getTime() + eightHours * 2).toISOString(),
-        scheduled_start: new Date(now.getTime() + eightHours * 2).toISOString(),
-        scheduled_end: new Date(now.getTime() + eightHours * 2 + contentDurationMs).toISOString(),
-        auto_delete_on_expire: true,
-        metadata: {
-          ...(originalItem.metadata || {}),
-          customer_email: customerEmail,
-          customer_name: customerName,
-          stripe_customer_id: customerId,
-          payment_date: now.toISOString(),
-          payment_status: 'confirmed',
-          display_status: 'published',
-          original_queue_item_id: queueItemId,
-          auto_scheduled_slot: 3,
-          slot_type: 'scheduled',
-          is_user_paid_content: true,
-          is_admin_content: false,
-        },
-      },
-    ];
+    };
 
+    // Insert first, then delete original - prevents data loss if insert fails
+    const { data: insertedItems, error: insertError } = await supabase
+      .from('queue_items')
+      .insert(newItem)
+      .select('id');
+
+    if (insertError) {
+      console.error('Error creating recurring queue item:', insertError);
+      await logAudit('error', customerEmail, queueItemId, 'queue_item', {
+        error: insertError.message,
+      }, false, `Error creating recurring queue item: ${insertError.message}`);
+      await updatePaymentTracking({
+        queueItemId,
+        webhookProcessed: true,
+        contentActivated: false,
+        activationFailedReason: `Error creating recurring item: ${insertError.message}`,
+      });
+      return;
+    }
+
+    const newContentId = insertedItems?.[0]?.id || null;
+
+    // Now safe to delete original
     const { error: deleteError } = await supabase
       .from('queue_items')
       .delete()
@@ -487,33 +453,15 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
       console.error('Error deleting original queue item:', deleteError);
     }
 
-    const { error: insertError } = await supabase
-      .from('queue_items')
-      .insert(itemsToCreate);
-
-    if (insertError) {
-      console.error('Error creating scheduled queue items:', insertError);
-      await logAudit('error', customerEmail, queueItemId, 'queue_item', {
-        error: insertError.message,
-      }, false, `Error creating scheduled queue items: ${insertError.message}`);
-      await updatePaymentTracking({
-        queueItemId,
-        webhookProcessed: true,
-        contentActivated: false,
-        activationFailedReason: `Error creating scheduled items: ${insertError.message}`,
-      });
-      return;
-    }
-
-    console.info(`Created 3 queue items for customer: ${customerEmail}`);
-    console.info(`Content duration: ${originalItem.duration}s`);
-    console.info(`Slot 1 (immediate): order_index ${maxOrderIndex + 1}, active now, added to END of queue`);
-    console.info(`Slot 2 (scheduled): order_index ${maxOrderIndex + 2}, shows at ${new Date(now.getTime() + eightHours).toISOString()}`);
-    console.info(`Slot 3 (scheduled): order_index ${maxOrderIndex + 3}, shows at ${new Date(now.getTime() + eightHours * 2).toISOString()}`);
+    console.info(`Created recurring queue item for customer: ${customerEmail}`);
+    console.info(`Content duration: ${originalItem.duration}s, plays: ${totalPlays}, interval: ${intervalMinutes}min`);
+    console.info(`Item order_index ${maxOrderIndex + 1}, expires at ${expiresAt.toISOString()}`);
 
     await logAudit('content_activated', customerEmail, queueItemId, 'queue_item', {
       queue_item_id: queueItemId,
-      slots_created: 3,
+      new_content_id: newContentId,
+      max_plays: totalPlays,
+      interval_minutes: intervalMinutes,
       customer_email: customerEmail,
     }, true);
 
@@ -540,15 +488,33 @@ async function activateQueueItemAfterPayment(queueItemId: string, customerEmail?
           checkoutSessionId: stripeContext?.checkoutSessionId,
           paymentIntentId: stripeContext?.paymentIntentId,
           orderId: queueItemId,
-          contentId: originalItem.id,
-          slots: itemsToCreate.map((item, index) => ({
-            slotNumber: index + 1,
-            slotType: item.metadata.slot_type,
-            scheduledStart: item.scheduled_start,
-            scheduledEnd: item.scheduled_end,
-            status: item.status,
-            durationSeconds: item.duration || 10,
-          })),
+          contentId: newContentId,
+          slots: [
+            {
+              slotNumber: 1,
+              slotType: 'immediate',
+              scheduledStart: null,
+              scheduledEnd: null,
+              status: 'active',
+              durationSeconds: originalItem.duration || 10,
+            },
+            {
+              slotNumber: 2,
+              slotType: 'scheduled',
+              scheduledStart: new Date(now.getTime() + intervalMinutes * 60 * 1000).toISOString(),
+              scheduledEnd: expiresAt.toISOString(),
+              status: 'active',
+              durationSeconds: originalItem.duration || 10,
+            },
+            {
+              slotNumber: 3,
+              slotType: 'scheduled',
+              scheduledStart: new Date(now.getTime() + intervalMinutes * 2 * 60 * 1000).toISOString(),
+              scheduledEnd: expiresAt.toISOString(),
+              status: 'active',
+              durationSeconds: originalItem.duration || 10,
+            },
+          ],
           paymentDate: now.toISOString(),
           queuePosition: positionData.queuePosition,
           totalItemsInQueue: positionData.totalItemsInQueue,

@@ -225,20 +225,52 @@ const KioskDisplay = () => {
 
     autoAdvanceTimer.current = setTimeout(async () => {
       const isPaidContent = currentItem.metadata?.is_user_paid_content === true;
-      const isImmediateSlot = currentItem.metadata?.slot_type === 'immediate';
-      const hasNoSchedule = !currentItem.scheduled_start && !currentItem.scheduled_end;
-      const autoComplete = currentItem.metadata?.auto_complete_after_play === true;
+      const slotType = currentItem.metadata?.slot_type;
       const maxPlays = currentItem.metadata?.max_plays || 0;
       const playCount = currentItem.metadata?.play_count || 0;
       const newPlayCount = playCount + 1;
 
-      const shouldDelete = isPaidContent && (
-        isImmediateSlot ||
-        hasNoSchedule ||
-        (autoComplete && maxPlays > 0 && newPlayCount >= maxPlays)
-      );
+      // Recurring paid content: increment play_count, delete only when max reached
+      if (isPaidContent && slotType === 'recurring' && maxPlays > 0) {
+        try {
+          if (newPlayCount >= maxPlays) {
+            // All plays used - delete
+            await supabase
+              .from('queue_items')
+              .delete()
+              .eq('id', currentItem.id);
 
-      if (shouldDelete) {
+            mediaCacheService.evict(currentItem.media_url);
+
+            setIsVisible(false);
+            setTimeout(async () => {
+              await fetchContent();
+              setTimeout(() => {
+                setCurrentIndex(prevIndex => {
+                  const newLength = items.length - 1;
+                  if (newLength <= 0) return 0;
+                  return prevIndex >= newLength ? 0 : prevIndex;
+                });
+                setIsVisible(true);
+              }, 300);
+            }, 500);
+            return;
+          } else {
+            // Still has plays remaining - update count and continue
+            await supabase
+              .from('queue_items')
+              .update({
+                metadata: {
+                  ...currentItem.metadata,
+                  play_count: newPlayCount,
+                  last_played_at: new Date().toISOString(),
+                }
+              })
+              .eq('id', currentItem.id);
+          }
+        } catch { /* silent */ }
+      } else if (isPaidContent && slotType === 'immediate') {
+        // Legacy immediate slots: delete after first play
         const hasBeenPlayed = currentItem.metadata?.has_been_played === true;
         if (!hasBeenPlayed) {
           try {
